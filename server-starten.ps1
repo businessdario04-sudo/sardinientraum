@@ -2,7 +2,7 @@ $port = 8080
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 $listener = [System.Net.HttpListener]::new()
-$listener.Prefixes.Add("http://localhost:$port/")
+$listener.Prefixes.Add("http://*:$port/")
 
 try {
     $listener.Start()
