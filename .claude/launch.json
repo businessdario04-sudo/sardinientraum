@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Sardinientraum – Static Server",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "server-starten.ps1"],
+      "port": 8080,
+      "autoPort": false
+    }
+  ]
+}

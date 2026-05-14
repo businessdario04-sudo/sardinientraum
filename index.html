@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sardinientraum – Ferienwohnungen in La Caletta</title>
+  <meta name="description" content="Sardinientraum – moderne Ferienwohnungen direkt am Meer in La Caletta, Sardinien. Persönliche Anfrage, individueller Urlaub." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sand:        #f0e6d3;
+      --sand-dark:   #d9c9a8;
+      --ocean:       #1e4d6b;
+      --ocean-light: #2e6d96;
+      --gold:        #c8975a;
+      --white:       #fdfaf6;
+      --text:        #2a2a2a;
+      --text-light:  #6b6b6b;
+      --radius:      16px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--white);
+      color: var(--text);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 5%;
+      transition: background .3s, box-shadow .3s, padding .3s;
+    }
+    nav.scrolled {
+      background: rgba(253,250,246,.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0,0,0,.08);
+      padding: 12px 5%;
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+      transition: color .3s;
+      text-decoration: none;
+    }
+    nav.scrolled .nav-logo { color: var(--ocean); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,.95);
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    nav.scrolled .nav-links a { color: var(--text); }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-cta {
+      padding: 10px 22px;
+      background: var(--gold);
+      color: #fff !important;
+      border-radius: 50px;
+      font-size: .85rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .nav-cta:hover { background: #b5823e; transform: translateY(-1px); color: #fff !important; }
+    .mobile-menu-btn { display: none; background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; }
+    nav.scrolled .mobile-menu-btn { color: var(--ocean); }
+
+    @media (max-width: 820px) {
+      .nav-links { position: fixed; top: 64px; right: -100%; flex-direction: column; gap: 18px; background: rgba(253,250,246,.98); backdrop-filter: blur(10px); padding: 30px 40px; border-radius: 0 0 0 16px; transition: right .3s; box-shadow: -4px 6px 30px rgba(0,0,0,.12); }
+      .nav-links.open { right: 0; }
+      .nav-links a, .nav-links a:not(.nav-cta) { color: var(--text); }
+      .mobile-menu-btn { display: block; }
+    }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      height: 100vh;
+      min-height: 600px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1e4d6b, #2e6d96);
+      z-index: 0;
+    }
+    #hero video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(30,77,107,.55) 100%);
+      z-index: 2;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      max-width: 900px;
+      padding: 0 20px;
+    }
+    .hero-tag {
+      display: inline-block;
+      padding: 6px 18px;
+      background: rgba(255,255,255,.15);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 50px;
+      font-size: .82rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .hero-content h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 6.5vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 22px;
+      text-shadow: 0 2px 24px rgba(0,0,0,.3);
+    }
+    .hero-content p {
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      max-width: 640px;
+      margin: 0 auto 38px;
+      opacity: .95;
+      font-weight: 300;
+      text-shadow: 0 1px 12px rgba(0,0,0,.3);
+    }
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      padding: 15px 36px;
+      background: var(--gold);
+      color: #fff;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: .95rem;
+      border: none;
+      cursor: pointer;
+      transition: background .2s, transform .2s, box-shadow .2s;
+      text-decoration: none;
+      display: inline-block;
+      box-shadow: 0 4px 18px rgba(200,151,90,.4);
+    }
+    .btn-primary:hover { background: #b5823e; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(200,151,90,.55); }
+    .btn-outline {
+      padding: 15px 36px;
+      background: transparent;
+      color: #fff;
+      border: 2px solid rgba(255,255,255,.6);
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,.15); border-color: #fff; }
+    .scroll-hint {
+      position: absolute;
+      bottom: 30px; left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,.8);
+      font-size: 1.6rem;
+      animation: bounce 2.4s infinite;
+      z-index: 3;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    @keyframes bounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
+
+    /* ── SECTIONS ── */
+    section { padding: 90px 5%; }
+    footer  { padding: 60px 5% 30px; }
+
+    .section-label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 3.6vw, 2.8rem);
+      font-weight: 600;
+      text-align: center;
+      color: var(--ocean);
+      margin-bottom: 20px;
+    }
+    .section-sub {
+      max-width: 680px;
+      margin: 0 auto 60px;
+      text-align: center;
+      color: var(--text-light);
+      font-size: 1rem;
+      font-weight: 300;
+    }
+
+    /* ── ÜBER UNS ── */
+    #ueber {
+      background: var(--sand);
+    }
+    .ueber-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .ueber-image {
+      border-radius: var(--radius);
+      overflow: hidden;
+      aspect-ratio: 4/5;
+      position: relative;
+    }
+    .ueber-image img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform .6s;
+    }
+    .ueber-image:hover img { transform: scale(1.04); }
+    .ueber-text .section-label,
+    .ueber-text .section-title { text-align: left; }
+    .ueber-text .section-sub { margin: 0 0 30px; text-align: left; }
+    .features {
+      list-style: none;
+      display: grid;
+      gap: 16px;
+    }
+    .feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,.55);
+      border-radius: 12px;
+      transition: background .2s, transform .2s;
+    }
+    .feature:hover { background: rgba(255,255,255,.85); transform: translateX(4px); }
+    .feature-icon {
+      width: 36px; height: 36px;
+      background: var(--gold);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .feature-text {
+      font-size: .92rem;
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .feature-text strong { display: block; color: var(--ocean); margin-bottom: 2px; }
+    @media (max-width: 820px) {
+      .ueber-grid { grid-template-columns: 1fr; gap: 36px; }
+      .ueber-image { aspect-ratio: 4/3; }
+    }
+
+    /* ── WOHNUNGEN ── */
+    #wohnungen { background: var(--white); }
+    .apt-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 30px;
+    }
+    .apt-card {
+      background: #fff;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,.06);
+      transition: transform .3s, box-shadow .3s;
+      display: flex;
+      flex-direction: column;
+    }
+    .apt-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(0,0,0,.12); }
+    .apt-img {
+      width: 100%;
+      aspect-ratio: 16/10;
+      overflow: hidden;
+      position: relative;
+    }
+    .apt-img img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform .5s;
+    }
+    .apt-card:hover .apt-img img { transform: scale(1.06); }
+    .apt-badge {
+      position: absolute;
+      top: 14px; left: 14px;
+      background: rgba(253,250,246,.95);
+      color: var(--ocean);
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      backdrop-filter: blur(4px);
+    }
+    .apt-body { padding: 26px 28px 28px; flex: 1; display: flex; flex-direction: column; }
+    .apt-body h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: var(--ocean);
+      margin-bottom: 8px;
+    }
+    .apt-body > p {
+      font-size: .92rem;
+      color: var(--text-light);
+      margin-bottom: 18px;
+      line-height: 1.7;
+      flex: 1;
+    }
+    .apt-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #ede5d5;
+      font-size: .85rem;
+      color: var(--text-light);
+    }
+    .apt-meta span { display: inline-flex; align-items: center; gap: 6px; }
+    .apt-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .apt-price { font-size: .92rem; color: var(--text-light); }
+    .apt-price strong { color: var(--ocean); font-size: 1.05rem; font-weight: 700; }
+    .btn-sm {
+      padding: 9px 18px;
+      background: var(--ocean);
+      color: #fff;
+      border-radius: 50px;
+      font-size: .82rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background .2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-sm:hover { background: var(--ocean-light); color: #fff; }
+
+    /* ── REGION ── */
+    #region { background: var(--sand); }
+    .region-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+    .region-card {
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 3/4;
+      cursor: default;
+      transition: transform .35s, box-shadow .35s;
+    }
+    .region-card:hover { transform: translateY(-5px); box-shadow: 0 14px 36px rgba(0,0,0,.18); }
+    .region-card img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform .6s;
+    }
+    .region-card:hover img { transform: scale(1.08); }
+    .region-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(30,77,107,.85) 100%);
+    }
+    .region-card-label {
+      position: absolute;
+      bottom: 22px; left: 22px; right: 22px;
+      color: #fff;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      font-weight: 600;
+      z-index: 2;
+    }
+
+    /* ── BEWERTUNGEN ── */
+    #bewertungen { background: var(--white); }
+    .reviews-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 26px;
+    }
+    .review-card {
+      background: var(--sand);
+      border-radius: var(--radius);
+      padding: 30px 26px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .review-card::before {
+      content: '"';
+      position: absolute;
+      top: -8px; left: 24px;
+      font-family: 'Playfair Display', serif;
+      font-size: 5rem;
+      color: var(--gold);
+      line-height: 1;
+      opacity: .55;
+    }
+    .review-stars { color: var(--gold); margin-bottom: 14px; font-size: 1rem; letter-spacing: 2px; }
+    .review-text {
+      font-size: .92rem;
+      color: var(--text);
+      line-height: 1.75;
+      margin-bottom: 20px;
+      font-style: italic;
+      flex: 1;
+    }
+    .reviewer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,.08);
+    }
+    .reviewer-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--ocean);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+      font-size: .92rem;
+    }
+    .reviewer-name { font-weight: 600; color: var(--ocean); font-size: .9rem; }
+    .reviewer-date { font-size: .78rem; color: var(--text-light); }
+
+    /* ── ANFRAGE ── */
+    #anfrage { background: var(--sand); }
+    .form-card {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 46px 44px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.08);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--ocean);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #e5dccb;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: .92rem;
+      color: var(--text);
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(200,151,90,.15);
+    }
+    .form-group textarea { resize: vertical; min-height: 110px; }
+    .form-submit {
+      width: 100%;
+      padding: 15px;
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: .98rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+      box-shadow: 0 4px 20px rgba(200,151,90,.35);
+      margin-top: 6px;
+    }
+    .form-submit:hover:not(:disabled) { background: #b5823e; transform: translateY(-1px); }
+    .form-submit:disabled { opacity: .65; cursor: wait; }
+    .form-note { font-size: .75rem; color: var(--text-light); text-align: center; margin-top: 14px; }
+
+    .form-success { display: none; text-align: center; padding: 20px 0; }
+    .form-success .check { font-size: 3rem; margin-bottom: 14px; }
+    .form-success h3 { font-family: 'Playfair Display', serif; color: var(--ocean); font-size: 1.5rem; margin-bottom: 8px; }
+    .form-success p { color: var(--text-light); font-size: .9rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--ocean);
+      color: rgba(255,255,255,.8);
+    }
+    .footer-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 40px;
+      padding-bottom: 36px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    @media (max-width: 700px) { .footer-grid { grid-template-columns: 1fr; gap: 30px; } }
+    .footer-brand h2 {
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+    }
+    .footer-brand > p { font-size: .9rem; line-height: 1.7; max-width: 380px; }
+    .footer-col h4 {
+      color: #fff;
+      font-size: .9rem;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+    .footer-col ul { list-style: none; display: grid; gap: 10px; }
+    .footer-col a {
+      color: rgba(255,255,255,.75);
+      text-decoration: none;
+      font-size: .88rem;
+      transition: color .2s;
+    }
+    .footer-col a:hover { color: var(--gold); }
+    .footer-bottom {
+      max-width: 1100px;
+      margin: 30px auto 0;
+      text-align: center;
+      font-size: .8rem;
+      color: rgba(255,255,255,.55);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav id="mainNav">
+  <a class="nav-logo" href="#">🌊 Sardinientraum</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#ueber">Über uns</a></li>
+    <li><a href="#wohnungen">Wohnungen</a></li>
+    <li><a href="#region">Region</a></li>
+    <li><a href="#bewertungen">Bewertungen</a></li>
+    <li><a class="nav-cta" href="#anfrage">Anfrage stellen</a></li>
+  </ul>
+  <button class="mobile-menu-btn" id="menuBtn" aria-label="Menü">☰</button>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <video autoplay muted loop playsinline poster="">
+    <source src="Scene-2.mp4" type="video/mp4">
+  </video>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <span class="hero-tag">La Caletta · Sardinien</span>
+    <h1>Dein Traum vom Meer<br>beginnt hier</h1>
+    <p>Persönlich geführte Ferienwohnungen direkt am türkisblauen Wasser Sardiniens – für unvergessliche Urlaubsmomente fernab vom Massentourismus.</p>
+    <div class="hero-buttons">
+      <a class="btn-primary" href="#wohnungen">Wohnungen entdecken</a>
+      <a class="btn-outline" href="#anfrage">Anfrage stellen</a>
+    </div>
+  </div>
+  <a class="scroll-hint" href="#ueber" aria-label="Weiter scrollen">↓</a>
+</section>
+
+<!-- ══ ÜBER UNS ══ -->
+<section id="ueber">
+  <div class="ueber-grid">
+    <div class="ueber-image">
+      <img src="https://images.unsplash.com/photo-1505761671935-60b3a7427bad?w=900&q=80" alt="Sardinien Küste" loading="lazy" />
+    </div>
+    <div class="ueber-text">
+      <span class="section-label">Über uns</span>
+      <h2 class="section-title">Mehr als nur ein Urlaubsort</h2>
+      <p class="section-sub">Bei uns findest du keine anonyme Hotelanlage – sondern liebevoll eingerichtete Wohnungen, persönliche Betreuung und echte sardische Gastfreundschaft.</p>
+      <ul class="features">
+        <li class="feature">
+          <div class="feature-icon">🏖</div>
+          <div class="feature-text"><strong>200m zum Strand</strong>Direkter Zugang zu kristallklarem Wasser und feinem Sand.</div>
+        </li>
+        <li class="feature">
+          <div class="feature-icon">🔑</div>
+          <div class="feature-text"><strong>Persönliche Übergabe</strong>Wir empfangen jeden Gast persönlich und geben unsere besten Tipps weiter.</div>
+        </li>
+        <li class="feature">
+          <div class="feature-icon">🅿</div>
+          <div class="feature-text"><strong>Kostenloser Parkplatz</strong>Direkt am Haus, sicher und schattig.</div>
+        </li>
+        <li class="feature">
+          <div class="feature-icon">📶</div>
+          <div class="feature-text"><strong>Schnelles WLAN</strong>In allen Wohnungen kostenfrei verfügbar.</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══ WOHNUNGEN ══ -->
+<section id="wohnungen">
+  <span class="section-label">Unsere Unterkünfte</span>
+  <h2 class="section-title">Zwei einzigartige Wohnungen</h2>
+  <p class="section-sub">Jede Wohnung hat ihren eigenen Charakter – wähle die, die zu deinem perfekten Urlaub passt.</p>
+  <div class="apt-grid">
+
+    <article class="apt-card">
+      <div class="apt-img">
+        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80" alt="Casa Tramonto" loading="lazy" />
+        <span class="apt-badge">Bis 4 Personen</span>
+      </div>
+      <div class="apt-body">
+        <h3>Casa Tramonto</h3>
+        <p>Helle, moderne Wohnung mit großer Terrasse und atemberaubendem Blick auf den Sonnenuntergang über dem Meer.</p>
+        <div class="apt-meta">
+          <span>🛏 2 Schlafzimmer</span>
+          <span>🛁 1 Bad</span>
+          <span>📐 65 m²</span>
+        </div>
+        <div class="apt-footer">
+          <div class="apt-price">ab <strong>120 €</strong> / Nacht</div>
+          <a class="btn-sm" href="#anfrage">Anfragen →</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="apt-card">
+      <div class="apt-img">
+        <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80" alt="Casa Mare" loading="lazy" />
+        <span class="apt-badge">Bis 2 Personen</span>
+      </div>
+      <div class="apt-body">
+        <h3>Casa Mare</h3>
+        <p>Romantisches Studio direkt am Meer – ideal für Paare, die einen ruhigen, intimen Urlaub in einzigartiger Lage suchen.</p>
+        <div class="apt-meta">
+          <span>🛏 1 Schlafzimmer</span>
+          <span>🛁 1 Bad</span>
+          <span>📐 40 m²</span>
+        </div>
+        <div class="apt-footer">
+          <div class="apt-price">ab <strong>95 €</strong> / Nacht</div>
+          <a class="btn-sm" href="#anfrage">Anfragen →</a>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</section>
+
+<!-- ══ REGION ══ -->
+<section id="region">
+  <span class="section-label">Die Region</span>
+  <h2 class="section-title">Entdecke La Caletta</h2>
+  <p class="section-sub">Vom paradiesischen Strand bis in die wilden Berge – Sardinien hat für jeden etwas zu bieten.</p>
+  <div class="region-grid">
+    <div class="region-card">
+      <img src="https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=600&q=80" alt="Strände" loading="lazy" />
+      <div class="region-card-label">Traumstrände</div>
+    </div>
+    <div class="region-card">
+      <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80" alt="Berge" loading="lazy" />
+      <div class="region-card-label">Wilde Berge</div>
+    </div>
+    <div class="region-card">
+      <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80" alt="Dörfer" loading="lazy" />
+      <div class="region-card-label">Charmante Dörfer</div>
+    </div>
+    <div class="region-card">
+      <img src="https://images.unsplash.com/photo-1551845728-6820a30c64e1?w=600&q=80" alt="Kulinarik" loading="lazy" />
+      <div class="region-card-label">Sardische Küche</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BEWERTUNGEN ══ -->
+<section id="bewertungen">
+  <span class="section-label">Bewertungen</span>
+  <h2 class="section-title">Was unsere Gäste sagen</h2>
+  <p class="section-sub">Hunderte zufriedene Urlauber kommen immer wieder gerne zurück.</p>
+  <div class="reviews-grid">
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">Ein absolut traumhafter Urlaub! Die Wohnung war wunderschön, die Lage perfekt und die Gastgeber super freundlich. Wir kommen definitiv wieder.</p>
+      <div class="reviewer">
+        <div class="reviewer-avatar">SM</div>
+        <div>
+          <div class="reviewer-name">Sarah M.</div>
+          <div class="reviewer-date">Juli 2025</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">Persönlicher Empfang, makellose Sauberkeit und ein Strand, der jeden Postkartenmotiv übertrifft. Wir haben jeden Tag genossen.</p>
+      <div class="reviewer">
+        <div class="reviewer-avatar">TK</div>
+        <div>
+          <div class="reviewer-name">Thomas K.</div>
+          <div class="reviewer-date">August 2025</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-card">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">Casa Mare ist das perfekte Versteck für Paare. Ruhig, romantisch, und das Meer direkt vor der Tür. Ein Geheimtipp!</p>
+      <div class="reviewer">
+        <div class="reviewer-avatar">JL</div>
+        <div>
+          <div class="reviewer-name">Julia L.</div>
+          <div class="reviewer-date">Juni 2025</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ ANFRAGE ══ -->
+<section id="anfrage">
+  <span class="section-label">Kontakt</span>
+  <h2 class="section-title">Anfrage stellen</h2>
+  <p class="section-sub" style="margin: 0 auto 40px;">Kein Buchungssystem – nur persönlicher Kontakt. Füllen Sie das Formular aus, und wir melden uns schnellstmöglich bei Ihnen.</p>
+  <div class="form-card">
+    <form id="anfrage-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="vorname">Vorname</label>
+          <input type="text" id="vorname" name="vorname" placeholder="Maria" required />
+        </div>
+        <div class="form-group">
+          <label for="nachname">Nachname</label>
+          <input type="text" id="nachname" name="nachname" placeholder="Mustermann" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">E-Mail-Adresse</label>
+          <input type="email" id="email" name="email" placeholder="maria@beispiel.de" required />
+        </div>
+        <div class="form-group">
+          <label for="telefon">Telefon (optional)</label>
+          <input type="tel" id="telefon" name="telefon" placeholder="+49 123 456789" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="anreise">Anreise</label>
+          <input type="date" id="anreise" name="anreise" required />
+        </div>
+        <div class="form-group">
+          <label for="abreise">Abreise</label>
+          <input type="date" id="abreise" name="abreise" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="wohnung">Gewünschte Wohnung</label>
+          <select id="wohnung" name="wohnung">
+            <option value="">Bitte wählen …</option>
+            <option>Casa Tramonto (bis 4 Pers.)</option>
+            <option>Casa Mare (bis 2 Pers.)</option>
+            <option>Noch unentschieden</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="personen">Anzahl Personen</label>
+          <select id="personen" name="personen">
+            <option>1 Person</option>
+            <option>2 Personen</option>
+            <option>3 Personen</option>
+            <option>4 Personen</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="nachricht">Ihre Nachricht (optional)</label>
+        <textarea id="nachricht" name="nachricht" placeholder="Haben Sie spezielle Wünsche oder Fragen? Gerne hier eintragen …"></textarea>
+      </div>
+      <button type="submit" class="form-submit">Anfrage absenden →</button>
+      <p class="form-note">Wir antworten in der Regel innerhalb von 24 Stunden. Ihre Daten werden vertraulich behandelt.</p>
+    </form>
+    <div class="form-success" id="form-success">
+      <div class="check">✅</div>
+      <h3>Vielen Dank!</h3>
+      <p>Ihre Anfrage ist bei uns eingegangen.<br>Wir melden uns innerhalb von 24 Stunden bei Ihnen.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <h2>🌊 Sardinientraum</h2>
+      <p>Persönlich geführte Ferienwohnungen in La Caletta, Sardinien. Dein Zuhause auf Zeit – fernab vom Massentourismus.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Entdecken</h4>
+      <ul>
+        <li><a href="#ueber">Über uns</a></li>
+        <li><a href="#wohnungen">Wohnungen</a></li>
+        <li><a href="#region">Region</a></li>
+        <li><a href="#bewertungen">Bewertungen</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Kontakt</h4>
+      <ul>
+        <li><a href="#anfrage">Anfrage stellen</a></li>
+        <li><a href="mailto:info@sardinientraum.de">info@sardinientraum.de</a></li>
+        <li><a href="#">Impressum</a></li>
+        <li><a href="#">Datenschutz</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2026 Sardinientraum · Mit ❤️ in Sardinien</div>
+</footer>
+
+<script>
+  /* ─── Nav scroll state ─── */
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 30));
+  /* ─── Mobile menu ─── */
+  document.getElementById('menuBtn').addEventListener('click', () => {
+    document.getElementById('navLinks').classList.toggle('open');
+  });
+  document.querySelectorAll('#navLinks a').forEach(a => a.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open')));
+  /* ─── Datum: Abreise ≥ Anreise ─── */
+  document.getElementById('anreise').addEventListener('change', e => {
+    document.getElementById('abreise').min = e.target.value;
+  });
+  /* ─── Form submit → contact.php (mit Fallback) ─── */
+  document.getElementById('anfrage-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = this.querySelector('.form-submit');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Wird gesendet…';
+    try {
+      const data = new FormData(this);
+      const resp = await fetch('./contact.php', { method: 'POST', body: data });
+      const json = await resp.json().catch(() => ({}));
+      if (resp.ok && json.ok !== false) {
+        this.style.display = 'none';
+        document.getElementById('form-success').style.display = 'block';
+      } else {
+        alert(json.msg || 'Fehler beim Senden. Bitte versuchen Sie es erneut.');
+        btn.disabled = false; btn.textContent = orig;
+      }
+    } catch (err) {
+      alert('Verbindungsfehler. Bitte prüfen Sie Ihre Internetverbindung.');
+      btn.disabled = false; btn.textContent = orig;
+    }
+  });
+</script>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     EDIT MODE v3 – Vollständiger Wix-Style Editor
+     Aktivierung nur über Admin-Panel (localStorage: et_autoopen='1')
+═══════════════════════════════════════════════════════════════════════ -->
+<style>
+  /* ── Toolbar ── */
+  #et-topbar {
+    display: none; position: fixed;
+    top: 0; left: 0; right: 0; z-index: 1001;
+    background: var(--ocean); color: #fff;
+    height: 48px; padding: 0 20px;
+    align-items: center; justify-content: space-between;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 2px 10px rgba(0,0,0,.2);
+  }
+  body.edit-active #et-topbar { display: flex; }
+  body.edit-active { padding-top: 96px; }
+  .et-topbar-title { font-weight: 700; font-size: .88rem; }
+  .et-topbar-right { display: flex; gap: 8px; align-items: center; }
+  .et-tbtn {
+    padding: 7px 18px; border-radius: 50px; border: none;
+    font-size: .8rem; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: opacity .2s, background .2s;
+  }
+  .et-tbtn:hover { opacity: .85; }
+  #et-save-btn { background: var(--gold); color: #fff; }
+  #et-exit-btn { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+  #et-settings-btn {
+    width: 36px; height: 36px; border-radius: 10px; border: none;
+    background: rgba(255,255,255,.15); color: #fff; font-size: 1.05rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .2s; flex-shrink: 0;
+  }
+  #et-settings-btn:hover, #et-settings-btn.open { background: rgba(255,255,255,.32); }
+
+  /* ── Properties-Bar ── */
+  #et-propsbar {
+    display: none; position: fixed;
+    top: 48px; left: 0; right: 0; z-index: 1000;
+    background: #f7f3ee; border-bottom: 1px solid #ddd;
+    height: 48px; padding: 0 14px;
+    align-items: center; gap: 5px;
+    font-family: 'Inter', sans-serif;
+    overflow-x: auto; white-space: nowrap;
+  }
+  body.edit-active #et-propsbar { display: flex; }
+  .et-pb-hint { font-size: .78rem; color: #aaa; font-style: italic; padding: 0 8px; }
+  .et-pb-sep { width: 1px; height: 26px; background: #d0c8bc; margin: 0 3px; flex-shrink: 0; }
+  .et-pb-label { font-size: .75rem; color: #888; font-weight: 600; margin-right: 4px; flex-shrink: 0; }
+  .et-sel { height: 32px; padding: 0 8px; border: 1px solid #d0c8bc; border-radius: 7px; font-size: .78rem; font-family: 'Inter', sans-serif; background: #fff; color: #222; cursor: pointer; outline: none; flex-shrink: 0; }
+  .et-sel:focus { border-color: var(--gold); }
+  #et-sel-font { width: 148px; } #et-sel-size { width: 70px; } #et-sel-lh { width: 115px; } #et-btn-radius-sel { width: 110px; }
+  .et-ib { width: 32px; height: 32px; border-radius: 7px; border: 1px solid #d0c8bc; background: #fff; cursor: pointer; font-size: .85rem; font-weight: 700; color: #333; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; flex-shrink: 0; transition: background .15s, border-color .15s, color .15s; user-select: none; }
+  .et-ib:hover { background: #f0e6d3; border-color: var(--gold); }
+  .et-ib.on { background: var(--ocean); color: #fff; border-color: var(--ocean); }
+  .et-ib[data-align] { font-family: 'Inter', sans-serif; font-size: .75rem; font-weight: 400; }
+  .et-color-group { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+  .et-color-label { font-size: .7rem; color: #666; white-space: nowrap; }
+  .et-color-inp { width: 32px; height: 32px; border: 1px solid #d0c8bc; border-radius: 7px; cursor: pointer; padding: 2px; background: #fff; flex-shrink: 0; }
+  .et-action-btn { height: 32px; padding: 0 14px; border-radius: 7px; border: 1px solid #d0c8bc; background: #fff; cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--ocean); font-family: 'Inter', sans-serif; white-space: nowrap; flex-shrink: 0; transition: background .15s; }
+  .et-action-btn:hover { background: #f0e6d3; }
+  .et-link-input { height: 32px; padding: 0 10px; border: 1px solid #d0c8bc; border-radius: 7px; font-size: .78rem; font-family: 'Inter', sans-serif; width: 190px; outline: none; background: #fff; flex-shrink: 0; }
+  .et-link-input:focus { border-color: var(--gold); }
+
+  /* ── Selection states ── */
+  body.edit-active .et-hoverable:hover { outline: 2px dashed rgba(200,151,90,.65) !important; outline-offset: 3px; cursor: pointer; }
+  body.edit-active .et-selected { outline: 2.5px solid #1e4d6b !important; outline-offset: 3px; }
+  body.edit-active .et-selected.et-text-el { cursor: text; }
+  [contenteditable]:focus { outline: 2px solid var(--gold) !important; }
+  body.edit-active section.et-hoverable:hover, body.edit-active footer.et-hoverable:hover { outline: 2px dashed rgba(30,77,107,.4) !important; outline-offset: 0; }
+  body.edit-active section.et-selected, body.edit-active footer.et-selected { outline: 2.5px solid var(--ocean) !important; outline-offset: 0; }
+  body.edit-active .et-btn-el:hover { outline: 2px dashed var(--gold) !important; outline-offset: 3px; cursor: pointer; }
+  body.edit-active .et-media-el { position: relative; cursor: pointer; }
+  body.edit-active .et-media-el::after { content: attr(data-et-label); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.42); color: #fff; font-size: .82rem; font-weight: 600; font-family: 'Inter', sans-serif; border-radius: inherit; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  body.edit-active .et-media-el:hover::after { opacity: 1; }
+  body.edit-active .hero-bg.et-media-el::after { border-radius: 0; font-size: .95rem; }
+  body.edit-active .et-card-el { cursor: grab; }
+  body.edit-active .et-card-el.et-dragging { opacity: .3; transform: scale(.96); cursor: grabbing; }
+  body.edit-active .et-card-el.et-drop-over { outline: 2.5px dashed var(--gold) !important; outline-offset: 4px; transform: scale(1.02); }
+  .et-video-el { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; }
+
+  /* ── Settings panel ── */
+  #et-settings-panel { display: none; position: fixed; top: 48px; left: 0; bottom: 0; width: 300px; z-index: 1002; background: #fff; border-right: 1px solid #ddd; box-shadow: 4px 0 18px rgba(0,0,0,.08); flex-direction: column; font-family: 'Inter', sans-serif; overflow: hidden; }
+  #et-settings-panel.open { display: flex; }
+  body.edit-active.settings-open #et-propsbar { left: 300px; }
+  .et-sp-head { padding: 14px 20px; background: var(--ocean); color: #fff; display: flex; justify-content: space-between; align-items: center; font-size: .92rem; font-weight: 700; flex-shrink: 0; }
+  #et-sp-close { width: 26px; height: 26px; border-radius: 6px; border: none; background: rgba(255,255,255,.15); color: #fff; cursor: pointer; font-size: .82rem; }
+  .et-sp-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+  .et-sp-section { margin-bottom: 22px; }
+  .et-sp-section-title { font-size: .68rem; color: #888; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+  .et-sp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .et-sp-info { flex: 1; min-width: 0; }
+  .et-sp-info label { font-size: .82rem; font-weight: 600; color: #333; display: block; }
+  .et-sp-info span { font-size: .68rem; color: #999; }
+  .et-sp-colorwrap { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+  .et-sp-color { width: 38px; height: 30px; border: 1px solid #d0c8bc; border-radius: 6px; cursor: pointer; padding: 2px; background: #fff; }
+  .et-sp-hex { width: 78px; height: 30px; padding: 0 8px; border: 1px solid #d0c8bc; border-radius: 6px; font-size: .76rem; font-family: 'SF Mono', Consolas, monospace; outline: none; }
+  .et-sp-hex:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,151,90,.15); }
+  .et-sp-hex.invalid { border-color: #e55; background: #fff5f5; }
+</style>
+
+<!-- Toolbar -->
+<div id="et-topbar">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button id="et-settings-btn" title="Globale Einstellungen">⚙️</button>
+    <span class="et-topbar-title">Bearbeitungsmodus</span>
+  </div>
+  <div class="et-topbar-right">
+    <button class="et-tbtn" id="et-save-btn">💾 Speichern</button>
+    <button class="et-tbtn" id="et-exit-btn">✕ Beenden</button>
+  </div>
+</div>
+
+<!-- Settings Sidebar -->
+<div id="et-settings-panel">
+  <div class="et-sp-head"><span>⚙️ Globale Einstellungen</span><button id="et-sp-close">✕</button></div>
+  <div class="et-sp-body">
+    <div class="et-sp-section">
+      <div class="et-sp-section-title">🎨 Farben</div>
+      <div class="et-sp-row">
+        <div class="et-sp-info"><label>Primärfarbe</label><span>Navigation, Footer</span></div>
+        <div class="et-sp-colorwrap">
+          <input type="text" class="et-sp-hex" id="sp-primary-hex" value="#1e4d6b" />
+          <input type="color" class="et-sp-color" id="sp-primary" value="#1e4d6b" />
+        </div>
+      </div>
+      <div class="et-sp-row">
+        <div class="et-sp-info"><label>Akzentfarbe</label><span>Buttons, Highlights</span></div>
+        <div class="et-sp-colorwrap">
+          <input type="text" class="et-sp-hex" id="sp-gold-hex" value="#c8975a" />
+          <input type="color" class="et-sp-color" id="sp-gold" value="#c8975a" />
+        </div>
+      </div>
+      <div class="et-sp-row">
+        <div class="et-sp-info"><label>Hintergrund</label><span>Sand-Sektionen</span></div>
+        <div class="et-sp-colorwrap">
+          <input type="text" class="et-sp-hex" id="sp-sand-hex" value="#f0e6d3" />
+          <input type="color" class="et-sp-color" id="sp-sand" value="#f0e6d3" />
+        </div>
+      </div>
+      <div class="et-sp-row">
+        <div class="et-sp-info"><label>Helle Fläche</label><span>Body-Hintergrund</span></div>
+        <div class="et-sp-colorwrap">
+          <input type="text" class="et-sp-hex" id="sp-white-hex" value="#fdfaf6" />
+          <input type="color" class="et-sp-color" id="sp-white" value="#fdfaf6" />
+        </div>
+      </div>
+      <div class="et-sp-row">
+        <div class="et-sp-info"><label>Textfarbe</label><span>Standard-Text</span></div>
+        <div class="et-sp-colorwrap">
+          <input type="text" class="et-sp-hex" id="sp-text-hex" value="#2a2a2a" />
+          <input type="color" class="et-sp-color" id="sp-text" value="#2a2a2a" />
+        </div>
+      </div>
+    </div>
+    <div class="et-sp-section">
+      <div class="et-sp-section-title">📐 Design</div>
+      <div class="et-sp-row">
+        <div class="et-sp-info"><label>Eckenradius</label><span>Karten & Bilder</span></div>
+        <select class="et-sel" id="sp-radius" style="width: 110px;">
+          <option value="0px">Eckig</option><option value="8px">Leicht</option>
+          <option value="16px" selected>Rund</option><option value="24px">Sehr rund</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Properties-Bar -->
+<div id="et-propsbar">
+  <span class="et-pb-hint" id="et-hint">↖ Element anklicken zum Bearbeiten</span>
+
+  <div id="et-text-tools" style="display:none;align-items:center;gap:5px;">
+    <span class="et-pb-label">Text:</span>
+    <select class="et-sel" id="et-sel-font">
+      <option value="'Inter', sans-serif">Inter</option>
+      <option value="'Playfair Display', serif">Playfair Display</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="'Times New Roman', serif">Times New Roman</option>
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="Verdana, sans-serif">Verdana</option>
+      <option value="'Courier New', monospace">Courier New</option>
+    </select>
+    <select class="et-sel" id="et-sel-size">
+      <option value="11">11px</option><option value="12">12px</option><option value="13">13px</option><option value="14">14px</option><option value="15">15px</option><option value="16">16px</option><option value="18">18px</option><option value="20">20px</option><option value="22">22px</option><option value="24">24px</option><option value="28">28px</option><option value="32">32px</option><option value="36">36px</option><option value="40">40px</option><option value="48">48px</option><option value="56">56px</option><option value="64">64px</option>
+    </select>
+    <div class="et-pb-sep"></div>
+    <button class="et-ib" id="et-bold" title="Fett"><b>B</b></button>
+    <button class="et-ib" id="et-italic" title="Kursiv"><i>I</i></button>
+    <button class="et-ib" id="et-underline" title="Unterstrichen" style="text-decoration:underline">U</button>
+    <div class="et-pb-sep"></div>
+    <button class="et-ib" data-align="left">⬅</button>
+    <button class="et-ib" data-align="center">☰</button>
+    <button class="et-ib" data-align="right">➡</button>
+    <div class="et-pb-sep"></div>
+    <div class="et-color-group"><span class="et-color-label">Text</span><input type="color" class="et-color-inp" id="et-text-color" value="#2a2a2a" /></div>
+    <div class="et-color-group"><span class="et-color-label">BG</span><input type="color" class="et-color-inp" id="et-text-bg" value="#ffffff" /></div>
+    <div class="et-pb-sep"></div>
+    <select class="et-sel" id="et-sel-lh">
+      <option value="1">Zeile 1×</option><option value="1.3">1.3×</option><option value="1.5" selected>1.5×</option><option value="1.7">1.7×</option><option value="2">2×</option>
+    </select>
+  </div>
+
+  <div id="et-btn-tools" style="display:none;align-items:center;gap:5px;">
+    <span class="et-pb-label">Button:</span>
+    <div class="et-color-group"><span class="et-color-label">BG</span><input type="color" class="et-color-inp" id="et-btn-bg" value="#c8975a" /></div>
+    <div class="et-color-group"><span class="et-color-label">Text</span><input type="color" class="et-color-inp" id="et-btn-fg" value="#ffffff" /></div>
+    <div class="et-color-group"><span class="et-color-label">Rahmen</span><input type="color" class="et-color-inp" id="et-btn-border" value="#c8975a" /></div>
+    <div class="et-pb-sep"></div>
+    <select class="et-sel" id="et-btn-radius-sel">
+      <option value="0px">Eckig</option><option value="6px">Leicht</option><option value="14px">Rund</option><option value="50px" selected>Pill</option>
+    </select>
+    <div class="et-pb-sep"></div>
+    <select class="et-sel" id="et-btn-size-sel" style="width:70px;">
+      <option value="12">12px</option><option value="13">13px</option><option value="14">14px</option><option value="15">15px</option><option value="16">16px</option><option value="18">18px</option><option value="20">20px</option>
+    </select>
+    <div class="et-pb-sep"></div>
+    <input type="text" class="et-link-input" id="et-btn-link" placeholder="🔗 Link-URL" />
+  </div>
+
+  <div id="et-media-tools" style="display:none;align-items:center;gap:10px;">
+    <span class="et-pb-label">Medien:</span>
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.06);border-radius:6px;padding:4px 8px;">
+      <img id="et-media-thumb" src="" style="width:56px;height:38px;object-fit:cover;border-radius:4px;border:1px solid rgba(0,0,0,.1);display:none;" />
+      <div id="et-media-no-thumb" style="width:56px;height:38px;border-radius:4px;border:1px dashed rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(0,0,0,.3);">🖼</div>
+      <div style="line-height:1.3;">
+        <div id="et-media-type-label" style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;">Bild</div>
+        <div id="et-media-size-rec" style="font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;">–</div>
+      </div>
+    </div>
+    <div class="et-pb-sep"></div>
+    <button class="et-action-btn" id="et-replace-img">📷 Bild ersetzen</button>
+    <button class="et-action-btn" id="et-replace-vid">🎬 Video einsetzen</button>
+  </div>
+
+  <div id="et-card-tools" style="display:none;align-items:center;gap:6px;">
+    <span class="et-pb-label">Karte:</span>
+    <button class="et-action-btn" id="et-move-up">↑ Hoch</button>
+    <button class="et-action-btn" id="et-move-dn">↓ Runter</button>
+    <div class="et-pb-sep"></div>
+    <div class="et-color-group"><span class="et-color-label">Kartenfarbe</span><input type="color" class="et-color-inp" id="et-card-bg" value="#ffffff" /></div>
+  </div>
+
+  <div id="et-sec-tools" style="display:none;align-items:center;gap:6px;">
+    <span class="et-pb-label">Abschnitt:</span>
+    <div class="et-color-group"><span class="et-color-label">BG-Farbe</span><input type="color" class="et-color-inp" id="et-sec-bg" value="#f0e6d3" /></div>
+    <div class="et-pb-sep"></div>
+    <button class="et-action-btn" id="et-sec-img">📷 Hintergrundbild</button>
+    <button class="et-action-btn" id="et-sec-vid">🎬 Hintergrundvideo</button>
+    <div class="et-pb-sep"></div>
+    <select class="et-sel" id="et-sec-pad" style="width:130px;">
+      <option value="40px 5%">Kompakt</option><option value="64px 5%">Normal</option><option value="90px 5%" selected>Großzügig</option><option value="130px 5%">Sehr groß</option>
+    </select>
+  </div>
+</div>
+
+<!-- Versteckter Toggle-Button (nur per Admin-Panel ansprechbar) -->
+<button id="edit-toggle" style="display:none" aria-hidden="true"></button>
+
+<!-- File-Inputs -->
+<input type="file" id="et-img-input" accept="image/*" style="display:none" />
+<input type="file" id="et-vid-input" accept="video/*" style="display:none" />
+<input type="file" id="et-bg-input" accept="image/*,video/*" style="display:none" />
+
+<script>
+(function () {
+  'use strict';
+
+  const TEXT_SEL = "h1,h2,h3,h4,.hero-tag,.section-label,.apt-badge,.region-card-label,.reviewer-name,.reviewer-date,.review-text,.apt-body>p,.ueber-text .section-sub,.footer-brand>p,.nav-logo,.apt-price strong,.footer-brand h2";
+  const BTN_SEL  = '.btn-primary,.btn-outline,.btn-sm,.nav-cta,.form-submit,.scroll-hint';
+  const CARD_SEL = '.apt-card,.review-card,.region-card,.feature';
+  const SEC_SEL  = 'section,footer';
+
+  let mode = false, selEl = null, selType = null, dragSrc = null;
+
+  const $ = id => document.getElementById(id);
+  const toggleBtn   = $('edit-toggle');
+  const saveBtn     = $('et-save-btn');
+  const exitBtn     = $('et-exit-btn');
+  const settingsBtn = $('et-settings-btn');
+  const settingsPanel = $('et-settings-panel');
+  const spClose     = $('et-sp-close');
+  const hint        = $('et-hint');
+  const textTools   = $('et-text-tools');
+  const btnTools    = $('et-btn-tools');
+  const mediaTools  = $('et-media-tools');
+  const cardTools   = $('et-card-tools');
+  const secTools    = $('et-sec-tools');
+  const heroBg      = document.querySelector('.hero-bg');
+
+  /* Text controls */
+  const selFont = $('et-sel-font'), selSize = $('et-sel-size'), selLH = $('et-sel-lh');
+  const boldBtn = $('et-bold'), italBtn = $('et-italic'), undlBtn = $('et-underline');
+  const alignBtns = document.querySelectorAll('[data-align]');
+  const txtColor = $('et-text-color'), txtBg = $('et-text-bg');
+  /* Button controls */
+  const btnBg = $('et-btn-bg'), btnFg = $('et-btn-fg'), btnBorder = $('et-btn-border');
+  const btnRadius = $('et-btn-radius-sel'), btnSize = $('et-btn-size-sel'), btnLink = $('et-btn-link');
+  /* Card */
+  const moveUpBtn = $('et-move-up'), moveDnBtn = $('et-move-dn'), cardBgInp = $('et-card-bg');
+  /* Section */
+  const secBgInp = $('et-sec-bg'), secPad = $('et-sec-pad');
+  /* File */
+  const imgInput = $('et-img-input'), vidInput = $('et-vid-input'), bgInput = $('et-bg-input');
+
+  /* ═══ ENTER / EXIT ═══ */
+  function enter() {
+    mode = true;
+    document.body.classList.add('edit-active');
+    document.querySelectorAll(TEXT_SEL).forEach(el => {
+      if (el.closest('#et-topbar,#et-propsbar,#et-settings-panel')) return;
+      el.classList.add('et-hoverable','et-text-el');
+    });
+    document.querySelectorAll(BTN_SEL).forEach(el => {
+      if (el.closest('#et-topbar,#et-propsbar,#et-settings-panel')) return;
+      el.classList.add('et-hoverable','et-btn-el');
+    });
+    document.querySelectorAll('img').forEach(img => {
+      if (img.closest('#et-topbar,#et-propsbar,#edit-toggle,#et-settings-panel')) return;
+      const wrap = img.closest('.apt-img,.ueber-image,.region-card') || img.parentElement;
+      if (!wrap.classList.contains('et-media-el')) {
+        wrap.classList.add('et-hoverable','et-media-el');
+        wrap.setAttribute('data-et-label','📷 / 🎬 Bild oder Video ersetzen');
+        wrap._etImg = img;
+      }
+    });
+    if (heroBg) {
+      heroBg.classList.add('et-hoverable','et-media-el');
+      heroBg.setAttribute('data-et-label','📷 / 🎬 Hintergrund ersetzen');
+    }
+    document.querySelectorAll(CARD_SEL).forEach(el => {
+      el.classList.add('et-hoverable','et-card-el');
+      el.setAttribute('draggable','true');
+      el.addEventListener('dragstart', onDragStart);
+      el.addEventListener('dragover',  onDragOver);
+      el.addEventListener('dragleave', onDragLeave);
+      el.addEventListener('drop',      onDrop);
+      el.addEventListener('dragend',   onDragEnd);
+    });
+    document.querySelectorAll(SEC_SEL).forEach(el => el.classList.add('et-hoverable','et-sec-el'));
+    document.addEventListener('click', globalClick, true);
+    showHint();
+  }
+
+  function exit() {
+    mode = false;
+    document.body.classList.remove('edit-active','settings-open');
+    settingsPanel.classList.remove('open');
+    settingsBtn.classList.remove('open');
+    deselect();
+    document.removeEventListener('click', globalClick, true);
+    const cleanup = [
+      ['.et-text-el',  ['et-hoverable','et-text-el','et-selected']],
+      ['.et-btn-el',   ['et-hoverable','et-btn-el','et-selected']],
+      ['.et-media-el', ['et-hoverable','et-media-el','et-selected']],
+      ['.et-card-el',  ['et-hoverable','et-card-el','et-selected','et-dragging','et-drop-over']],
+      ['.et-sec-el',   ['et-hoverable','et-sec-el','et-selected']],
+    ];
+    cleanup.forEach(([sel, classes]) => {
+      document.querySelectorAll(sel).forEach(el => {
+        el.classList.remove(...classes);
+        if (sel === '.et-card-el') {
+          el.removeAttribute('draggable');
+          el.removeEventListener('dragstart', onDragStart);
+          el.removeEventListener('dragover',  onDragOver);
+          el.removeEventListener('dragleave', onDragLeave);
+          el.removeEventListener('drop',      onDrop);
+          el.removeEventListener('dragend',   onDragEnd);
+        }
+      });
+    });
+    if (heroBg) heroBg.classList.remove('et-hoverable','et-media-el','et-selected');
+    document.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    document.querySelectorAll('[data-et-label]').forEach(el => el.removeAttribute('data-et-label'));
+  }
+
+  /* ═══ CLICK INTERCEPTOR ═══ */
+  function globalClick(e) {
+    if (!mode) return;
+    const et = e.target;
+    if (et.closest('#et-topbar,#et-propsbar,#edit-toggle,#et-settings-panel,#et-img-input,#et-vid-input,#et-bg-input')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const btnEl  = et.closest(BTN_SEL);
+    const textEl = et.closest(TEXT_SEL);
+    const mediaEl= et.closest('.et-media-el');
+    const cardEl = et.closest(CARD_SEL);
+    const secEl  = et.closest(SEC_SEL);
+    if (btnEl)  { select(btnEl, 'button'); return; }
+    if (textEl) { selectText(textEl); return; }
+    if (mediaEl) {
+      if (mediaEl === heroBg) select(heroBg, 'hero');
+      else select(mediaEl, 'media');
+      return;
+    }
+    if (cardEl) { select(cardEl, 'card'); return; }
+    if (secEl)  { select(secEl,  'section'); return; }
+    deselect();
+  }
+
+  /* ═══ SELECTION ═══ */
+  function select(el, type) {
+    deselect();
+    selEl = el; selType = type;
+    el.classList.add('et-selected');
+    hint.style.display = 'none';
+    textTools.style.display  = type === 'text' ? 'flex' : 'none';
+    btnTools.style.display   = type === 'button' ? 'flex' : 'none';
+    mediaTools.style.display = (type === 'media' || type === 'hero') ? 'flex' : 'none';
+    cardTools.style.display  = type === 'card' ? 'flex' : 'none';
+    secTools.style.display   = type === 'section' ? 'flex' : 'none';
+    if (type === 'text')    syncTextBar(el);
+    if (type === 'button')  syncBtnBar(el);
+    if (type === 'card')    syncCardBar(el);
+    if (type === 'section') syncSecBar(el);
+    if (type === 'media' || type === 'hero') syncMediaBar(el, type);
+  }
+  function selectText(el) {
+    select(el, 'text');
+    el.setAttribute('contenteditable', 'true');
+    el.focus();
+    try {
+      const r = document.createRange();
+      r.selectNodeContents(el); r.collapse(false);
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    } catch(_) {}
+    el.addEventListener('keydown', onTextKey);
+    el.addEventListener('blur', () => {
+      el.removeAttribute('contenteditable');
+      el.removeEventListener('keydown', onTextKey);
+    }, { once: true });
+  }
+  function deselect() {
+    if (selEl) {
+      selEl.classList.remove('et-selected');
+      if (selEl.hasAttribute('contenteditable')) {
+        selEl.removeAttribute('contenteditable');
+        selEl.removeEventListener('keydown', onTextKey);
+      }
+    }
+    selEl = null; selType = null;
+    showHint();
+  }
+  function showHint() {
+    hint.style.display = '';
+    textTools.style.display = btnTools.style.display = mediaTools.style.display = cardTools.style.display = secTools.style.display = 'none';
+  }
+  function onTextKey(e) { if (e.key === 'Escape') this.blur(); }
+
+  /* ═══ TEXT props ═══ */
+  function syncTextBar(el) {
+    const cs = getComputedStyle(el);
+    const ff = (el.style.fontFamily || cs.fontFamily || '').toLowerCase();
+    if      (ff.includes('playfair')) selFont.value = "'Playfair Display', serif";
+    else if (ff.includes('georgia'))  selFont.value = 'Georgia, serif';
+    else if (ff.includes('times'))    selFont.value = "'Times New Roman', serif";
+    else if (ff.includes('arial'))    selFont.value = 'Arial, sans-serif';
+    else if (ff.includes('verdana'))  selFont.value = 'Verdana, sans-serif';
+    else if (ff.includes('courier'))  selFont.value = "'Courier New', monospace";
+    else                              selFont.value = "'Inter', sans-serif";
+    selSize.value = closestVal(selSize, Math.round(parseFloat(el.style.fontSize || cs.fontSize)));
+    const lhPx = parseFloat(el.style.lineHeight || cs.lineHeight);
+    const lhRel = isNaN(lhPx) ? 1.5 : lhPx / parseFloat(cs.fontSize);
+    selLH.value = closestVal(selLH, lhRel);
+    boldBtn.classList.toggle('on', parseInt(cs.fontWeight) >= 600);
+    italBtn.classList.toggle('on', cs.fontStyle === 'italic');
+    undlBtn.classList.toggle('on', cs.textDecoration.includes('underline'));
+    alignBtns.forEach(b => b.classList.toggle('on', b.dataset.align === cs.textAlign));
+    txtColor.value = rgb2hex(cs.color) || '#2a2a2a';
+    txtBg.value = rgb2hex(cs.backgroundColor) || '#ffffff';
+  }
+  selFont.addEventListener('change', () => applyTxt('fontFamily', selFont.value));
+  selSize.addEventListener('change', () => applyTxt('fontSize', selSize.value + 'px'));
+  selLH.addEventListener('change',   () => applyTxt('lineHeight', selLH.value));
+  txtColor.addEventListener('input', () => applyTxt('color', txtColor.value));
+  txtBg.addEventListener('input',    () => applyTxt('backgroundColor', txtBg.value));
+  boldBtn.addEventListener('mousedown', e => { e.preventDefault(); if(!selEl) return; const on = parseInt(getComputedStyle(selEl).fontWeight) >= 600; applyTxt('fontWeight', on ? '400' : '700'); boldBtn.classList.toggle('on', !on); });
+  italBtn.addEventListener('mousedown', e => { e.preventDefault(); if(!selEl) return; const on = getComputedStyle(selEl).fontStyle === 'italic'; applyTxt('fontStyle', on ? 'normal' : 'italic'); italBtn.classList.toggle('on', !on); });
+  undlBtn.addEventListener('mousedown', e => { e.preventDefault(); if(!selEl) return; const on = getComputedStyle(selEl).textDecoration.includes('underline'); applyTxt('textDecoration', on ? 'none' : 'underline'); undlBtn.classList.toggle('on', !on); });
+  alignBtns.forEach(btn => btn.addEventListener('mousedown', e => {
+    e.preventDefault();
+    if (!selEl) return;
+    applyTxt('textAlign', btn.dataset.align);
+    alignBtns.forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+  }));
+  function applyTxt(prop, val) { if (!selEl || selType !== 'text') return; selEl.style[prop] = val; }
+
+  /* ═══ BUTTON props ═══ */
+  function syncBtnBar(el) {
+    const cs = getComputedStyle(el);
+    btnBg.value = rgb2hex(cs.backgroundColor) || '#c8975a';
+    btnFg.value = rgb2hex(cs.color) || '#ffffff';
+    btnBorder.value = rgb2hex(cs.borderColor) || '#c8975a';
+    btnSize.value = closestVal(btnSize, Math.round(parseFloat(cs.fontSize)));
+    const br = parseFloat(cs.borderRadius);
+    btnRadius.value = br <= 0 ? '0px' : br <= 6 ? '6px' : br <= 14 ? '14px' : '50px';
+    btnLink.value = el.getAttribute('href') || el.dataset.href || '';
+    el.setAttribute('contenteditable', 'true');
+    el.focus();
+  }
+  btnBg.addEventListener('input', () => applyBtn('backgroundColor', btnBg.value));
+  btnFg.addEventListener('input', () => applyBtn('color', btnFg.value));
+  btnBorder.addEventListener('input', () => applyBtn('borderColor', btnBorder.value));
+  btnRadius.addEventListener('change', () => applyBtn('borderRadius', btnRadius.value));
+  btnSize.addEventListener('change', () => applyBtn('fontSize', btnSize.value + 'px'));
+  btnLink.addEventListener('input', () => {
+    if (!selEl) return;
+    if (selEl.tagName === 'A') selEl.setAttribute('href', btnLink.value);
+    else selEl.dataset.href = btnLink.value;
+  });
+  function applyBtn(prop, val) { if (!selEl || selType !== 'button') return; selEl.style[prop] = val; }
+
+  /* ═══ MEDIA props ═══ */
+  function syncMediaBar(el, type) {
+    const thumb = $('et-media-thumb'), noThumb = $('et-media-no-thumb');
+    const tLabel = $('et-media-type-label'), sizeRec = $('et-media-size-rec');
+    let recSize = 'Empfohlen: 1200 × 800 px';
+    if (type === 'hero') recSize = 'Empfohlen: 1920 × 1080 px';
+    else if (el.classList.contains('apt-img') || el.closest('.apt-card')) recSize = 'Empfohlen: 800 × 500 px';
+    else if (el.classList.contains('region-card') || el.closest('.region-card')) recSize = 'Empfohlen: 600 × 800 px';
+    else if (el.classList.contains('ueber-image') || el.closest('.ueber-image')) recSize = 'Empfohlen: 800 × 1000 px';
+    sizeRec.textContent = recSize;
+    let src = null, isVideo = false;
+    if (type === 'hero') {
+      const heroVid = document.querySelector('#hero video');
+      if (heroVid) { src = heroVid.src || heroVid.querySelector('source')?.src; isVideo = true; }
+    } else {
+      const vidEl = el.querySelector('video.et-video-el'), imgEl = el._etImg || el.querySelector('img');
+      if (vidEl) { src = vidEl.src; isVideo = true; }
+      else if (imgEl) src = imgEl.src;
+    }
+    tLabel.textContent = isVideo ? 'Video' : 'Bild';
+    if (src && !isVideo) { thumb.src = src; thumb.style.display = ''; noThumb.style.display = 'none'; }
+    else { thumb.style.display = 'none'; noThumb.style.display = ''; noThumb.textContent = isVideo ? '🎬' : '🖼'; }
+  }
+  $('et-replace-img').addEventListener('click', () => imgInput.click());
+  $('et-replace-vid').addEventListener('click', () => vidInput.click());
+  imgInput.addEventListener('change', function() { if (!this.files[0]) return; loadMedia(this.files[0], 'image'); this.value = ''; });
+  vidInput.addEventListener('change', function() { if (!this.files[0]) return; loadMedia(this.files[0], 'video'); this.value = ''; });
+  bgInput.addEventListener('change', function() { if (!this.files[0]) return; loadMedia(this.files[0], this.files[0].type.startsWith('video') ? 'video' : 'image'); this.value = ''; });
+  $('et-sec-img').addEventListener('click', () => bgInput.click());
+  $('et-sec-vid').addEventListener('click', () => bgInput.click());
+
+  function loadMedia(file, kind) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const src = ev.target.result;
+      if (selType === 'hero') {
+        if (kind === 'video') {
+          let vid = document.querySelector('#hero video');
+          if (!vid) { vid = document.createElement('video'); vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; document.getElementById('hero').prepend(vid); }
+          vid.innerHTML = ''; vid.src = src;
+        } else {
+          const vid = document.querySelector('#hero video'); if (vid) vid.remove();
+          heroBg.style.backgroundImage = `url('${src}')`;
+          heroBg.style.backgroundSize = 'cover';
+          heroBg.style.backgroundPosition = 'center';
+        }
+      } else if (selType === 'media' && selEl) {
+        const img = selEl._etImg || selEl.querySelector('img');
+        if (!img) return;
+        if (kind === 'video') {
+          const vid = document.createElement('video');
+          vid.src = src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.className = 'et-video-el';
+          img.style.display = 'none';
+          img.insertAdjacentElement('afterend', vid);
+        } else {
+          const existVid = selEl.querySelector('video.et-video-el');
+          if (existVid) { existVid.remove(); img.style.display = ''; }
+          img.src = src;
+        }
+      } else if (selType === 'section' && selEl) {
+        if (kind === 'video') {
+          const old = selEl.querySelector('video.et-bg-vid'); if (old) old.remove();
+          const vid = document.createElement('video');
+          vid.src = src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.className = 'et-bg-vid';
+          vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+          selEl.style.position = 'relative'; selEl.style.overflow = 'hidden';
+          selEl.prepend(vid);
+        } else {
+          selEl.style.backgroundImage = `url('${src}')`;
+          selEl.style.backgroundSize = 'cover';
+          selEl.style.backgroundPosition = 'center';
+        }
+      }
+      if (selType === 'media' || selType === 'hero') {
+        const thumb = $('et-media-thumb'), noThumb = $('et-media-no-thumb'), tLabel = $('et-media-type-label');
+        if (kind === 'image') { thumb.src = src; thumb.style.display = ''; noThumb.style.display = 'none'; tLabel.textContent = 'Bild'; }
+        else { thumb.style.display = 'none'; noThumb.style.display = ''; noThumb.textContent = '🎬'; tLabel.textContent = 'Video'; }
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ═══ CARD props ═══ */
+  function syncCardBar(el) { cardBgInp.value = rgb2hex(getComputedStyle(el).backgroundColor) || '#ffffff'; }
+  moveUpBtn.addEventListener('click', () => { if (!selEl) return; const p = selEl.previousElementSibling; if (p) selEl.parentNode.insertBefore(selEl, p); });
+  moveDnBtn.addEventListener('click', () => { if (!selEl) return; const n = selEl.nextElementSibling; if (n) n.insertAdjacentElement('afterend', selEl); });
+  cardBgInp.addEventListener('input', () => { if (selEl && selType === 'card') selEl.style.backgroundColor = cardBgInp.value; });
+
+  /* ═══ SECTION props ═══ */
+  function syncSecBar(el) {
+    const cs = getComputedStyle(el);
+    secBgInp.value = rgb2hex(cs.backgroundColor) || '#f0e6d3';
+    secPad.value = closestPad(el.style.padding || cs.padding);
+  }
+  secBgInp.addEventListener('input', () => { if (selEl && selType === 'section') selEl.style.backgroundColor = secBgInp.value; });
+  secPad.addEventListener('change', () => { if (selEl && selType === 'section') selEl.style.padding = secPad.value; });
+  function closestPad(pad) { const opts = [...secPad.options].map(o => o.value); return opts.includes(pad) ? pad : '90px 5%'; }
+
+  /* ═══ DRAG & DROP ═══ */
+  function onDragStart(e) { dragSrc = this; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => this.classList.add('et-dragging'), 0); }
+  function onDragOver(e)  { e.preventDefault(); if (this !== dragSrc && same(this, dragSrc)) this.classList.add('et-drop-over'); }
+  function onDragLeave()  { this.classList.remove('et-drop-over'); }
+  function onDrop(e) {
+    e.preventDefault(); this.classList.remove('et-drop-over');
+    if (this === dragSrc || !same(this, dragSrc)) return;
+    const p = this.parentNode, kids = [...p.children];
+    p.insertBefore(dragSrc, kids.indexOf(dragSrc) < kids.indexOf(this) ? this.nextSibling : this);
+  }
+  function onDragEnd() {
+    this.classList.remove('et-dragging');
+    document.querySelectorAll('.et-drop-over').forEach(el => el.classList.remove('et-drop-over'));
+    dragSrc = null;
+  }
+  function same(a, b) { return a && b && a.parentNode === b.parentNode; }
+
+  /* ═══ SETTINGS PANEL ═══ */
+  function openSettings() {
+    settingsPanel.classList.add('open');
+    settingsBtn.classList.add('open');
+    document.body.classList.add('settings-open');
+    const root = document.documentElement;
+    const iv = name => root.style.getPropertyValue(name) || null;
+    $('sp-primary').value     = iv('--ocean') || '#1e4d6b';
+    $('sp-primary-hex').value = $('sp-primary').value;
+    $('sp-gold').value        = iv('--gold')  || '#c8975a';
+    $('sp-gold-hex').value    = $('sp-gold').value;
+    $('sp-sand').value        = iv('--sand')  || '#f0e6d3';
+    $('sp-sand-hex').value    = $('sp-sand').value;
+    $('sp-white').value       = iv('--white') || '#fdfaf6';
+    $('sp-white-hex').value   = $('sp-white').value;
+    $('sp-text').value        = iv('--text')  || '#2a2a2a';
+    $('sp-text-hex').value    = $('sp-text').value;
+    $('sp-radius').value      = iv('--radius') || '16px';
+  }
+  function closeSettings() {
+    settingsPanel.classList.remove('open');
+    settingsBtn.classList.remove('open');
+    document.body.classList.remove('settings-open');
+  }
+  settingsBtn.addEventListener('click', () => settingsPanel.classList.contains('open') ? closeSettings() : openSettings());
+  spClose.addEventListener('click', closeSettings);
+
+  function setCSSVar(name, val) { document.documentElement.style.setProperty(name, val); }
+  function bindColorPair(pickerId, hexId, cssProp, extra) {
+    const picker = $(pickerId), hex = $(hexId);
+    picker.addEventListener('input', function() {
+      hex.value = this.value; hex.classList.remove('invalid');
+      setCSSVar(cssProp, this.value);
+      if (extra) extra(this.value);
+    });
+    hex.addEventListener('input', function() {
+      const v = this.value.trim();
+      const valid = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(v);
+      this.classList.toggle('invalid', !valid);
+      if (valid) { picker.value = v; setCSSVar(cssProp, v); if (extra) extra(v); }
+    });
+  }
+  function lighten(hex, p) { const [r,g,b] = hex2rgb(hex); return '#' + [r,g,b].map(c => Math.min(255, Math.round(c + (255-c)*p/100))).map(c => c.toString(16).padStart(2,'0')).join(''); }
+  function darken(hex, p)  { const [r,g,b] = hex2rgb(hex); return '#' + [r,g,b].map(c => Math.max(0, Math.round(c * (100-p)/100))).map(c => c.toString(16).padStart(2,'0')).join(''); }
+  bindColorPair('sp-primary', 'sp-primary-hex', '--ocean', v => setCSSVar('--ocean-light', lighten(v, 20)));
+  bindColorPair('sp-gold',    'sp-gold-hex',    '--gold');
+  bindColorPair('sp-sand',    'sp-sand-hex',    '--sand',  v => setCSSVar('--sand-dark', darken(v, 10)));
+  bindColorPair('sp-white',   'sp-white-hex',   '--white');
+  bindColorPair('sp-text',    'sp-text-hex',    '--text');
+  $('sp-radius').addEventListener('change', e => setCSSVar('--radius', e.target.value));
+
+  /* ═══ SAVE ═══ */
+  function buildCleanHTML() {
+    const root = document.documentElement;
+    const varNames = ['--ocean','--ocean-light','--gold','--sand','--sand-dark','--white','--text','--radius'];
+    const vars = {};
+    varNames.forEach(n => { const v = root.style.getPropertyValue(n); if (v) vars[n] = v.trim(); });
+
+    const clone = document.documentElement.cloneNode(true);
+    /* CSS-Variablen ins :root schreiben */
+    const styles = clone.querySelectorAll('style');
+    if (styles.length) {
+      let css = styles[0].textContent;
+      Object.entries(vars).forEach(([prop, val]) => {
+        const rx = new RegExp('(' + prop.replace('-','\\-') + '\\s*:\\s*)[^;]+', 'g');
+        css = css.replace(rx, '$1' + val);
+      });
+      styles[0].textContent = css;
+    }
+    clone.removeAttribute('style');
+
+    /* Editor-UI entfernen */
+    ['#et-topbar','#et-propsbar','#edit-toggle','#et-settings-panel','#et-img-input','#et-vid-input','#et-bg-input']
+      .forEach(s => clone.querySelector(s)?.remove());
+    const sc = clone.querySelectorAll('script'); sc[sc.length-1]?.remove();
+    const st = clone.querySelectorAll('style'); st[st.length-1]?.remove();
+    clone.body.classList.remove('edit-active','settings-open');
+    const edClasses = ['et-hoverable','et-text-el','et-btn-el','et-media-el','et-card-el','et-sec-el','et-selected'];
+    clone.querySelectorAll('.' + edClasses.join(',.')).forEach(el => el.classList.remove(...edClasses));
+    clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    clone.querySelectorAll('[data-et-label]').forEach(el => el.removeAttribute('data-et-label'));
+
+    return '<!DOCTYPE html>\n' + clone.outerHTML;
+  }
+
+  async function save() {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ Speichern…';
+    exit();
+    const html = buildCleanHTML();
+    const token = sessionStorage.getItem('et_save_token') || '';
+
+    async function trySave(url, headers = {}) {
+      try {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/html; charset=utf-8', ...headers },
+          body: html
+        });
+        if (!r.ok) return r.status;
+        const txt = await r.text();
+        return txt.trim() === 'OK' ? 'OK' : false;
+      } catch(_) { return false; }
+    }
+
+    const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+    let savedOK = false;
+    if (isLocal) {
+      savedOK = (await trySave('http://localhost:8080/save')) === 'OK';
+    } else {
+      let res = await trySave('./save.php', { 'X-Save-Token': token });
+      if (res === 401 || res === 403) {
+        const pw = prompt('Admin-Passwort eingeben:');
+        if (pw) {
+          sessionStorage.setItem('et_save_token', pw);
+          res = await trySave('./save.php', { 'X-Save-Token': pw });
+        }
+      }
+      savedOK = res === 'OK';
+    }
+
+    if (savedOK) {
+      saveBtn.textContent = '✅ Gespeichert!';
+      saveBtn.style.background = '#27ae60';
+      localStorage.setItem('last_edit', new Date().toISOString());
+      setTimeout(() => { saveBtn.textContent = '💾 Speichern'; saveBtn.style.background = ''; saveBtn.disabled = false; }, 2000);
+    } else {
+      /* Fallback: Download */
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'index.html' });
+      a.click(); URL.revokeObjectURL(a.href);
+      alert('Server-Speichern fehlgeschlagen. Datei wurde als Download bereitgestellt.');
+      saveBtn.textContent = '💾 Speichern';
+      saveBtn.disabled = false;
+    }
+    enter();
+  }
+
+  /* ═══ HELPERS ═══ */
+  function rgb2hex(rgb) {
+    if (!rgb || rgb === 'transparent' || rgb.includes('rgba(0, 0, 0, 0)')) return null;
+    const m = rgb.match(/\d+/g);
+    if (!m || m.length < 3) return null;
+    return '#' + m.slice(0,3).map(n => (+n).toString(16).padStart(2,'0')).join('');
+  }
+  function hex2rgb(hex) {
+    const h = hex.replace('#',''); const s = h.length === 3 ? h.split('').map(c=>c+c).join('') : h;
+    return [parseInt(s.slice(0,2),16), parseInt(s.slice(2,4),16), parseInt(s.slice(4,6),16)];
+  }
+  function closestVal(sel, val) {
+    const opts = [...sel.options].map(o => +o.value);
+    return opts.reduce((a,b) => Math.abs(b-val) < Math.abs(a-val) ? b : a).toString();
+  }
+
+  /* ═══ BOOT: Edit-Modus nur per Admin-Panel ═══ */
+  saveBtn.addEventListener('click', save);
+  exitBtn.addEventListener('click', exit);
+
+  (function checkAdminAccess() {
+    if (localStorage.getItem('et_autoopen') === '1') {
+      localStorage.removeItem('et_autoopen');
+      enter();
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>

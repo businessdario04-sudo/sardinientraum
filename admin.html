@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – Sardinientraum</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #0f1117;
+      --card:   #1a1d27;
+      --border: #2a2d3a;
+      --text:   #e2e4eb;
+      --muted:  #6b7280;
+      --blue:   #3b82f6;
+      --gold:   #c8975a;
+      --green:  #22c55e;
+      --red:    #ef4444;
+      --yellow: #f59e0b;
+    }
+
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; }
+
+    /* ── LOGIN ─────────────────────────────── */
+    #login-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+    .login-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:44px 40px; width:100%; max-width:380px; text-align:center; }
+    .login-logo { font-size:2rem; margin-bottom:8px; }
+    .login-box h1 { font-size:1.3rem; font-weight:700; margin-bottom:4px; color:#fff; }
+    .login-box > p { font-size:.82rem; color:var(--muted); margin-bottom:32px; }
+    .field { width:100%; background:#0f1117; border:1px solid var(--border); border-radius:10px; padding:13px 16px; font-size:.9rem; font-family:'Inter',sans-serif; color:var(--text); margin-bottom:12px; outline:none; transition:border-color .2s; }
+    .field:focus { border-color:var(--blue); }
+    .login-btn { width:100%; background:var(--blue); color:#fff; border:none; border-radius:10px; padding:13px; font-size:.92rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; margin-top:4px; transition:background .2s,transform .15s; }
+    .login-btn:hover { background:#2563eb; transform:translateY(-1px); }
+    .login-error { color:var(--red); font-size:.8rem; margin-top:10px; display:none; }
+    .login-hint { font-size:.72rem; color:var(--muted); margin-top:20px; }
+
+    /* ── APP SHELL ─────────────────────────── */
+    #admin-app { display:none; flex-direction:column; min-height:100vh; }
+    .admin-header { background:var(--card); border-bottom:1px solid var(--border); padding:0 28px; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+    .admin-header-left { display:flex; align-items:center; gap:14px; }
+    .admin-brand { font-weight:700; font-size:.95rem; color:#fff; }
+    .admin-badge { background:var(--blue); color:#fff; font-size:.65rem; font-weight:700; padding:3px 8px; border-radius:20px; letter-spacing:.5px; text-transform:uppercase; }
+    .admin-header-right { display:flex; align-items:center; gap:12px; }
+    .admin-user { font-size:.82rem; color:var(--muted); }
+    .admin-logout { background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:8px; font-size:.78rem; font-family:'Inter',sans-serif; cursor:pointer; transition:border-color .2s,color .2s; }
+    .admin-logout:hover { border-color:var(--red); color:var(--red); }
+
+    /* ── TAB NAV ───────────────────────────── */
+    .tab-nav { background:var(--card); border-bottom:1px solid var(--border); padding:0 28px; display:flex; gap:0; }
+    .tab-btn { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); font-family:'Inter',sans-serif; font-size:.88rem; font-weight:500; padding:14px 20px; cursor:pointer; transition:color .2s,border-color .2s; }
+    .tab-btn.active { color:#fff; border-bottom-color:var(--blue); }
+    .tab-btn:hover:not(.active) { color:var(--text); }
+
+    /* ── MAIN ──────────────────────────────── */
+    .admin-main { flex:1; padding:32px 28px; max-width:1100px; margin:0 auto; width:100%; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* ── DASHBOARD ─────────────────────────── */
+    .admin-welcome { margin-bottom:32px; }
+    .admin-welcome h2 { font-size:1.5rem; font-weight:700; color:#fff; margin-bottom:6px; }
+    .admin-welcome p { font-size:.88rem; color:var(--muted); }
+    .admin-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; margin-bottom:32px; }
+    .admin-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px; transition:border-color .2s,transform .2s; }
+    .admin-card:hover { border-color:var(--blue); transform:translateY(-2px); }
+    .admin-card.primary { border-color:var(--blue); background:rgba(59,130,246,.07); }
+    .admin-card-icon { font-size:1.8rem; margin-bottom:14px; }
+    .admin-card h3 { font-size:1rem; font-weight:700; color:#fff; margin-bottom:6px; }
+    .admin-card p { font-size:.82rem; color:var(--muted); line-height:1.6; margin-bottom:16px; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; border-radius:8px; font-size:.82rem; font-weight:600; border:none; cursor:pointer; font-family:'Inter',sans-serif; transition:background .2s,border-color .2s,color .2s; text-decoration:none; }
+    .btn-blue  { background:var(--blue); color:#fff; }
+    .btn-blue:hover { background:#2563eb; }
+    .btn-gold  { background:var(--gold); color:#fff; }
+    .btn-gold:hover { background:#b5823e; }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn-outline:hover { border-color:var(--blue); color:var(--blue); }
+    .btn-green { background:var(--green); color:#fff; }
+    .btn-green:hover { background:#16a34a; }
+
+    /* ── STATUS LIST ───────────────────────── */
+    .section-title { font-size:.72rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; margin-top:32px; }
+    .status-list { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .status-row { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; border-bottom:1px solid var(--border); gap:12px; }
+    .status-row:last-child { border-bottom:none; }
+    .status-label { font-size:.85rem; color:var(--text); flex-shrink:0; }
+    .status-val { font-size:.82rem; color:var(--muted); text-align:right; }
+    .badge-ok   { color:var(--green); font-weight:600; }
+    .badge-warn { color:var(--yellow); font-weight:600; }
+    .badge-err  { color:var(--red); font-weight:600; }
+
+    /* ── SETTINGS ──────────────────────────── */
+    .settings-block { background:var(--card); border:1px solid var(--border); border-radius:14px; margin-bottom:24px; overflow:hidden; }
+    .settings-block-head { padding:18px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    .settings-block-head .icon { font-size:1.2rem; }
+    .settings-block-head h3 { font-size:.95rem; font-weight:700; color:#fff; }
+    .settings-block-head p { font-size:.78rem; color:var(--muted); margin-top:2px; }
+    .settings-body { padding:20px 24px; display:flex; flex-direction:column; gap:16px; }
+    .setting-row { display:grid; grid-template-columns:200px 1fr; align-items:start; gap:16px; }
+    .setting-label { font-size:.85rem; color:var(--text); padding-top:11px; }
+    .setting-label span { display:block; font-size:.72rem; color:var(--muted); margin-top:2px; }
+    .field-sm { width:100%; background:#0f1117; border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-size:.88rem; font-family:'Inter',sans-serif; color:var(--text); outline:none; transition:border-color .2s; }
+    .field-sm:focus { border-color:var(--blue); }
+    select.field-sm { cursor:pointer; }
+    .field-row { display:flex; gap:10px; }
+    .field-row .field-sm { flex:1; }
+    .hint-box { background:rgba(59,130,246,.08); border:1px solid rgba(59,130,246,.2); border-radius:8px; padding:12px 16px; font-size:.78rem; color:#93c5fd; line-height:1.6; }
+    .hint-box a { color:#60a5fa; }
+    .hint-box strong { color:#bfdbfe; }
+    .settings-footer { padding:20px 24px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .settings-save-info { font-size:.78rem; color:var(--muted); }
+    #settings-save-msg { font-size:.82rem; font-weight:600; display:none; }
+    .formspree-status { display:inline-flex; align-items:center; gap:6px; font-size:.8rem; font-weight:600; }
+
+    /* ── MODAL ─────────────────────────────── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:200; align-items:center; justify-content:center; padding:20px; }
+    .modal-box { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px; width:100%; max-width:380px; text-align:center; }
+    .modal-box h3 { font-size:1.1rem; font-weight:700; margin-bottom:20px; color:#fff; }
+    .modal-msg { font-size:.78rem; margin-top:10px; }
+
+    /* Responsive */
+    @media (max-width:700px) {
+      .admin-header,.tab-nav { padding:0 16px; }
+      .admin-main { padding:20px 16px; }
+      .login-box { padding:32px 24px; }
+      .setting-row { grid-template-columns:1fr; gap:6px; }
+      .setting-label { padding-top:0; }
+      .tab-btn { padding:14px 12px; font-size:.8rem; }
+      .settings-footer { flex-direction:column; align-items:stretch; text-align:center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">🌊</div>
+    <h1>Sardinientraum</h1>
+    <p>Admin-Bereich — bitte anmelden</p>
+    <input type="text"     class="field" id="login-user" placeholder="Benutzername" autocomplete="username" />
+    <input type="password" class="field" id="login-pass" placeholder="Passwort" autocomplete="current-password" />
+    <button class="login-btn" id="login-btn">Anmelden</button>
+    <div class="login-error" id="login-error">Falscher Benutzername oder Passwort.</div>
+    <p class="login-hint">Standard: admin / sardinien2025</p>
+  </div>
+</div>
+
+<!-- ══ ADMIN APP ══ -->
+<div id="admin-app">
+
+  <header class="admin-header">
+    <div class="admin-header-left">
+      <span class="admin-brand">🌊 Sardinientraum</span>
+      <span class="admin-badge">Admin</span>
+    </div>
+    <div class="admin-header-right">
+      <span class="admin-user" id="admin-user-label">Hallo, Admin</span>
+      <button class="admin-logout" id="logout-btn">Abmelden</button>
+    </div>
+  </header>
+
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab-btn" data-tab="settings">⚙️ Einstellungen</button>
+    <button class="tab-btn" data-tab="mailtpl">✉️ E-Mail Vorlagen</button>
+  </nav>
+
+  <main class="admin-main">
+
+    <!-- ══ TAB: DASHBOARD ══ -->
+    <div class="tab-panel active" id="tab-dashboard">
+
+      <div class="admin-welcome">
+        <h2>Willkommen im Admin-Bereich</h2>
+        <p>Hier verwaltest du deine Ferienwohnungs-Webseite.</p>
+      </div>
+
+      <div class="admin-grid">
+        <div class="admin-card primary">
+          <div class="admin-card-icon">✏️</div>
+          <h3>Webseite bearbeiten</h3>
+          <p>Texte, Bilder, Farben und Layout direkt auf der Seite anpassen.</p>
+          <button class="btn btn-gold" id="open-editor-btn">→ Editor öffnen</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-icon">👁️</div>
+          <h3>Vorschau</h3>
+          <p>Schau dir die Webseite so an, wie Besucher sie sehen.</p>
+          <a class="btn btn-outline" href="index.html" target="_blank">→ Seite anzeigen</a>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-icon">📥</div>
+          <h3>Exportieren</h3>
+          <p>Lade die aktuelle index.html herunter zum Hochladen auf den Webserver.</p>
+          <button class="btn btn-outline" id="export-btn">→ HTML herunterladen</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-icon">🔒</div>
+          <h3>Passwort ändern</h3>
+          <p>Admin-Passwort für mehr Sicherheit ändern.</p>
+          <button class="btn btn-outline" id="change-pw-btn">→ Passwort ändern</button>
+        </div>
+      </div>
+
+      <div class="section-title">Website-Status</div>
+      <div class="status-list">
+        <div class="status-row">
+          <span class="status-label">Webseite</span>
+          <span class="badge-ok">✓ index.html vorhanden</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Anfrageformular</span>
+          <span id="form-status-badge" class="badge-warn">⚠ Noch keine E-Mail eingestellt</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Kontakt-E-Mail</span>
+          <span class="status-val" id="status-email">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Letzte Bearbeitung</span>
+          <span class="status-val" id="last-edit-val">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">Lokaler Server</span>
+          <span id="server-status" class="badge-warn">Prüfe…</span>
+        </div>
+      </div>
+
+    </div><!-- /tab-dashboard -->
+
+    <!-- ══ TAB: EINSTELLUNGEN ══ -->
+    <div class="tab-panel" id="tab-settings">
+
+      <!-- ── 1. Anfragen & E-Mail ── -->
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <span class="icon">📬</span>
+          <div>
+            <h3>Anfragen & E-Mail-Empfang</h3>
+            <p>Wohin sollen Buchungsanfragen vom Formular gesendet werden?</p>
+          </div>
+        </div>
+        <div class="settings-body">
+
+          <div class="hint-box">
+            <strong>So funktioniert es:</strong> Der kostenlose Dienst <a href="https://formspree.io" target="_blank">Formspree.io</a> leitet Formular-Einsendungen direkt an deine E-Mail weiter — ohne eigenen Server.<br><br>
+            1. Kostenlos registrieren auf <a href="https://formspree.io" target="_blank">formspree.io</a><br>
+            2. Neues Formular anlegen → deine E-Mail-Adresse eingeben<br>
+            3. Die <strong>Formular-ID</strong> (z.B. <code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;">xpwzgkla</code>) hier eintragen<br>
+            4. „Auf Website anwenden" klicken — fertig!
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              Formspree-ID
+              <span>Aus deiner Formspree-URL: formspree.io/f/<strong>HIER</strong></span>
+            </div>
+            <div class="field-row">
+              <input type="text" class="field-sm" id="s-formspree-id" placeholder="z.B. xpwzgkla" />
+              <span id="formspree-check" style="padding:10px 8px;font-size:1rem;" title="Status"></span>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              Empfänger-E-Mail
+              <span>Zur Kontrolle – muss mit Formspree übereinstimmen</span>
+            </div>
+            <input type="email" class="field-sm" id="s-contact-email" placeholder="z.B. info@sardinientraum.de" />
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              Betreff-Vorlage
+              <span>Wie Anfragen in deinem Postfach erscheinen</span>
+            </div>
+            <input type="text" class="field-sm" id="s-form-subject" placeholder="Neue Buchungsanfrage – Sardinientraum" />
+          </div>
+
+        </div>
+        <div class="settings-footer">
+          <span class="settings-save-info">Änderungen werden in der Website gespeichert.</span>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <span id="settings-save-msg"></span>
+            <button class="btn btn-outline" id="settings-save-only">Zwischenspeichern</button>
+            <button class="btn btn-green" id="settings-apply-btn">✓ Auf Website anwenden</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 2. Kontaktdaten ── -->
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <span class="icon">📞</span>
+          <div>
+            <h3>Kontaktdaten</h3>
+            <p>Werden im Footer und ggf. im Kontaktbereich der Website angezeigt.</p>
+          </div>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Telefon<span>Mit Ländervorwahl</span></div>
+            <input type="tel" class="field-sm" id="s-phone" placeholder="+39 123 456 7890" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">WhatsApp<span>Falls abweichend von Telefon</span></div>
+            <input type="tel" class="field-sm" id="s-whatsapp" placeholder="+39 123 456 7890" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Adresse<span>Straße, Ort</span></div>
+            <input type="text" class="field-sm" id="s-address" placeholder="Via Sardegna 1, La Caletta, Siniscola" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Google Maps Link<span>Link zur Unterkunft</span></div>
+            <input type="url" class="field-sm" id="s-maps-url" placeholder="https://maps.google.com/..." />
+          </div>
+        </div>
+        <div class="settings-footer">
+          <span class="settings-save-info">Tipp: Kontaktdaten im Footer auch direkt per Editor ändern.</span>
+          <button class="btn btn-outline" id="settings-save-only-2">Zwischenspeichern</button>
+        </div>
+      </div>
+
+      <!-- ── 3. Objekt-Informationen ── -->
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <span class="icon">🏠</span>
+          <div>
+            <h3>Objekt-Informationen</h3>
+            <p>Eckdaten deiner Unterkunft — zur internen Referenz und für den Editor.</p>
+          </div>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Name der Unterkunft</div>
+            <input type="text" class="field-sm" id="s-prop-name" placeholder="Sardinientraum" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Standort / Region</div>
+            <input type="text" class="field-sm" id="s-prop-location" placeholder="La Caletta, Siniscola, Sardinien" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Personen / Schlafzimmer</div>
+            <div class="field-row">
+              <input type="number" class="field-sm" id="s-prop-persons" placeholder="Max. Personen" min="1" max="20" />
+              <input type="number" class="field-sm" id="s-prop-rooms"   placeholder="Schlafzimmer" min="1" max="10" />
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              Preis pro Nacht (€)
+              <span>Ungefährer Richtwert</span>
+            </div>
+            <input type="text" class="field-sm" id="s-prop-price" placeholder="ab 120 € / Nacht" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              Check-in / Check-out
+              <span>Uhrzeit</span>
+            </div>
+            <div class="field-row">
+              <input type="text" class="field-sm" id="s-checkin"  placeholder="Check-in ab 15:00" />
+              <input type="text" class="field-sm" id="s-checkout" placeholder="Check-out bis 11:00" />
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Mindestaufenthalt</div>
+            <input type="text" class="field-sm" id="s-min-nights" placeholder="z.B. 7 Nächte (Juli/August)" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Stornierungsregeln<span>Kurzbeschreibung</span></div>
+            <input type="text" class="field-sm" id="s-cancel-policy" placeholder="z.B. Kostenlos bis 30 Tage vor Anreise" />
+          </div>
+        </div>
+        <div class="settings-footer">
+          <span class="settings-save-info">Wird als Referenz gespeichert.</span>
+          <button class="btn btn-outline" id="settings-save-only-3">Zwischenspeichern</button>
+        </div>
+      </div>
+
+      <!-- ── 4. SEO & Social ── -->
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <span class="icon">🌐</span>
+          <div>
+            <h3>SEO &amp; Social Media</h3>
+            <p>Wie deine Seite bei Google und in sozialen Netzwerken erscheint.</p>
+          </div>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">
+              Seiten-Titel
+              <span>Browser-Tab & Google-Ergebnis</span>
+            </div>
+            <input type="text" class="field-sm" id="s-site-title" placeholder="Sardinientraum – Ferienwohnungen in La Caletta" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">
+              Meta-Beschreibung
+              <span>Google-Vorschautext (max. 160 Zeichen)</span>
+            </div>
+            <input type="text" class="field-sm" id="s-meta-desc" placeholder="Urlaub in Sardinien – moderne Ferienwohnungen direkt am Meer in La Caletta." maxlength="160" />
+          </div>
+          <div id="meta-char-count" style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:-8px;">0 / 160</div>
+          <div class="setting-row">
+            <div class="setting-label">Instagram</div>
+            <input type="url" class="field-sm" id="s-instagram" placeholder="https://instagram.com/deinprofil" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Facebook</div>
+            <input type="url" class="field-sm" id="s-facebook" placeholder="https://facebook.com/deineprofil" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Airbnb / Booking-Link<span>Optional – für interne Notiz</span></div>
+            <input type="url" class="field-sm" id="s-booking" placeholder="https://airbnb.com/..." />
+          </div>
+        </div>
+        <div class="settings-footer">
+          <span class="settings-save-info">SEO-Änderungen werden beim Anwenden in die index.html geschrieben.</span>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <span id="settings-save-msg-2"></span>
+            <button class="btn btn-outline" id="settings-save-only-4">Zwischenspeichern</button>
+            <button class="btn btn-green" id="settings-apply-seo-btn">✓ SEO auf Website anwenden</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 5. Admin-Zugang ── -->
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <span class="icon">🔒</span>
+          <div>
+            <h3>Admin-Zugang</h3>
+            <p>Zugangsdaten für dieses Admin-Panel.</p>
+          </div>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Benutzername</div>
+            <input type="text" class="field-sm" id="s-admin-user" placeholder="admin" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Neues Passwort<span>Leer lassen = nicht ändern</span></div>
+            <input type="password" class="field-sm" id="s-admin-pass-new" placeholder="Neues Passwort (min. 6 Zeichen)" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Passwort wiederholen</div>
+            <input type="password" class="field-sm" id="s-admin-pass-confirm" placeholder="Wiederholen" />
+          </div>
+          <div id="admin-cred-msg" style="font-size:.82rem;display:none;"></div>
+        </div>
+        <div class="settings-footer">
+          <span class="settings-save-info">Zugangsdaten werden lokal im Browser gespeichert.</span>
+          <button class="btn btn-blue" id="save-credentials-btn">Zugangsdaten speichern</button>
+        </div>
+      </div>
+
+    </div><!-- /tab-settings -->
+
+    <!-- ══ TAB: E-MAIL VORLAGEN ══ -->
+    <div class="tab-panel" id="tab-mailtpl">
+
+      <div class="admin-welcome">
+        <h2>E-Mail Vorlagen</h2>
+        <p>Felder ausfüllen, Vorschau prüfen, dann per Knopfdruck in die Zwischenablage kopieren und in dein E-Mail-Programm einfügen (Gmail, Outlook etc. unterstützen formatierte E-Mails).</p>
+      </div>
+
+      <!-- ── Angebots-E-Mail ── -->
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <span class="icon">📋</span>
+          <div><h3>Angebots-E-Mail</h3><p>Antwort an den Gast mit konkretem Angebot nach Anfrage.</p></div>
+        </div>
+        <div class="settings-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Vorname Gast</label><input class="field-sm" id="tpl-a-vorname" placeholder="Maria" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Nachname Gast</label><input class="field-sm" id="tpl-a-nachname" placeholder="Mustermann" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Wohnung</label><input class="field-sm" id="tpl-a-wohnung" placeholder="Casa Tramonto" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Personen</label><input class="field-sm" id="tpl-a-personen" placeholder="4 Personen" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Anreise</label><input class="field-sm" type="date" id="tpl-a-anreise" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Abreise</label><input class="field-sm" type="date" id="tpl-a-abreise" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Preis pro Nacht (€)</label><input class="field-sm" id="tpl-a-preis-nacht" placeholder="120" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Gesamtpreis (€)</label><input class="field-sm" id="tpl-a-preis-ges" placeholder="840" /></div>
+            <div style="grid-column:1/-1;"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Inbegriffen (Leistungen)</label><input class="field-sm" id="tpl-a-leistungen" placeholder="WLAN, Bettwäsche, Endreinigung, Parkplatz" /></div>
+            <div style="grid-column:1/-1;"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Zusätzliche Hinweise / persönliche Notiz</label><textarea class="field-sm" id="tpl-a-notiz" rows="3" placeholder="Gerne können Sie auch früher anreisen, wir werden die Wohnung bereits ab 13 Uhr bereithalten."></textarea></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+            <button class="btn btn-outline" onclick="previewTemplate('angebot')">👁 Vorschau</button>
+            <button class="btn btn-gold"   onclick="copyTemplate('angebot')">📋 In Zwischenablage kopieren</button>
+          </div>
+          <div id="preview-angebot" style="display:none;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:4px;"></div>
+        </div>
+      </div>
+
+      <!-- ── Buchungsbestätigung ── -->
+      <div class="settings-block">
+        <div class="settings-block-head">
+          <span class="icon">🎉</span>
+          <div><h3>Buchungsbestätigung</h3><p>Finale Bestätigung nach Zahlung oder Zusage des Gastes.</p></div>
+        </div>
+        <div class="settings-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Vorname Gast</label><input class="field-sm" id="tpl-b-vorname" placeholder="Maria" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Nachname Gast</label><input class="field-sm" id="tpl-b-nachname" placeholder="Mustermann" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Wohnung</label><input class="field-sm" id="tpl-b-wohnung" placeholder="Casa Tramonto" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Personen</label><input class="field-sm" id="tpl-b-personen" placeholder="4 Personen" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Anreise</label><input class="field-sm" type="date" id="tpl-b-anreise" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Abreise</label><input class="field-sm" type="date" id="tpl-b-abreise" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Check-in Uhrzeit</label><input class="field-sm" id="tpl-b-checkin" placeholder="15:00 Uhr" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Check-out Uhrzeit</label><input class="field-sm" id="tpl-b-checkout" placeholder="11:00 Uhr" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Gesamtbetrag (€)</label><input class="field-sm" id="tpl-b-betrag" placeholder="840" /></div>
+            <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Bezahlt am</label><input class="field-sm" type="date" id="tpl-b-zahldatum" /></div>
+            <div style="grid-column:1/-1;"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Adresse der Unterkunft</label><input class="field-sm" id="tpl-b-adresse" placeholder="Via Sardegna 1, La Caletta, 08029 Siniscola" /></div>
+            <div style="grid-column:1/-1;"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Wichtige Hinweise / Hausregeln</label><textarea class="field-sm" id="tpl-b-hinweise" rows="3" placeholder="Rauchen nur auf der Terrasse. Haustiere leider nicht erlaubt. WLAN-Passwort erhalten Sie bei Ankunft."></textarea></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+            <button class="btn btn-outline" onclick="previewTemplate('buchung')">👁 Vorschau</button>
+            <button class="btn btn-gold"   onclick="copyTemplate('buchung')">📋 In Zwischenablage kopieren</button>
+          </div>
+          <div id="preview-buchung" style="display:none;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:4px;"></div>
+        </div>
+      </div>
+
+    </div><!-- /tab-mailtpl -->
+
+  </main>
+</div>
+
+<!-- ── PW-Modal (legacy, kept for change-pw-btn) ── -->
+<div class="modal-overlay" id="pw-modal">
+  <div class="modal-box">
+    <h3>Passwort ändern</h3>
+    <input type="password" id="pw-new"     class="field" placeholder="Neues Passwort" />
+    <input type="password" id="pw-confirm" class="field" placeholder="Wiederholen" />
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-blue"    style="flex:1;" id="pw-save-btn">Speichern</button>
+      <button class="btn btn-outline" style="flex:1;" id="pw-cancel-btn">Abbrechen</button>
+    </div>
+    <p id="pw-msg" class="modal-msg"></p>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   EINSTELLUNGEN — localStorage-Schema:
+   Key: "site_settings"  →  JSON-Objekt
+══════════════════════════════════════════════ */
+
+const DEFAULT_USER = 'admin';
+const DEFAULT_PASS = 'sardinien2025';
+const SETTINGS_KEY = 'site_settings';
+
+function getPass() { return localStorage.getItem('admin_pass') || DEFAULT_PASS; }
+function getUser() { return localStorage.getItem('admin_user') || DEFAULT_USER; }
+
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch(_) { return {}; }
+}
+function saveSettings(obj) {
+  const cur = loadSettings();
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(Object.assign(cur, obj)));
+}
+
+/* ── Einstellungs-Felder ── */
+const FIELDS = {
+  's-formspree-id':     'formspree_id',
+  's-contact-email':    'contact_email',
+  's-form-subject':     'form_subject',
+  's-phone':            'phone',
+  's-whatsapp':         'whatsapp',
+  's-address':          'address',
+  's-maps-url':         'maps_url',
+  's-prop-name':        'prop_name',
+  's-prop-location':    'prop_location',
+  's-prop-persons':     'prop_persons',
+  's-prop-rooms':       'prop_rooms',
+  's-prop-price':       'prop_price',
+  's-checkin':          'checkin',
+  's-checkout':         'checkout',
+  's-min-nights':       'min_nights',
+  's-cancel-policy':    'cancel_policy',
+  's-site-title':       'site_title',
+  's-meta-desc':        'meta_desc',
+  's-instagram':        'instagram',
+  's-facebook':         'facebook',
+  's-booking':          'booking',
+};
+
+function populateFields() {
+  const s = loadSettings();
+  Object.entries(FIELDS).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el && s[key]) el.value = s[key];
+  });
+  document.getElementById('s-admin-user').value = getUser();
+  updateFormspreeCheck();
+  updateFormStatusBadge();
+  updateStatusEmail();
+  updateMetaCount();
+}
+
+function collectFields() {
+  const obj = {};
+  Object.entries(FIELDS).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el) obj[key] = el.value.trim();
+  });
+  return obj;
+}
+
+function updateFormspreeCheck() {
+  const id  = document.getElementById('s-formspree-id').value.trim();
+  const el  = document.getElementById('formspree-check');
+  el.textContent = id ? '✅' : '⬜';
+  el.title = id ? 'Formspree-ID eingetragen' : 'Noch keine ID';
+}
+
+function updateFormStatusBadge() {
+  const s   = loadSettings();
+  const id  = s.formspree_id || document.getElementById('s-formspree-id')?.value?.trim();
+  const el  = document.getElementById('form-status-badge');
+  if (!el) return;
+  if (id) { el.className='badge-ok'; el.textContent='✓ Formspree verbunden (ID: '+id+')'; }
+  else     { el.className='badge-warn'; el.textContent='⚠ Noch keine E-Mail eingestellt'; }
+}
+
+function updateStatusEmail() {
+  const s = loadSettings();
+  const el = document.getElementById('status-email');
+  if (el) el.textContent = s.contact_email || '—';
+}
+
+function updateMetaCount() {
+  const el = document.getElementById('s-meta-desc');
+  const cnt = document.getElementById('meta-char-count');
+  if (el && cnt) {
+    const len = el.value.length;
+    cnt.textContent = len + ' / 160';
+    cnt.style.color = len > 155 ? 'var(--yellow)' : 'var(--muted)';
+  }
+}
+
+/* ── Flash-Meldung ── */
+function flashMsg(elId, text, ok=true) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = ok ? 'var(--green)' : 'var(--red)';
+  el.style.display = 'inline';
+  setTimeout(() => { el.style.display='none'; el.textContent=''; }, 3000);
+}
+
+/* ── Einstellungen zwischenspeichern ── */
+function justSave(msgId) {
+  saveSettings(collectFields());
+  updateFormspreeCheck();
+  updateFormStatusBadge();
+  updateStatusEmail();
+  if (msgId) flashMsg(msgId, '✓ Gespeichert');
+}
+
+document.getElementById('settings-save-only').addEventListener('click',   () => justSave('settings-save-msg'));
+document.getElementById('settings-save-only-2').addEventListener('click',  () => justSave('settings-save-msg'));
+document.getElementById('settings-save-only-3').addEventListener('click',  () => justSave('settings-save-msg'));
+document.getElementById('settings-save-only-4').addEventListener('click',  () => justSave('settings-save-msg-2'));
+
+document.getElementById('s-formspree-id').addEventListener('input', updateFormspreeCheck);
+document.getElementById('s-meta-desc').addEventListener('input', updateMetaCount);
+
+/* ── Einstellungen auf index.html anwenden ── */
+async function applyToWebsite(mode) {
+  justSave(null);   // Felder erst in localStorage sichern
+  const s = loadSettings();
+  const token = sessionStorage.getItem('et_save_token') || getPass();
+
+  let html;
+  try {
+    const r = await fetch('./index.html?nc='+Date.now());
+    html = await r.text();
+  } catch(e) {
+    alert('Konnte index.html nicht laden: '+e.message);
+    return;
+  }
+
+  if (mode === 'form') {
+    /* Formspree-ID in Form-Action schreiben */
+    const fid = s.formspree_id;
+    if (!fid) { alert('Bitte zuerst eine Formspree-ID eingeben.'); return; }
+
+    const subject = encodeURIComponent(s.form_subject || 'Neue Buchungsanfrage – Sardinientraum');
+    const action  = `https://formspree.io/f/${fid}`;
+
+    /* Bestehende action ersetzen oder neue hinzufügen */
+    if (/id="anfrage-form"[^>]*action=/.test(html)) {
+      html = html.replace(/(id="anfrage-form"[^>]*)action="[^"]*"/g,
+                          `$1action="${action}"`);
+    } else {
+      html = html.replace('id="anfrage-form"',
+                          `id="anfrage-form" action="${action}" method="POST"`);
+    }
+
+    /* Hidden _subject Feld einfügen wenn noch nicht vorhanden */
+    if (!html.includes('name="_subject"')) {
+      html = html.replace('id="anfrage-form"[^>]*>',
+        m => m + `\n      <input type="hidden" name="_subject" value="${s.form_subject || 'Neue Buchungsanfrage'}" />`);
+    }
+  }
+
+  if (mode === 'seo') {
+    /* Seitentitel */
+    if (s.site_title) {
+      html = html.replace(/<title>[^<]*<\/title>/, `<title>${s.site_title}</title>`);
+    }
+    /* Meta Description */
+    if (s.meta_desc) {
+      if (/<meta\s+name="description"/.test(html)) {
+        html = html.replace(/(<meta\s+name="description"\s+content=")[^"]*(")/,
+                            `$1${s.meta_desc}$2`);
+      } else {
+        html = html.replace('</title>', `</title>\n  <meta name="description" content="${s.meta_desc}" />`);
+      }
+    }
+  }
+
+  /* Speichern */
+  let saved = false;
+  try {
+    const r = await fetch('./save.php', {
+      method:'POST',
+      headers:{'Content-Type':'text/html; charset=utf-8','X-Save-Token':token},
+      body: html
+    });
+    if (r.ok) saved = true;
+    else if (r.status === 401) {
+      const pw = prompt('Admin-Passwort eingeben:');
+      if (pw) {
+        sessionStorage.setItem('et_save_token', pw);
+        const r2 = await fetch('./save.php', {method:'POST',headers:{'Content-Type':'text/html; charset=utf-8','X-Save-Token':pw},body:html});
+        if (r2.ok) saved = true;
+      }
+    }
+  } catch(_) {}
+
+  if (!saved) {
+    /* Fallback: lokaler Server */
+    try {
+      const r = await fetch('http://localhost:8080/save', {method:'POST',headers:{'Content-Type':'text/html; charset=utf-8'},body:html});
+      if (r.ok) saved = true;
+    } catch(_) {}
+  }
+
+  if (saved) {
+    localStorage.setItem('last_edit', new Date().toISOString());
+    const msgId = mode === 'seo' ? 'settings-save-msg-2' : 'settings-save-msg';
+    flashMsg(msgId, '✓ Auf Website angewendet!', true);
+    updateFormStatusBadge();
+  } else {
+    alert('Speichern fehlgeschlagen. Läuft der Server? (server-starten.ps1)');
+  }
+}
+
+document.getElementById('settings-apply-btn').addEventListener('click', async () => {
+  await applyToWebsite('form');
+  await saveConfigToServer();   // auch site-config.json aktualisieren
+});
+document.getElementById('settings-apply-seo-btn').addEventListener('click', async () => {
+  await applyToWebsite('seo');
+  await saveConfigToServer();
+});
+
+/* ── site-config.json auf Server schreiben ── */
+async function saveConfigToServer() {
+  const s     = loadSettings();
+  const token = sessionStorage.getItem('et_save_token') || getPass();
+  try {
+    await fetch('./save-config.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Save-Token': token },
+      body: JSON.stringify(s)
+    });
+  } catch(_) { /* Kein PHP-Server — lokal okay */ }
+}
+
+/* ════════════════════════════════════════════
+   E-MAIL VORLAGEN
+════════════════════════════════════════════ */
+function fmtDate(v) {
+  if (!v) return '—';
+  const d = new Date(v + 'T12:00:00');
+  return d.toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function nightCount(a, b) {
+  if (!a || !b) return '';
+  const n = Math.round((new Date(b) - new Date(a)) / 86400000);
+  return n > 0 ? ` (${n} Nächte)` : '';
+}
+
+function buildAngebotHTML() {
+  const s    = loadSettings();
+  const name = (document.getElementById('tpl-a-vorname').value||'').trim();
+  const nach = (document.getElementById('tpl-a-nachname').value||'').trim();
+  const wohn = document.getElementById('tpl-a-wohnung').value  || '—';
+  const pers = document.getElementById('tpl-a-personen').value || '—';
+  const an   = document.getElementById('tpl-a-anreise').value;
+  const ab   = document.getElementById('tpl-a-abreise').value;
+  const pN   = document.getElementById('tpl-a-preis-nacht').value || '—';
+  const pG   = document.getElementById('tpl-a-preis-ges').value   || '—';
+  const leis = document.getElementById('tpl-a-leistungen').value  || '';
+  const noti = document.getElementById('tpl-a-notiz').value       || '';
+  const siteName = s.prop_name || 'Sardinientraum';
+  const siteLoc  = s.prop_location || 'La Caletta, Sardinien';
+  const ownerEmail = s.contact_email || '';
+  const ownerPhone = s.phone || '';
+
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f0e6d3;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0e6d3;padding:32px 16px;">
+<tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+  <tr><td style="background:#1e4d6b;border-radius:14px 14px 0 0;padding:36px 40px;text-align:center;">
+    <p style="margin:0 0 4px;font-size:12px;color:rgba(255,255,255,.6);letter-spacing:2px;text-transform:uppercase;">Ihr persönliches Angebot</p>
+    <h1 style="margin:0;font-size:26px;color:#fff;font-weight:700;">🌊 ${siteName}</h1>
+    <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,.7);">${siteLoc}</p>
+  </td></tr>
+  <tr><td style="background:#c8975a;padding:14px 40px;text-align:center;">
+    <p style="margin:0;font-size:15px;font-weight:700;color:#fff;">Hallo ${name}! Wir freuen uns, Ihnen folgendes Angebot zu unterbreiten.</p>
+  </td></tr>
+  <tr><td style="background:#fff;padding:36px 40px;">
+    <div style="background:#f8f4ee;border-radius:10px;padding:24px;margin-bottom:28px;">
+      <h3 style="margin:0 0 16px;font-size:14px;color:#1e4d6b;text-transform:uppercase;letter-spacing:1px;">Ihr Angebot im Überblick</h3>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;width:140px;">Wohnung</td><td style="padding:7px 0;font-size:14px;font-weight:600;color:#2a2a2a;">${wohn}</td></tr>
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Personen</td><td style="padding:7px 0;font-size:14px;color:#2a2a2a;">${pers}</td></tr>
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Anreise</td><td style="padding:7px 0;font-size:14px;font-weight:600;color:#2a2a2a;">${fmtDate(an)}</td></tr>
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Abreise</td><td style="padding:7px 0;font-size:14px;font-weight:600;color:#2a2a2a;">${fmtDate(ab)}${nightCount(an,ab)}</td></tr>
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Preis/Nacht</td><td style="padding:7px 0;font-size:14px;color:#2a2a2a;">€ ${pN}</td></tr>
+        <tr style="border-top:2px solid #e8ddc8;"><td style="padding:12px 0 0;color:#1e4d6b;font-size:14px;font-weight:700;">Gesamtpreis</td><td style="padding:12px 0 0;font-size:18px;font-weight:700;color:#c8975a;">€ ${pG}</td></tr>
+      </table>
+    </div>
+    ${leis ? `<p style="margin:0 0 8px;font-size:14px;font-weight:700;color:#1e4d6b;">Inbegriffen:</p><p style="margin:0 0 24px;font-size:14px;color:#2a2a2a;line-height:1.7;">✓ ${leis.split(',').map(s=>s.trim()).join('&nbsp;&nbsp;✓ ')}</p>` : ''}
+    ${noti ? `<div style="background:#fff8f0;border-left:4px solid #c8975a;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:24px;"><p style="margin:0;font-size:14px;color:#2a2a2a;line-height:1.7;">${noti}</p></div>` : ''}
+    <p style="margin:0 0 20px;font-size:14px;color:#2a2a2a;line-height:1.8;">Bitte teilen Sie uns mit, ob das Angebot Ihren Vorstellungen entspricht. Wir freuen uns auf Ihre Rückmeldung und halten den Zeitraum gerne für Sie reserviert.</p>
+    <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+      <a href="mailto:${ownerEmail}" style="display:inline-block;background:#c8975a;color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:700;">✓ Angebot annehmen</a>
+    </td></tr></table>
+  </td></tr>
+  <tr><td style="background:#1e4d6b;border-radius:0 0 14px 14px;padding:24px 40px;text-align:center;">
+    <p style="margin:0 0 4px;font-size:13px;color:rgba(255,255,255,.9);font-weight:600;">${siteName}</p>
+    <p style="margin:0;font-size:12px;color:rgba(255,255,255,.5);">${siteLoc}${ownerEmail ? ' · ' + ownerEmail : ''}${ownerPhone ? ' · ' + ownerPhone : ''}</p>
+  </td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+function buildBuchungHTML() {
+  const s      = loadSettings();
+  const name   = (document.getElementById('tpl-b-vorname').value||'').trim();
+  const wohn   = document.getElementById('tpl-b-wohnung').value   || '—';
+  const pers   = document.getElementById('tpl-b-personen').value  || '—';
+  const an     = document.getElementById('tpl-b-anreise').value;
+  const ab     = document.getElementById('tpl-b-abreise').value;
+  const ci     = document.getElementById('tpl-b-checkin').value   || '15:00 Uhr';
+  const co     = document.getElementById('tpl-b-checkout').value  || '11:00 Uhr';
+  const bet    = document.getElementById('tpl-b-betrag').value    || '—';
+  const zd     = document.getElementById('tpl-b-zahldatum').value;
+  const addr   = document.getElementById('tpl-b-adresse').value   || '';
+  const hinw   = document.getElementById('tpl-b-hinweise').value  || '';
+  const siteName   = s.prop_name || 'Sardinientraum';
+  const siteLoc    = s.prop_location || 'La Caletta, Sardinien';
+  const ownerEmail = s.contact_email || '';
+  const ownerPhone = s.phone || '';
+
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f0e6d3;font-family:Arial,Helvetica,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0e6d3;padding:32px 16px;">
+<tr><td align="center"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+  <tr><td style="background:#1e4d6b;border-radius:14px 14px 0 0;padding:36px 40px;text-align:center;">
+    <p style="margin:0 0 6px;font-size:28px;">🎉</p>
+    <h1 style="margin:0;font-size:26px;color:#fff;font-weight:700;">Buchungsbestätigung</h1>
+    <p style="margin:8px 0 0;font-size:14px;color:rgba(255,255,255,.7);">${siteName} · ${siteLoc}</p>
+  </td></tr>
+  <tr><td style="background:#c8975a;padding:14px 40px;text-align:center;">
+    <p style="margin:0;font-size:15px;font-weight:700;color:#fff;">Herzlichen Glückwunsch, ${name}! Ihre Buchung ist bestätigt. ✓</p>
+  </td></tr>
+  <tr><td style="background:#fff;padding:36px 40px;">
+    <p style="margin:0 0 28px;font-size:15px;color:#2a2a2a;line-height:1.8;">wir freuen uns sehr, Sie bei uns begrüßen zu dürfen! Hier sind alle wichtigen Informationen zu Ihrem Aufenthalt auf einen Blick.</p>
+    <div style="background:#f8f4ee;border-radius:10px;padding:24px;margin-bottom:28px;">
+      <h3 style="margin:0 0 16px;font-size:14px;color:#1e4d6b;text-transform:uppercase;letter-spacing:1px;">Ihre Buchungsdetails</h3>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;width:140px;">Wohnung</td><td style="padding:7px 0;font-size:14px;font-weight:600;color:#2a2a2a;">${wohn}</td></tr>
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Personen</td><td style="padding:7px 0;font-size:14px;color:#2a2a2a;">${pers}</td></tr>
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Anreise</td><td style="padding:7px 0;font-size:14px;font-weight:600;color:#1e4d6b;">${fmtDate(an)} ab ${ci}</td></tr>
+        <tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Abreise</td><td style="padding:7px 0;font-size:14px;font-weight:600;color:#1e4d6b;">${fmtDate(ab)} bis ${co}${nightCount(an,ab)}</td></tr>
+        ${addr ? `<tr><td style="padding:7px 0;color:#6b6b6b;font-size:13px;">Adresse</td><td style="padding:7px 0;font-size:14px;color:#2a2a2a;">${addr}</td></tr>` : ''}
+        <tr style="border-top:2px solid #e8ddc8;"><td style="padding:12px 0 0;color:#1e4d6b;font-size:14px;font-weight:700;">Bezahlt</td><td style="padding:12px 0 0;font-size:16px;font-weight:700;color:#22c55e;">€ ${bet} ✓${zd ? ' · ' + fmtDate(zd) : ''}</td></tr>
+      </table>
+    </div>
+    ${hinw ? `<h3 style="margin:0 0 12px;font-size:15px;color:#1e4d6b;">Wichtige Hinweise:</h3><div style="background:#fff8f0;border-left:4px solid #c8975a;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:24px;"><p style="margin:0;font-size:14px;color:#2a2a2a;line-height:1.8;">${hinw.replace(/\n/g,'<br>')}</p></div>` : ''}
+    <p style="margin:0;font-size:14px;color:#2a2a2a;line-height:1.8;">Bei Fragen stehen wir Ihnen jederzeit gerne zur Verfügung. Wir wünschen Ihnen jetzt schon eine wunderbare Vorfreude auf Sardinien! 🌊☀️</p>
+  </td></tr>
+  <tr><td style="background:#1e4d6b;border-radius:0 0 14px 14px;padding:28px 40px;text-align:center;">
+    <p style="margin:0 0 4px;font-size:13px;color:rgba(255,255,255,.9);font-weight:600;">${siteName}</p>
+    <p style="margin:0;font-size:12px;color:rgba(255,255,255,.5);">${siteLoc}${ownerEmail ? ' · ' + ownerEmail : ''}${ownerPhone ? ' · ' + ownerPhone : ''}</p>
+  </td></tr>
+</table></td></tr></table></body></html>`;
+}
+
+function previewTemplate(type) {
+  const html = type === 'angebot' ? buildAngebotHTML() : buildBuchungHTML();
+  const el   = document.getElementById('preview-' + type);
+  el.style.display = 'block';
+  el.innerHTML = `<iframe srcdoc="${html.replace(/"/g,'&quot;')}" style="width:100%;height:520px;border:none;" sandbox="allow-same-origin"></iframe>`;
+}
+
+async function copyTemplate(type) {
+  const html = type === 'angebot' ? buildAngebotHTML() : buildBuchungHTML();
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({ 'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([html], {type:'text/plain'}) })
+    ]);
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Kopiert! Jetzt in Gmail/Outlook einfügen (Strg+V)';
+    btn.style.background = '#22c55e';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 4000);
+  } catch(e) {
+    /* Fallback: Neues Fenster öffnen → Benutzer kann manuell kopieren */
+    const w = window.open('', '_blank');
+    w.document.write(html);
+    w.document.close();
+    alert('Seite öffnet sich in neuem Tab → Alles markieren (Strg+A) → Kopieren (Strg+C) → in E-Mail einfügen');
+  }
+}
+
+/* ── Admin-Zugangsdaten speichern ── */
+document.getElementById('save-credentials-btn').addEventListener('click', () => {
+  const user    = document.getElementById('s-admin-user').value.trim();
+  const passNew = document.getElementById('s-admin-pass-new').value;
+  const passCon = document.getElementById('s-admin-pass-confirm').value;
+  const msg     = document.getElementById('admin-cred-msg');
+
+  msg.style.display = 'block';
+  if (!user) { msg.style.color='var(--red)'; msg.textContent='Benutzername darf nicht leer sein.'; return; }
+  if (passNew && passNew.length < 6) { msg.style.color='var(--red)'; msg.textContent='Passwort mindestens 6 Zeichen.'; return; }
+  if (passNew && passNew !== passCon) { msg.style.color='var(--red)'; msg.textContent='Passwörter stimmen nicht überein.'; return; }
+
+  localStorage.setItem('admin_user', user);
+  if (passNew) {
+    localStorage.setItem('admin_pass', passNew);
+    sessionStorage.setItem('et_save_token', passNew);
+    /* save.php-Passwort-Hinweis */
+    const needsPhp = passNew !== DEFAULT_PASS;
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Zugangsdaten gespeichert!' + (needsPhp ? ' Bitte auch save.php aktualisieren.' : '');
+  } else {
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Benutzername gespeichert!';
+  }
+  document.getElementById('s-admin-pass-new').value = '';
+  document.getElementById('s-admin-pass-confirm').value = '';
+  setTimeout(() => { msg.style.display='none'; }, 4000);
+});
+
+/* ═══════════════════════════════
+   LOGIN
+═══════════════════════════════ */
+function tryLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  if (u === getUser() && p === getPass()) {
+    sessionStorage.setItem('admin_logged', '1');
+    sessionStorage.setItem('et_save_token', p);
+    showApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-pass').value = '';
+  }
+}
+document.getElementById('login-btn').addEventListener('click', tryLogin);
+['login-user','login-pass'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => { if(e.key==='Enter') tryLogin(); })
+);
+
+/* ═══════════════════════════════
+   SHOW APP
+═══════════════════════════════ */
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('admin-app').style.display = 'flex';
+  document.getElementById('admin-user-label').textContent = 'Hallo, ' + getUser();
+
+  const lastEdit = localStorage.getItem('last_edit');
+  document.getElementById('last-edit-val').textContent = lastEdit
+    ? new Date(lastEdit).toLocaleString('de-DE') : 'Noch keine Bearbeitung';
+
+  /* Server-Check */
+  fetch('http://localhost:8080/').then(() => {
+    document.getElementById('server-status').textContent = '✓ localhost:8080 erreichbar';
+    document.getElementById('server-status').className = 'badge-ok';
+  }).catch(() => {
+    fetch('./save.php', {method:'OPTIONS'}).then(() => {
+      document.getElementById('server-status').textContent = '✓ save.php verfügbar (Hosting)';
+      document.getElementById('server-status').className = 'badge-ok';
+    }).catch(() => {
+      document.getElementById('server-status').textContent = '✗ Kein Server — server-starten.ps1 ausführen';
+      document.getElementById('server-status').className = 'badge-warn';
+    });
+  });
+
+  populateFields();
+}
+
+/* Auto-Login */
+if (sessionStorage.getItem('admin_logged')) {
+  if (!sessionStorage.getItem('et_save_token')) sessionStorage.setItem('et_save_token', getPass());
+  showApp();
+}
+
+/* Logout */
+document.getElementById('logout-btn').addEventListener('click', () => {
+  sessionStorage.removeItem('admin_logged');
+  location.reload();
+});
+
+/* ═══════════════════════════════
+   TAB-NAVIGATION
+═══════════════════════════════ */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ═══════════════════════════════
+   DASHBOARD-AKTIONEN
+═══════════════════════════════ */
+document.getElementById('open-editor-btn').addEventListener('click', () => {
+  localStorage.setItem('et_autoopen', '1');
+  localStorage.setItem('last_edit', new Date().toISOString());
+  window.open('index.html', '_blank');
+});
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  Object.assign(document.createElement('a'), {href:'index.html', download:'sardinientraum.html'}).click();
+});
+
+/* Legacy PW-Modal */
+const pwModal = document.getElementById('pw-modal');
+document.getElementById('change-pw-btn').addEventListener('click', () => { pwModal.style.display='flex'; });
+document.getElementById('pw-cancel-btn').addEventListener('click', () => { pwModal.style.display='none'; });
+document.getElementById('pw-save-btn').addEventListener('click', () => {
+  const n = document.getElementById('pw-new').value;
+  const c = document.getElementById('pw-confirm').value;
+  const msg = document.getElementById('pw-msg');
+  if (!n||n.length<6){ msg.style.color='var(--red)'; msg.textContent='Mindestens 6 Zeichen.'; return; }
+  if (n!==c){ msg.style.color='var(--red)'; msg.textContent='Passwörter stimmen nicht überein.'; return; }
+  localStorage.setItem('admin_pass', n);
+  sessionStorage.setItem('et_save_token', n);
+  msg.style.color='var(--green)'; msg.textContent='Passwort gespeichert!';
+  setTimeout(()=>{ pwModal.style.display='none'; msg.textContent=''; }, 1500);
+});
+</script>
+</body>
+</html>
