@@ -1,0 +1,451 @@
+$port = 8080
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+# ══════════════════════════════════════════════════════════════
+#  SAFE-SAVE-MODE  —  schützt index.html vor versehentlichem Überschreiben
+#  $true  → /save schreibt in index.draft.html (Default, sicher)
+#  $false → /save schreibt direkt in index.html (gefährlich)
+#  Wechsel auf Live: POST /promote-draft (validiert + sichert Backup)
+# ══════════════════════════════════════════════════════════════
+$SAFE_SAVE_MODE = $true
+
+# Uptime-Tracking
+$serverStartTime = Get-Date
+
+$listener = [System.Net.HttpListener]::new()
+$listener.Prefixes.Add("http://localhost:$port/")
+
+try {
+    $listener.Start()
+} catch {
+    Write-Host "Fehler: Eventuell Administratorrechte benoetigt. Starte als Admin neu." -ForegroundColor Red
+    pause
+    exit
+}
+
+$ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object {
+    $_.InterfaceAlias -notmatch 'Loopback' -and $_.IPAddress -notmatch '^169'
+} | Select-Object -First 1).IPAddress
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "  Server laeuft!" -ForegroundColor Green
+Write-Host ""
+Write-Host "  Am PC:     http://localhost:$port" -ForegroundColor White
+Write-Host "  Am Handy:  http://$($ip):$port" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  Handy muss im selben WLAN sein!" -ForegroundColor Gray
+Write-Host "  Fenster schliessen = Server stoppen" -ForegroundColor Gray
+Write-Host ""
+if ($SAFE_SAVE_MODE) {
+    Write-Host "  [SAFE MODE AKTIV]  Saves -> index.draft.html" -ForegroundColor Green
+    Write-Host "  Live setzen via POST /promote-draft im Admin-Panel" -ForegroundColor Gray
+} else {
+    Write-Host "  !! SAFE MODE AUS !! /save ueberschreibt index.html direkt !!" -ForegroundColor Red
+}
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+$mimeTypes = @{
+    ".html" = "text/html; charset=utf-8"
+    ".css"  = "text/css"
+    ".js"   = "application/javascript"
+    ".json" = "application/json; charset=utf-8"
+    ".jpg"  = "image/jpeg"
+    ".jpeg" = "image/jpeg"
+    ".png"  = "image/png"
+    ".gif"  = "image/gif"
+    ".webp" = "image/webp"
+    ".svg"  = "image/svg+xml"
+    ".ico"  = "image/x-icon"
+    ".mp4"  = "video/mp4"
+    ".webm" = "video/webm"
+    ".mov"  = "video/quicktime"
+    ".woff" = "font/woff"
+    ".woff2"= "font/woff2"
+}
+
+function Send-Response {
+    param($res, $status, $body, $mime = "text/plain; charset=utf-8")
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($body)
+    $res.StatusCode      = $status
+    $res.ContentType     = $mime
+    $res.ContentLength64 = [long]$bytes.LongLength
+    $res.Headers.Add("Access-Control-Allow-Origin", "*")
+    $res.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    $res.Headers.Add("Access-Control-Allow-Headers", "Content-Type")
+    $res.OutputStream.Write($bytes, 0, $bytes.Length)
+    $res.Close()
+}
+
+while ($listener.IsListening) {
+    $ctx  = $listener.GetContext()
+    $req  = $ctx.Request
+    $res  = $ctx.Response
+    $method = $req.HttpMethod
+    $urlPath = $req.Url.LocalPath
+
+    Write-Host "$(Get-Date -Format 'HH:mm:ss')  $method $urlPath"
+
+    # ── CORS preflight ──────────────────────────────────────────
+    if ($method -eq 'OPTIONS') {
+        Send-Response $res 204 ""
+        continue
+    }
+
+    # ── POST /save  →  HTML auf Festplatte schreiben ────────────
+    # Safe-Mode: schreibt in index.draft.html
+    # Unsafe-Mode: schreibt direkt in index.html
+    if ($method -eq 'POST' -and $urlPath -eq '/save') {
+        try {
+            $reader  = [System.IO.StreamReader]::new($req.InputStream, [System.Text.Encoding]::UTF8)
+            $html    = $reader.ReadToEnd()
+            $reader.Close()
+
+            # ── Validierung: muss eine echte HTML-Datei sein ──
+            $isHtml  = $html -match '(?i)<!DOCTYPE html>' -and $html -match '(?i)</html>'
+            $minSize = 10000
+            if (-not $isHtml -or $html.Length -lt $minSize) {
+                Write-Host "  --> ABGELEHNT: zu klein ($($html.Length) Bytes) oder kein HTML" -ForegroundColor Yellow
+                Send-Response $res 422 "Inhalt zu klein oder kein gueltiges HTML (min $minSize Bytes, mit DOCTYPE und </html>)"
+                continue
+            }
+
+            if ($SAFE_SAVE_MODE) {
+                $target = Join-Path $root 'index.draft.html'
+                $label  = 'index.draft.html'
+            } else {
+                $target = Join-Path $root 'index.html'
+                $label  = 'index.html (DIREKT - Safe Mode aus!)'
+                # Backup wenn direkt geschrieben wird
+                if (Test-Path $target) {
+                    Copy-Item $target (Join-Path $root 'index.html.bak') -Force
+                }
+            }
+
+            $utf8nob = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText($target, $html, $utf8nob)
+
+            Write-Host "  --> $label gespeichert ($([Math]::Round($html.Length/1024,1)) KB)" -ForegroundColor Green
+            $mode = if ($SAFE_SAVE_MODE) { 'draft' } else { 'live' }
+            Send-Response $res 200 "OK:$mode"
+        } catch {
+            Write-Host "  --> FEHLER beim Speichern: $_" -ForegroundColor Red
+            Send-Response $res 500 "Fehler: $_"
+        }
+        continue
+    }
+
+    # ── POST /save-live  →  Direkt in index.html schreiben ──────
+    # Override des Safe-Modes (für Editor-Button "Direkt live")
+    # Mit Validierung + Backup
+    if ($method -eq 'POST' -and $urlPath -eq '/save-live') {
+        try {
+            $reader = [System.IO.StreamReader]::new($req.InputStream, [System.Text.Encoding]::UTF8)
+            $html   = $reader.ReadToEnd()
+            $reader.Close()
+
+            $isHtml = $html -match '(?i)<!DOCTYPE html>' -and $html -match '(?i)</html>'
+            if (-not $isHtml -or $html.Length -lt 10000) {
+                Send-Response $res 422 "Inhalt zu klein oder kein gueltiges HTML (min 10000 Bytes, mit DOCTYPE und </html>)"
+                continue
+            }
+
+            $live = Join-Path $root 'index.html'
+
+            # Backup mit Timestamp
+            if (Test-Path $live) {
+                $ts = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+                $backup = Join-Path $root "index.html.backup-$ts.html"
+                Copy-Item $live $backup -Force
+                Write-Host "  --> Backup: index.html.backup-$ts.html" -ForegroundColor Cyan
+            }
+
+            $utf8nob = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText($live, $html, $utf8nob)
+            Write-Host "  --> DIREKT LIVE: index.html gespeichert ($([Math]::Round($html.Length/1024,1)) KB)" -ForegroundColor Yellow
+            Send-Response $res 200 "OK"
+        } catch {
+            Send-Response $res 500 "Fehler: $_"
+        }
+        continue
+    }
+
+    # ── POST /promote-draft  →  index.draft.html → index.html ───
+    # Validiert + sichert Backup + nur dann Promote
+    if ($method -eq 'POST' -and $urlPath -eq '/promote-draft') {
+        try {
+            $draft = Join-Path $root 'index.draft.html'
+            $live  = Join-Path $root 'index.html'
+
+            if (-not (Test-Path $draft)) {
+                Send-Response $res 404 "Keine Draft-Datei vorhanden. Erst im Editor speichern."
+                continue
+            }
+
+            $draftHtml = [System.IO.File]::ReadAllText($draft, [System.Text.Encoding]::UTF8)
+            $isHtml    = $draftHtml -match '(?i)<!DOCTYPE html>' -and $draftHtml -match '(?i)</html>'
+            if (-not $isHtml -or $draftHtml.Length -lt 10000) {
+                Send-Response $res 422 "Draft ungueltig - kann nicht promoted werden."
+                continue
+            }
+
+            # Backup von Live mit Timestamp
+            if (Test-Path $live) {
+                $ts = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+                $backup = Join-Path $root "index.html.backup-$ts.html"
+                Copy-Item $live $backup -Force
+                Write-Host "  --> Backup: index.html.backup-$ts.html" -ForegroundColor Cyan
+            }
+
+            # Promote
+            Copy-Item $draft $live -Force
+            Write-Host "  --> PROMOTED: index.draft.html -> index.html (LIVE!)" -ForegroundColor Green
+            Send-Response $res 200 "OK"
+        } catch {
+            Write-Host "  --> FEHLER bei Promote: $_" -ForegroundColor Red
+            Send-Response $res 500 "Fehler: $_"
+        }
+        continue
+    }
+
+    # ── GET /save-status  →  Safe-Mode-Status + Draft-Info ──────
+    if ($method -eq 'GET' -and $urlPath -eq '/save-status') {
+        $draft = Join-Path $root 'index.draft.html'
+        $draftExists = Test-Path $draft
+        $draftTime   = if ($draftExists) { (Get-Item $draft).LastWriteTime.ToString('s') } else { '' }
+        $draftSize   = if ($draftExists) { (Get-Item $draft).Length } else { 0 }
+        $body = "{`"safeMode`":$($SAFE_SAVE_MODE.ToString().ToLower()),`"draftExists`":$($draftExists.ToString().ToLower()),`"draftTime`":`"$draftTime`",`"draftSize`":$draftSize}"
+        Send-Response $res 200 $body 'application/json; charset=utf-8'
+        continue
+    }
+
+    # ── GET /health  →  Komplette Status-Info (Live-Status-Karte) ──
+    if ($method -eq 'GET' -and $urlPath -eq '/health') {
+        $live  = Join-Path $root 'index.html'
+        $draft = Join-Path $root 'index.draft.html'
+        $cfg   = Join-Path $root 'site-config.json'
+
+        $liveExists  = Test-Path $live
+        $liveSize    = if ($liveExists)  { (Get-Item $live).Length } else { 0 }
+        $liveTime    = if ($liveExists)  { (Get-Item $live).LastWriteTime.ToString('s') } else { '' }
+
+        $draftExists = Test-Path $draft
+        $draftSize   = if ($draftExists) { (Get-Item $draft).Length } else { 0 }
+        $draftTime   = if ($draftExists) { (Get-Item $draft).LastWriteTime.ToString('s') } else { '' }
+
+        # Backups zählen
+        $backups = Get-ChildItem -Path $root -Filter 'index.html.backup-*.html' -ErrorAction SilentlyContinue
+        $backupCount = if ($backups) { $backups.Count } else { 0 }
+        $latestBackup = if ($backups) { ($backups | Sort-Object LastWriteTime -Descending | Select-Object -First 1).LastWriteTime.ToString('s') } else { '' }
+
+        # Config-E-Mail prüfen
+        $configEmail = ''
+        if (Test-Path $cfg) {
+            try {
+                $cfgObj = Get-Content $cfg -Raw | ConvertFrom-Json
+                $configEmail = $cfgObj.contact_email
+            } catch {}
+        }
+
+        # Uptime seit Server-Start
+        $uptime = ((Get-Date) - $serverStartTime).ToString('hh\:mm\:ss')
+
+        $body = @"
+{
+  "ok": true,
+  "safeMode": $($SAFE_SAVE_MODE.ToString().ToLower()),
+  "uptime": "$uptime",
+  "live":  { "exists": $($liveExists.ToString().ToLower()),  "size": $liveSize,  "time": "$liveTime" },
+  "draft": { "exists": $($draftExists.ToString().ToLower()), "size": $draftSize, "time": "$draftTime" },
+  "backups": { "count": $backupCount, "latest": "$latestBackup" },
+  "config": { "email": "$configEmail" }
+}
+"@
+        Send-Response $res 200 $body 'application/json; charset=utf-8'
+        continue
+    }
+
+    # ── POST /restart  →  Server-Neustart (neuer Prozess + Exit) ──
+    if ($method -eq 'POST' -and $urlPath -eq '/restart') {
+        Send-Response $res 200 "RESTARTING"
+        Write-Host ""
+        Write-Host "==> SERVER-NEUSTART angefordert vom Admin-Panel" -ForegroundColor Yellow
+        Start-Sleep -Milliseconds 500
+
+        # Neuen Server-Prozess starten (in 2 Sekunden, damit dieser Prozess vorher sauber zumachen kann)
+        $scriptPath = Join-Path $root 'server-starten.ps1'
+        Start-Process powershell -ArgumentList @(
+            '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-Command',
+            "Start-Sleep -Seconds 2; & '$scriptPath'"
+        ) -WindowStyle Normal
+
+        # Listener sauber stoppen und beenden
+        Write-Host "==> Aktueller Prozess beendet sich..." -ForegroundColor Yellow
+        Start-Sleep -Milliseconds 300
+        try { $listener.Stop() } catch {}
+        try { $listener.Close() } catch {}
+        exit
+    }
+
+    # ── POST /upload  →  Bild/Video als Datei in uploads/ speichern ──
+    # multipart/form-data mit Field "file"
+    # Antwort: { ok:true, url:"uploads/...", size:N, name:"..." }
+    if ($method -eq 'POST' -and $urlPath -eq '/upload') {
+        try {
+            $ct = $req.ContentType
+            if (-not $ct -or -not $ct.Contains('multipart/form-data')) {
+                Send-Response $res 400 '{"ok":false,"msg":"multipart/form-data erwartet"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            $boundary = ($ct -split 'boundary=')[1].Trim()
+            if (-not $boundary) {
+                Send-Response $res 400 '{"ok":false,"msg":"Kein Boundary gefunden"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Body als Bytes lesen
+            $ms = New-Object System.IO.MemoryStream
+            $buffer = New-Object byte[] 65536
+            while (($n = $req.InputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                $ms.Write($buffer, 0, $n)
+            }
+            $bodyBytes = $ms.ToArray()
+            $ms.Close()
+
+            # Boundary-Start finden
+            $boundaryBytes = [System.Text.Encoding]::ASCII.GetBytes("--$boundary")
+            $headerStart = -1
+            for ($i = 0; $i -lt $bodyBytes.Length - $boundaryBytes.Length; $i++) {
+                $match = $true
+                for ($j = 0; $j -lt $boundaryBytes.Length; $j++) {
+                    if ($bodyBytes[$i + $j] -ne $boundaryBytes[$j]) { $match = $false; break }
+                }
+                if ($match) { $headerStart = $i + $boundaryBytes.Length + 2; break }
+            }
+            if ($headerStart -lt 0) {
+                Send-Response $res 400 '{"ok":false,"msg":"Boundary nicht gefunden"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Header-Ende finden (CRLF CRLF)
+            $headerEnd = -1
+            for ($i = $headerStart; $i -lt $bodyBytes.Length - 3; $i++) {
+                if ($bodyBytes[$i] -eq 13 -and $bodyBytes[$i+1] -eq 10 -and $bodyBytes[$i+2] -eq 13 -and $bodyBytes[$i+3] -eq 10) {
+                    $headerEnd = $i + 4; break
+                }
+            }
+            if ($headerEnd -lt 0) {
+                Send-Response $res 400 '{"ok":false,"msg":"Multipart-Header nicht parsebar"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Filename aus Header
+            $headerText = [System.Text.Encoding]::UTF8.GetString($bodyBytes, $headerStart, $headerEnd - $headerStart)
+            $filename = $null
+            if ($headerText -match 'filename="([^"]+)"') { $filename = $matches[1] }
+            if (-not $filename) {
+                Send-Response $res 400 '{"ok":false,"msg":"Kein filename"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # End-Boundary finden
+            $endBoundaryBytes = [System.Text.Encoding]::ASCII.GetBytes("`r`n--$boundary")
+            $fileEnd = -1
+            for ($i = $headerEnd; $i -lt $bodyBytes.Length - $endBoundaryBytes.Length; $i++) {
+                $match = $true
+                for ($j = 0; $j -lt $endBoundaryBytes.Length; $j++) {
+                    if ($bodyBytes[$i + $j] -ne $endBoundaryBytes[$j]) { $match = $false; break }
+                }
+                if ($match) { $fileEnd = $i; break }
+            }
+            if ($fileEnd -lt 0) { $fileEnd = $bodyBytes.Length }
+
+            $fileLen = $fileEnd - $headerEnd
+            if ($fileLen -le 0) {
+                Send-Response $res 400 '{"ok":false,"msg":"Leere Datei"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Sicherer Dateiname
+            $safe = $filename -replace '[^a-zA-Z0-9._-]', '_'
+            $ts   = Get-Date -Format 'yyyyMMdd-HHmmss'
+            $ext  = [System.IO.Path]::GetExtension($safe)
+            $base = [System.IO.Path]::GetFileNameWithoutExtension($safe)
+            if ($base.Length -gt 40) { $base = $base.Substring(0, 40) }
+            $finalName = "${ts}-${base}${ext}"
+            $uploadsDir = Join-Path $root 'uploads'
+            if (-not (Test-Path $uploadsDir)) { New-Item -ItemType Directory -Path $uploadsDir | Out-Null }
+            $targetPath = Join-Path $uploadsDir $finalName
+
+            $fileBytes = New-Object byte[] $fileLen
+            [Array]::Copy($bodyBytes, $headerEnd, $fileBytes, 0, $fileLen)
+            [System.IO.File]::WriteAllBytes($targetPath, $fileBytes)
+
+            Write-Host "  --> Upload: uploads/$finalName ($([Math]::Round($fileLen/1024,1)) KB)" -ForegroundColor Green
+            $jsonResp = "{`"ok`":true,`"url`":`"uploads/$finalName`",`"size`":$fileLen,`"name`":`"$finalName`"}"
+            Send-Response $res 200 $jsonResp 'application/json; charset=utf-8'
+        } catch {
+            Write-Host "  --> Upload-FEHLER: $_" -ForegroundColor Red
+            Send-Response $res 500 "{`"ok`":false,`"msg`":`"$_`"}" 'application/json; charset=utf-8'
+        }
+        continue
+    }
+
+    # ── POST /save-config  →  site-config.json schreiben ────────
+    if ($method -eq 'POST' -and $urlPath -eq '/save-config') {
+        try {
+            $reader = [System.IO.StreamReader]::new($req.InputStream, [System.Text.Encoding]::UTF8)
+            $json   = $reader.ReadToEnd()
+            $reader.Close()
+
+            # JSON validieren
+            try { $null = $json | ConvertFrom-Json } catch {
+                Send-Response $res 422 "Ungueltiges JSON: $_"
+                continue
+            }
+
+            $target  = Join-Path $root 'site-config.json'
+            $utf8nob = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText($target, $json, $utf8nob)
+
+            Write-Host "  --> site-config.json gespeichert" -ForegroundColor Green
+            Send-Response $res 200 "OK"
+        } catch {
+            Write-Host "  --> FEHLER beim Config-Speichern: $_" -ForegroundColor Red
+            Send-Response $res 500 "Fehler: $_"
+        }
+        continue
+    }
+
+    # ── GET  →  statische Datei ausliefern ───────────────────────
+    $local = $urlPath.Replace('/', '\')
+    $path  = Join-Path $root $local
+    if ($path -match '\\$' -or (Test-Path $path -PathType Container)) {
+        $path = Join-Path $path 'index.html'
+    }
+
+    if (Test-Path $path -PathType Leaf) {
+        $ext   = [System.IO.Path]::GetExtension($path).ToLower()
+        $mime  = if ($mimeTypes[$ext]) { $mimeTypes[$ext] } else { "application/octet-stream" }
+        $bytes = [System.IO.File]::ReadAllBytes($path)
+        $res.ContentType     = $mime
+        $res.ContentLength64 = [long]$bytes.LongLength
+        $res.Headers.Add("Access-Control-Allow-Origin", "*")
+        if ($method -ne 'HEAD') {
+            $res.OutputStream.Write($bytes, 0, $bytes.Length)
+        }
+        $res.Close()
+    } else {
+        $res.StatusCode = 404
+        if ($method -ne 'HEAD') {
+            $body  = [System.Text.Encoding]::UTF8.GetBytes("404 Not Found")
+            $res.ContentLength64 = $body.Length
+            $res.OutputStream.Write($body, 0, $body.Length)
+        }
+        $res.Close()
+    }
+}
