@@ -951,11 +951,8 @@
     font-family: 'Inter', sans-serif; transition: opacity .2s, background .2s;
   }
   .et-tbtn:hover { opacity: .85; }
-  #et-save-btn      { background: #3b82f6; color: #fff; }
-  #et-save-btn:hover{ background: #2563eb; }
-  #et-save-live-btn { background: var(--gold); color: #fff; }
-  #et-save-live-btn:hover { background: #b5823e; }
-  #et-exit-btn      { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+  #et-save-btn { background: var(--gold); color: #fff; }
+  #et-exit-btn { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
   #et-settings-btn {
     width: 36px; height: 36px; border-radius: 10px; border: none;
     background: rgba(255,255,255,.15); color: #fff; font-size: 1.05rem;
@@ -1037,8 +1034,7 @@
     <span class="et-topbar-title">Bearbeitungsmodus</span>
   </div>
   <div class="et-topbar-right">
-    <button class="et-tbtn" id="et-save-btn"      title="In index.draft.html speichern (sicher)">💾 Als Draft</button>
-    <button class="et-tbtn" id="et-save-live-btn" title="Direkt in index.html speichern (Live!)">🚀 Direkt Live</button>
+    <button class="et-tbtn" id="et-save-btn">💾 Speichern</button>
     <button class="et-tbtn" id="et-exit-btn">✕ Beenden</button>
   </div>
 </div>
@@ -1208,7 +1204,6 @@
   const $ = id => document.getElementById(id);
   const toggleBtn   = $('edit-toggle');
   const saveBtn     = $('et-save-btn');
-  const saveLiveBtn = $('et-save-live-btn');
   const exitBtn     = $('et-exit-btn');
   const settingsBtn = $('et-settings-btn');
   const settingsPanel = $('et-settings-panel');
@@ -1630,38 +1625,25 @@
     }
     clone.removeAttribute('style');
 
-    /* Editor BLEIBT in der HTML drin (für späteres Editieren).
-       Er ist für Besucher unsichtbar — alle Editor-UI-Elemente sind
-       nur via body.edit-active sichtbar, was per et_autoopen Flag aktiviert wird.
-       Bereinigt werden nur die Edit-Mode-Zustände. */
+    /* Editor-UI entfernen */
+    ['#et-topbar','#et-propsbar','#edit-toggle','#et-settings-panel','#et-img-input','#et-vid-input','#et-bg-input']
+      .forEach(s => clone.querySelector(s)?.remove());
+    const sc = clone.querySelectorAll('script'); sc[sc.length-1]?.remove();
+    const st = clone.querySelectorAll('style'); st[st.length-1]?.remove();
     clone.querySelector('body')?.classList.remove('edit-active','settings-open');
-    const edClasses = ['et-hoverable','et-text-el','et-btn-el','et-media-el','et-card-el','et-sec-el','et-selected','et-dragging','et-drop-over'];
+    const edClasses = ['et-hoverable','et-text-el','et-btn-el','et-media-el','et-card-el','et-sec-el','et-selected'];
     clone.querySelectorAll('.' + edClasses.join(',.')).forEach(el => el.classList.remove(...edClasses));
     clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
     clone.querySelectorAll('[data-et-label]').forEach(el => el.removeAttribute('data-et-label'));
-    clone.querySelectorAll('[draggable]').forEach(el => el.removeAttribute('draggable'));
-    clone.querySelectorAll('input[type="file"]').forEach(el => el.value = '');
 
     return '<!DOCTYPE html>\n' + clone.outerHTML;
   }
 
-  async function doSave(mode) {
-    /* mode: 'draft' → /save (Safe-Mode-respecting)  |  'live' → /save-live (immer direkt) */
-    const btn        = mode === 'live' ? saveLiveBtn : saveBtn;
-    const origText   = btn.textContent;
-    const origBg     = btn.style.background;
-    const otherBtn   = mode === 'live' ? saveBtn : saveLiveBtn;
-
-    /* "Direkt live" → Bestätigung */
-    if (mode === 'live') {
-      if (!confirm('⚠️ Direkt auf die LIVE-Webseite schreiben?\n\nDie aktuelle index.html wird sofort überschrieben (Backup wird angelegt). Besucher sehen die Änderung sofort.')) return;
-    }
-
-    btn.disabled = true;
-    otherBtn.disabled = true;
-    btn.textContent = '⏳ Speichern…';
+  async function save() {
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ Speichern…';
     exit();
-    const html  = buildCleanHTML();
+    const html = buildCleanHTML();
     const token = sessionStorage.getItem('et_save_token') || '';
 
     async function trySave(url, headers = {}) {
@@ -1678,44 +1660,39 @@
       } catch(_) { return false; }
     }
 
-    const isLocal  = ['localhost','127.0.0.1'].includes(location.hostname);
-    const endpoint = mode === 'live' ? '/save-live' : '/save';
-    let result = false;
-
+    const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+    let saveResult = false;
     if (isLocal) {
-      result = await trySave('http://localhost:8080' + endpoint);
+      saveResult = await trySave('http://localhost:8080/save');
     } else {
-      let res = await trySave('./save.php', { 'X-Save-Token': token, 'X-Save-Mode': mode });
+      let res = await trySave('./save.php', { 'X-Save-Token': token });
       if (res === 401 || res === 403) {
         const pw = prompt('Admin-Passwort eingeben:');
         if (pw) {
           sessionStorage.setItem('et_save_token', pw);
-          res = await trySave('./save.php', { 'X-Save-Token': pw, 'X-Save-Mode': mode });
+          res = await trySave('./save.php', { 'X-Save-Token': pw });
         }
       }
-      result = res;
+      saveResult = res;
     }
 
-    const savedOK = result === 'OK' || (typeof result === 'string' && result.startsWith('OK'));
+    const savedOK = saveResult === 'OK' || (typeof saveResult === 'string' && saveResult.startsWith('OK'));
+    const isDraft = saveResult === 'OK:draft';
 
     if (savedOK) {
-      btn.textContent = mode === 'live' ? '✅ Live!' : '✅ Draft gespeichert';
-      btn.style.background = mode === 'live' ? '#22c55e' : '#22c55e';
+      saveBtn.textContent = isDraft ? '✅ Als Draft gespeichert' : '✅ LIVE gespeichert';
+      saveBtn.style.background = isDraft ? '#3b82f6' : '#27ae60';
       localStorage.setItem('last_edit', new Date().toISOString());
-      setTimeout(() => {
-        btn.textContent = origText;
-        btn.style.background = origBg;
-        btn.disabled = false;
-        otherBtn.disabled = false;
-      }, 2500);
+      if (isDraft) localStorage.setItem('et_draft_pending', '1');
+      setTimeout(() => { saveBtn.textContent = '💾 Speichern'; saveBtn.style.background = ''; saveBtn.disabled = false; }, 2500);
     } else {
+      /* Fallback: Download */
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
       const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'index.html' });
       a.click(); URL.revokeObjectURL(a.href);
       alert('Server-Speichern fehlgeschlagen. Datei wurde als Download bereitgestellt.');
-      btn.textContent = origText;
-      btn.disabled = false;
-      otherBtn.disabled = false;
+      saveBtn.textContent = '💾 Speichern';
+      saveBtn.disabled = false;
     }
     enter();
   }
@@ -1737,8 +1714,7 @@
   }
 
   /* ═══ BOOT: Edit-Modus nur per Admin-Panel ═══ */
-  saveBtn.addEventListener('click',     () => doSave('draft'));
-  saveLiveBtn.addEventListener('click', () => doSave('live'));
+  saveBtn.addEventListener('click', save);
   exitBtn.addEventListener('click', exit);
 
   (function checkAdminAccess() {

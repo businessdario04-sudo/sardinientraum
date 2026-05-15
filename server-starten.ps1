@@ -1,6 +1,14 @@
 $port = 8080
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+# ══════════════════════════════════════════════════════════════
+#  SAFE-SAVE-MODE  —  schützt index.html vor versehentlichem Überschreiben
+#  $true  → /save schreibt in index.draft.html (Default, sicher)
+#  $false → /save schreibt direkt in index.html (gefährlich)
+#  Wechsel auf Live: POST /promote-draft (validiert + sichert Backup)
+# ══════════════════════════════════════════════════════════════
+$SAFE_SAVE_MODE = $true
+
 $listener = [System.Net.HttpListener]::new()
 $listener.Prefixes.Add("http://localhost:$port/")
 
@@ -25,6 +33,13 @@ Write-Host "  Am Handy:  http://$($ip):$port" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "  Handy muss im selben WLAN sein!" -ForegroundColor Gray
 Write-Host "  Fenster schliessen = Server stoppen" -ForegroundColor Gray
+Write-Host ""
+if ($SAFE_SAVE_MODE) {
+    Write-Host "  [SAFE MODE AKTIV]  Saves -> index.draft.html" -ForegroundColor Green
+    Write-Host "  Live setzen via POST /promote-draft im Admin-Panel" -ForegroundColor Gray
+} else {
+    Write-Host "  !! SAFE MODE AUS !! /save ueberschreibt index.html direkt !!" -ForegroundColor Red
+}
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -68,23 +83,130 @@ while ($listener.IsListening) {
         continue
     }
 
-    # ── POST /save  →  index.html auf Festplatte schreiben ──────
+    # ── POST /save  →  HTML auf Festplatte schreiben ────────────
+    # Safe-Mode: schreibt in index.draft.html
+    # Unsafe-Mode: schreibt direkt in index.html
     if ($method -eq 'POST' -and $urlPath -eq '/save') {
         try {
             $reader  = [System.IO.StreamReader]::new($req.InputStream, [System.Text.Encoding]::UTF8)
             $html    = $reader.ReadToEnd()
             $reader.Close()
 
-            $target  = Join-Path $root 'index.html'
+            # ── Validierung: muss eine echte HTML-Datei sein ──
+            $isHtml  = $html -match '(?i)<!DOCTYPE html>' -and $html -match '(?i)</html>'
+            $minSize = 10000
+            if (-not $isHtml -or $html.Length -lt $minSize) {
+                Write-Host "  --> ABGELEHNT: zu klein ($($html.Length) Bytes) oder kein HTML" -ForegroundColor Yellow
+                Send-Response $res 422 "Inhalt zu klein oder kein gueltiges HTML (min $minSize Bytes, mit DOCTYPE und </html>)"
+                continue
+            }
+
+            if ($SAFE_SAVE_MODE) {
+                $target = Join-Path $root 'index.draft.html'
+                $label  = 'index.draft.html'
+            } else {
+                $target = Join-Path $root 'index.html'
+                $label  = 'index.html (DIREKT - Safe Mode aus!)'
+                # Backup wenn direkt geschrieben wird
+                if (Test-Path $target) {
+                    Copy-Item $target (Join-Path $root 'index.html.bak') -Force
+                }
+            }
+
             $utf8nob = New-Object System.Text.UTF8Encoding $false
             [System.IO.File]::WriteAllText($target, $html, $utf8nob)
 
-            Write-Host "  --> index.html gespeichert ($([Math]::Round($html.Length/1024,1)) KB)" -ForegroundColor Green
-            Send-Response $res 200 "OK"
+            Write-Host "  --> $label gespeichert ($([Math]::Round($html.Length/1024,1)) KB)" -ForegroundColor Green
+            $mode = if ($SAFE_SAVE_MODE) { 'draft' } else { 'live' }
+            Send-Response $res 200 "OK:$mode"
         } catch {
             Write-Host "  --> FEHLER beim Speichern: $_" -ForegroundColor Red
             Send-Response $res 500 "Fehler: $_"
         }
+        continue
+    }
+
+    # ── POST /save-live  →  Direkt in index.html schreiben ──────
+    # Override des Safe-Modes (für Editor-Button "Direkt live")
+    # Mit Validierung + Backup
+    if ($method -eq 'POST' -and $urlPath -eq '/save-live') {
+        try {
+            $reader = [System.IO.StreamReader]::new($req.InputStream, [System.Text.Encoding]::UTF8)
+            $html   = $reader.ReadToEnd()
+            $reader.Close()
+
+            $isHtml = $html -match '(?i)<!DOCTYPE html>' -and $html -match '(?i)</html>'
+            if (-not $isHtml -or $html.Length -lt 10000) {
+                Send-Response $res 422 "Inhalt zu klein oder kein gueltiges HTML (min 10000 Bytes, mit DOCTYPE und </html>)"
+                continue
+            }
+
+            $live = Join-Path $root 'index.html'
+
+            # Backup mit Timestamp
+            if (Test-Path $live) {
+                $ts = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+                $backup = Join-Path $root "index.html.backup-$ts.html"
+                Copy-Item $live $backup -Force
+                Write-Host "  --> Backup: index.html.backup-$ts.html" -ForegroundColor Cyan
+            }
+
+            $utf8nob = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText($live, $html, $utf8nob)
+            Write-Host "  --> DIREKT LIVE: index.html gespeichert ($([Math]::Round($html.Length/1024,1)) KB)" -ForegroundColor Yellow
+            Send-Response $res 200 "OK"
+        } catch {
+            Send-Response $res 500 "Fehler: $_"
+        }
+        continue
+    }
+
+    # ── POST /promote-draft  →  index.draft.html → index.html ───
+    # Validiert + sichert Backup + nur dann Promote
+    if ($method -eq 'POST' -and $urlPath -eq '/promote-draft') {
+        try {
+            $draft = Join-Path $root 'index.draft.html'
+            $live  = Join-Path $root 'index.html'
+
+            if (-not (Test-Path $draft)) {
+                Send-Response $res 404 "Keine Draft-Datei vorhanden. Erst im Editor speichern."
+                continue
+            }
+
+            $draftHtml = [System.IO.File]::ReadAllText($draft, [System.Text.Encoding]::UTF8)
+            $isHtml    = $draftHtml -match '(?i)<!DOCTYPE html>' -and $draftHtml -match '(?i)</html>'
+            if (-not $isHtml -or $draftHtml.Length -lt 10000) {
+                Send-Response $res 422 "Draft ungueltig - kann nicht promoted werden."
+                continue
+            }
+
+            # Backup von Live mit Timestamp
+            if (Test-Path $live) {
+                $ts = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+                $backup = Join-Path $root "index.html.backup-$ts.html"
+                Copy-Item $live $backup -Force
+                Write-Host "  --> Backup: index.html.backup-$ts.html" -ForegroundColor Cyan
+            }
+
+            # Promote
+            Copy-Item $draft $live -Force
+            Write-Host "  --> PROMOTED: index.draft.html -> index.html (LIVE!)" -ForegroundColor Green
+            Send-Response $res 200 "OK"
+        } catch {
+            Write-Host "  --> FEHLER bei Promote: $_" -ForegroundColor Red
+            Send-Response $res 500 "Fehler: $_"
+        }
+        continue
+    }
+
+    # ── GET /save-status  →  Safe-Mode-Status + Draft-Info ──────
+    if ($method -eq 'GET' -and $urlPath -eq '/save-status') {
+        $draft = Join-Path $root 'index.draft.html'
+        $draftExists = Test-Path $draft
+        $draftTime   = if ($draftExists) { (Get-Item $draft).LastWriteTime.ToString('s') } else { '' }
+        $draftSize   = if ($draftExists) { (Get-Item $draft).Length } else { 0 }
+        $body = "{`"safeMode`":$($SAFE_SAVE_MODE.ToString().ToLower()),`"draftExists`":$($draftExists.ToString().ToLower()),`"draftTime`":`"$draftTime`",`"draftSize`":$draftSize}"
+        Send-Response $res 200 $body 'application/json; charset=utf-8'
         continue
     }
 

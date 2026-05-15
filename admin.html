@@ -177,6 +177,32 @@
         <p>Hier verwaltest du deine Ferienwohnungs-Webseite.</p>
       </div>
 
+      <!-- ── Safe-Mode-Status + Draft-Banner ── -->
+      <div id="safe-mode-banner" style="display:none;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:1.4rem;">🛡️</span>
+          <div>
+            <div id="safe-mode-title" style="font-weight:700;color:#fff;font-size:.95rem;">Safe Mode aktiv</div>
+            <div id="safe-mode-sub" style="font-size:.8rem;color:var(--muted);margin-top:2px;">Editor-Speicherungen gehen in <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;">index.draft.html</code>. Live-Seite bleibt unverändert.</div>
+          </div>
+        </div>
+        <div id="safe-mode-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <a class="btn btn-outline" id="preview-draft-btn" href="index.draft.html" target="_blank" style="display:none;">👁 Draft anzeigen</a>
+          <button class="btn btn-green" id="promote-btn" style="display:none;">🚀 Draft auf Live setzen</button>
+        </div>
+      </div>
+
+      <!-- ── Unsafe-Mode-Warnung ── -->
+      <div id="unsafe-mode-banner" style="display:none;background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:12px;padding:14px 20px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:1.4rem;">⚠️</span>
+          <div>
+            <div style="font-weight:700;color:var(--red);font-size:.95rem;">SAFE MODE IST AUS</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:2px;">Jede Speicherung überschreibt direkt <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;">index.html</code> — Vorsicht!</div>
+          </div>
+        </div>
+      </div>
+
       <div class="admin-grid">
         <div class="admin-card primary">
           <div class="admin-card-icon">✏️</div>
@@ -1036,7 +1062,76 @@ function showApp() {
   })();
 
   populateFields();
+  refreshSaveStatus();
 }
+
+/* ── Safe-Mode + Draft-Status anzeigen ── */
+async function refreshSaveStatus() {
+  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+  const safeBanner   = document.getElementById('safe-mode-banner');
+  const unsafeBanner = document.getElementById('unsafe-mode-banner');
+  const safeSub      = document.getElementById('safe-mode-sub');
+  const previewBtn   = document.getElementById('preview-draft-btn');
+  const promoteBtn   = document.getElementById('promote-btn');
+
+  if (!isLocal) {
+    /* Auf Hosting kein Safe-Mode-Konzept → Standard-Verhalten */
+    safeBanner.style.display = 'none';
+    unsafeBanner.style.display = 'none';
+    return;
+  }
+
+  try {
+    const r = await fetch('http://localhost:8080/save-status?v=' + Date.now());
+    const s = await r.json();
+    if (s.safeMode) {
+      safeBanner.style.display = 'flex';
+      unsafeBanner.style.display = 'none';
+      if (s.draftExists) {
+        const ts = s.draftTime ? new Date(s.draftTime).toLocaleString('de-DE') : '';
+        const kb = (s.draftSize / 1024).toFixed(1);
+        safeSub.innerHTML = `📄 Aktueller Draft: <strong style="color:#fff;">${kb} KB</strong> · ${ts} <br><span style="font-size:.75rem;">Im Editor speichern → Draft anzeigen → bei OK auf Live setzen.</span>`;
+        previewBtn.style.display = 'inline-flex';
+        promoteBtn.style.display = 'inline-flex';
+      } else {
+        safeSub.innerHTML = 'Editor-Speicherungen gehen in <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;">index.draft.html</code>. Noch keine Änderungen gespeichert.';
+        previewBtn.style.display = 'none';
+        promoteBtn.style.display = 'none';
+      }
+    } else {
+      safeBanner.style.display = 'none';
+      unsafeBanner.style.display = 'block';
+    }
+  } catch(_) {
+    safeBanner.style.display = 'none';
+    unsafeBanner.style.display = 'none';
+  }
+}
+
+/* ── Draft auf Live setzen ── */
+async function promoteDraft() {
+  if (!confirm('Den aktuellen Draft wirklich auf die Live-Webseite setzen?\n\nDie aktuelle index.html wird vorher als Backup gesichert.')) return;
+  const btn = document.getElementById('promote-btn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Promote läuft…';
+  try {
+    const r = await fetch('http://localhost:8080/promote-draft', { method: 'POST' });
+    const txt = await r.text();
+    if (r.ok && txt.trim() === 'OK') {
+      btn.textContent = '✅ Auf Live übernommen!';
+      btn.style.background = '#22c55e';
+      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.disabled = false; refreshSaveStatus(); }, 2500);
+    } else {
+      alert('Promote fehlgeschlagen: ' + txt);
+      btn.textContent = orig; btn.disabled = false;
+    }
+  } catch(e) {
+    alert('Server nicht erreichbar.');
+    btn.textContent = orig; btn.disabled = false;
+  }
+}
+document.getElementById('promote-btn')?.addEventListener('click', promoteDraft);
 
 /* Auto-Login */
 if (sessionStorage.getItem('admin_logged')) {
