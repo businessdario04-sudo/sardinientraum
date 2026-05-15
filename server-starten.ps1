@@ -50,12 +50,19 @@ $mimeTypes = @{
     ".html" = "text/html; charset=utf-8"
     ".css"  = "text/css"
     ".js"   = "application/javascript"
+    ".json" = "application/json; charset=utf-8"
     ".jpg"  = "image/jpeg"
     ".jpeg" = "image/jpeg"
     ".png"  = "image/png"
     ".gif"  = "image/gif"
+    ".webp" = "image/webp"
     ".svg"  = "image/svg+xml"
     ".ico"  = "image/x-icon"
+    ".mp4"  = "video/mp4"
+    ".webm" = "video/webm"
+    ".mov"  = "video/quicktime"
+    ".woff" = "font/woff"
+    ".woff2"= "font/woff2"
 }
 
 function Send-Response {
@@ -281,6 +288,111 @@ while ($listener.IsListening) {
         try { $listener.Stop() } catch {}
         try { $listener.Close() } catch {}
         exit
+    }
+
+    # ── POST /upload  →  Bild/Video als Datei in uploads/ speichern ──
+    # multipart/form-data mit Field "file"
+    # Antwort: { ok:true, url:"uploads/...", size:N, name:"..." }
+    if ($method -eq 'POST' -and $urlPath -eq '/upload') {
+        try {
+            $ct = $req.ContentType
+            if (-not $ct -or -not $ct.Contains('multipart/form-data')) {
+                Send-Response $res 400 '{"ok":false,"msg":"multipart/form-data erwartet"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            $boundary = ($ct -split 'boundary=')[1].Trim()
+            if (-not $boundary) {
+                Send-Response $res 400 '{"ok":false,"msg":"Kein Boundary gefunden"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Body als Bytes lesen
+            $ms = New-Object System.IO.MemoryStream
+            $buffer = New-Object byte[] 65536
+            while (($n = $req.InputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                $ms.Write($buffer, 0, $n)
+            }
+            $bodyBytes = $ms.ToArray()
+            $ms.Close()
+
+            # Boundary-Start finden
+            $boundaryBytes = [System.Text.Encoding]::ASCII.GetBytes("--$boundary")
+            $headerStart = -1
+            for ($i = 0; $i -lt $bodyBytes.Length - $boundaryBytes.Length; $i++) {
+                $match = $true
+                for ($j = 0; $j -lt $boundaryBytes.Length; $j++) {
+                    if ($bodyBytes[$i + $j] -ne $boundaryBytes[$j]) { $match = $false; break }
+                }
+                if ($match) { $headerStart = $i + $boundaryBytes.Length + 2; break }
+            }
+            if ($headerStart -lt 0) {
+                Send-Response $res 400 '{"ok":false,"msg":"Boundary nicht gefunden"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Header-Ende finden (CRLF CRLF)
+            $headerEnd = -1
+            for ($i = $headerStart; $i -lt $bodyBytes.Length - 3; $i++) {
+                if ($bodyBytes[$i] -eq 13 -and $bodyBytes[$i+1] -eq 10 -and $bodyBytes[$i+2] -eq 13 -and $bodyBytes[$i+3] -eq 10) {
+                    $headerEnd = $i + 4; break
+                }
+            }
+            if ($headerEnd -lt 0) {
+                Send-Response $res 400 '{"ok":false,"msg":"Multipart-Header nicht parsebar"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Filename aus Header
+            $headerText = [System.Text.Encoding]::UTF8.GetString($bodyBytes, $headerStart, $headerEnd - $headerStart)
+            $filename = $null
+            if ($headerText -match 'filename="([^"]+)"') { $filename = $matches[1] }
+            if (-not $filename) {
+                Send-Response $res 400 '{"ok":false,"msg":"Kein filename"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # End-Boundary finden
+            $endBoundaryBytes = [System.Text.Encoding]::ASCII.GetBytes("`r`n--$boundary")
+            $fileEnd = -1
+            for ($i = $headerEnd; $i -lt $bodyBytes.Length - $endBoundaryBytes.Length; $i++) {
+                $match = $true
+                for ($j = 0; $j -lt $endBoundaryBytes.Length; $j++) {
+                    if ($bodyBytes[$i + $j] -ne $endBoundaryBytes[$j]) { $match = $false; break }
+                }
+                if ($match) { $fileEnd = $i; break }
+            }
+            if ($fileEnd -lt 0) { $fileEnd = $bodyBytes.Length }
+
+            $fileLen = $fileEnd - $headerEnd
+            if ($fileLen -le 0) {
+                Send-Response $res 400 '{"ok":false,"msg":"Leere Datei"}' 'application/json; charset=utf-8'
+                continue
+            }
+
+            # Sicherer Dateiname
+            $safe = $filename -replace '[^a-zA-Z0-9._-]', '_'
+            $ts   = Get-Date -Format 'yyyyMMdd-HHmmss'
+            $ext  = [System.IO.Path]::GetExtension($safe)
+            $base = [System.IO.Path]::GetFileNameWithoutExtension($safe)
+            if ($base.Length -gt 40) { $base = $base.Substring(0, 40) }
+            $finalName = "${ts}-${base}${ext}"
+            $uploadsDir = Join-Path $root 'uploads'
+            if (-not (Test-Path $uploadsDir)) { New-Item -ItemType Directory -Path $uploadsDir | Out-Null }
+            $targetPath = Join-Path $uploadsDir $finalName
+
+            $fileBytes = New-Object byte[] $fileLen
+            [Array]::Copy($bodyBytes, $headerEnd, $fileBytes, 0, $fileLen)
+            [System.IO.File]::WriteAllBytes($targetPath, $fileBytes)
+
+            Write-Host "  --> Upload: uploads/$finalName ($([Math]::Round($fileLen/1024,1)) KB)" -ForegroundColor Green
+            $jsonResp = "{`"ok`":true,`"url`":`"uploads/$finalName`",`"size`":$fileLen,`"name`":`"$finalName`"}"
+            Send-Response $res 200 $jsonResp 'application/json; charset=utf-8'
+        } catch {
+            Write-Host "  --> Upload-FEHLER: $_" -ForegroundColor Red
+            Send-Response $res 500 "{`"ok`":false,`"msg`":`"$_`"}" 'application/json; charset=utf-8'
+        }
+        continue
     }
 
     # ── POST /save-config  →  site-config.json schreiben ────────
