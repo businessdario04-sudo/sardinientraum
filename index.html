@@ -2239,9 +2239,35 @@
   saveLiveBtn.addEventListener('click', () => doSave('live'));
   exitBtn.addEventListener('click', exit);
 
+  /* DEFENSIVER RESET beim Page-Load:
+     Falls die geladene HTML (z.B. aus dem Cache) einen kaputten Button-State
+     enthält (disabled, "⏳ Speichern…", Settings-Panel offen, Edit-Modus-Klassen),
+     hier sauber zurücksetzen damit der Editor verlässlich startet. */
+  function defensiveReset() {
+    if (saveBtn)     { saveBtn.disabled = false;     saveBtn.textContent     = '💾 Als Draft';   saveBtn.style.background = ''; }
+    if (saveLiveBtn) { saveLiveBtn.disabled = false; saveLiveBtn.textContent = '🚀 Direkt Live'; saveLiveBtn.style.background = ''; }
+    if (settingsBtn) settingsBtn.classList.remove('open');
+    if (settingsPanel) settingsPanel.classList.remove('open');
+    document.body.classList.remove('edit-active','settings-open');
+    document.querySelectorAll('.et-selected,.et-hoverable,.et-text-el,.et-btn-el,.et-media-el,.et-card-el,.et-sec-el,.et-dragging,.et-drop-over')
+      .forEach(el => el.classList.remove('et-selected','et-hoverable','et-text-el','et-btn-el','et-media-el','et-card-el','et-sec-el','et-dragging','et-drop-over'));
+    document.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    document.querySelectorAll('[data-et-label]').forEach(el => el.removeAttribute('data-et-label'));
+    document.querySelectorAll('[draggable]').forEach(el => el.removeAttribute('draggable'));
+    /* Apartment-Modal: zu */
+    document.getElementById('apt-modal-overlay')?.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  defensiveReset();
+
   (function checkAdminAccess() {
-    if (localStorage.getItem('et_autoopen') === '1') {
-      localStorage.removeItem('et_autoopen');
+    /* Sowohl localStorage-Flag als auch URL-Parameter ?edit=... lösen den
+       Editor aus. URL-Param ist robust gegen Cache + funktioniert auch wenn
+       localStorage durch private-Mode/Sicherheitseinstellungen gesperrt ist. */
+    const hasUrlEdit = new URLSearchParams(location.search).has('edit');
+    const hasFlag    = localStorage.getItem('et_autoopen') === '1';
+    if (hasFlag || hasUrlEdit) {
+      try { localStorage.removeItem('et_autoopen'); } catch(_) {}
       enter();
     }
   })();

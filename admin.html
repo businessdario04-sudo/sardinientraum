@@ -1296,7 +1296,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.getElementById('open-editor-btn').addEventListener('click', () => {
   localStorage.setItem('et_autoopen', '1');
   localStorage.setItem('last_edit', new Date().toISOString());
-  window.open('index.html', '_blank');
+  /* Cache-Buster + benannter Tab "sardinien-editor": jeder Klick lädt die
+     index.html frisch UND verwendet immer den gleichen Editor-Tab wieder.
+     Verhindert "hängenden Editor"-Effekt durch Browser-Cache. */
+  const url = 'index.html?edit=' + Date.now();
+  const win = window.open(url, 'sardinien-editor');
+  /* Falls Tab schon offen war → zwingen zu reloaden mit frischer URL */
+  if (win) { try { win.location.replace(url); win.focus(); } catch(_) {} }
 });
 
 document.getElementById('export-btn').addEventListener('click', () => {
