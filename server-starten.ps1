@@ -88,6 +88,32 @@ while ($listener.IsListening) {
         continue
     }
 
+    # ── POST /save-config  →  site-config.json schreiben ────────
+    if ($method -eq 'POST' -and $urlPath -eq '/save-config') {
+        try {
+            $reader = [System.IO.StreamReader]::new($req.InputStream, [System.Text.Encoding]::UTF8)
+            $json   = $reader.ReadToEnd()
+            $reader.Close()
+
+            # JSON validieren
+            try { $null = $json | ConvertFrom-Json } catch {
+                Send-Response $res 422 "Ungueltiges JSON: $_"
+                continue
+            }
+
+            $target  = Join-Path $root 'site-config.json'
+            $utf8nob = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText($target, $json, $utf8nob)
+
+            Write-Host "  --> site-config.json gespeichert" -ForegroundColor Green
+            Send-Response $res 200 "OK"
+        } catch {
+            Write-Host "  --> FEHLER beim Config-Speichern: $_" -ForegroundColor Red
+            Send-Response $res 500 "Fehler: $_"
+        }
+        continue
+    }
+
     # ── GET  →  statische Datei ausliefern ───────────────────────
     $local = $urlPath.Replace('/', '\')
     $path  = Join-Path $root $local

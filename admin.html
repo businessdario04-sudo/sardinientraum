@@ -725,31 +725,31 @@ async function applyToWebsite(mode) {
     }
   }
 
-  /* Speichern */
+  /* Speichern — Body-Check auf "OK" damit statisch ausgelieferte PHP-Datei nicht als Erfolg gewertet wird */
+  async function trySaveHtml(url, headers) {
+    try {
+      const r = await fetch(url, { method:'POST', headers, body: html });
+      if (!r.ok) return r.status;
+      const txt = await r.text();
+      return txt.trim() === 'OK' ? 'OK' : false;
+    } catch(_) { return false; }
+  }
+
+  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
   let saved = false;
-  try {
-    const r = await fetch('./save.php', {
-      method:'POST',
-      headers:{'Content-Type':'text/html; charset=utf-8','X-Save-Token':token},
-      body: html
-    });
-    if (r.ok) saved = true;
-    else if (r.status === 401) {
+
+  if (isLocal) {
+    saved = (await trySaveHtml('http://localhost:8080/save', {'Content-Type':'text/html; charset=utf-8'})) === 'OK';
+  } else {
+    let res = await trySaveHtml('./save.php', {'Content-Type':'text/html; charset=utf-8','X-Save-Token':token});
+    if (res === 401 || res === 403) {
       const pw = prompt('Admin-Passwort eingeben:');
       if (pw) {
         sessionStorage.setItem('et_save_token', pw);
-        const r2 = await fetch('./save.php', {method:'POST',headers:{'Content-Type':'text/html; charset=utf-8','X-Save-Token':pw},body:html});
-        if (r2.ok) saved = true;
+        res = await trySaveHtml('./save.php', {'Content-Type':'text/html; charset=utf-8','X-Save-Token':pw});
       }
     }
-  } catch(_) {}
-
-  if (!saved) {
-    /* Fallback: lokaler Server */
-    try {
-      const r = await fetch('http://localhost:8080/save', {method:'POST',headers:{'Content-Type':'text/html; charset=utf-8'},body:html});
-      if (r.ok) saved = true;
-    } catch(_) {}
+    saved = res === 'OK';
   }
 
   if (saved) {
@@ -775,13 +775,23 @@ document.getElementById('settings-apply-seo-btn').addEventListener('click', asyn
 async function saveConfigToServer() {
   const s     = loadSettings();
   const token = sessionStorage.getItem('et_save_token') || getPass();
-  try {
-    await fetch('./save-config.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'X-Save-Token': token },
-      body: JSON.stringify(s)
-    });
-  } catch(_) { /* Kein PHP-Server — lokal okay */ }
+  const body  = JSON.stringify(s, null, 2);
+  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+
+  async function tryPost(url, headers) {
+    try {
+      const r = await fetch(url, { method:'POST', headers, body });
+      if (!r.ok) return false;
+      const txt = await r.text();
+      return txt.trim() === 'OK';
+    } catch(_) { return false; }
+  }
+
+  if (isLocal) {
+    return tryPost('http://localhost:8080/save-config', { 'Content-Type':'application/json; charset=utf-8' });
+  } else {
+    return tryPost('./save-config.php', { 'Content-Type':'application/json; charset=utf-8', 'X-Save-Token':token });
+  }
 }
 
 /* ════════════════════════════════════════════
@@ -995,18 +1005,35 @@ function showApp() {
     ? new Date(lastEdit).toLocaleString('de-DE') : 'Noch keine Bearbeitung';
 
   /* Server-Check */
-  fetch('http://localhost:8080/').then(() => {
-    document.getElementById('server-status').textContent = '✓ localhost:8080 erreichbar';
-    document.getElementById('server-status').className = 'badge-ok';
-  }).catch(() => {
-    fetch('./save.php', {method:'OPTIONS'}).then(() => {
-      document.getElementById('server-status').textContent = '✓ save.php verfügbar (Hosting)';
-      document.getElementById('server-status').className = 'badge-ok';
-    }).catch(() => {
-      document.getElementById('server-status').textContent = '✗ Kein Server — server-starten.ps1 ausführen';
-      document.getElementById('server-status').className = 'badge-warn';
-    });
-  });
+  (async () => {
+    const el = document.getElementById('server-status');
+    const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+    if (isLocal) {
+      try {
+        await fetch('http://localhost:8080/');
+        el.textContent = '✓ localhost:8080 (PowerShell-Server)';
+        el.className   = 'badge-ok';
+      } catch(_) {
+        el.textContent = '✗ Server nicht erreichbar — server-starten.ps1 ausführen';
+        el.className   = 'badge-warn';
+      }
+    } else {
+      /* Hosting: testen ob save.php korrekt antwortet (nicht nur als Text) */
+      try {
+        const r = await fetch('./save.php', { method:'OPTIONS' });
+        if (r.status === 204 || r.headers.get('Access-Control-Allow-Methods')) {
+          el.textContent = '✓ PHP-Hosting aktiv (save.php)';
+          el.className   = 'badge-ok';
+        } else {
+          el.textContent = '⚠ save.php nicht erreichbar — PHP-Hosting prüfen';
+          el.className   = 'badge-warn';
+        }
+      } catch(_) {
+        el.textContent = '✗ Server nicht erreichbar';
+        el.className   = 'badge-warn';
+      }
+    }
+  })();
 
   populateFields();
 }
