@@ -9,6 +9,9 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 # ══════════════════════════════════════════════════════════════
 $SAFE_SAVE_MODE = $true
 
+# Uptime-Tracking
+$serverStartTime = Get-Date
+
 $listener = [System.Net.HttpListener]::new()
 $listener.Prefixes.Add("http://localhost:$port/")
 
@@ -208,6 +211,76 @@ while ($listener.IsListening) {
         $body = "{`"safeMode`":$($SAFE_SAVE_MODE.ToString().ToLower()),`"draftExists`":$($draftExists.ToString().ToLower()),`"draftTime`":`"$draftTime`",`"draftSize`":$draftSize}"
         Send-Response $res 200 $body 'application/json; charset=utf-8'
         continue
+    }
+
+    # ── GET /health  →  Komplette Status-Info (Live-Status-Karte) ──
+    if ($method -eq 'GET' -and $urlPath -eq '/health') {
+        $live  = Join-Path $root 'index.html'
+        $draft = Join-Path $root 'index.draft.html'
+        $cfg   = Join-Path $root 'site-config.json'
+
+        $liveExists  = Test-Path $live
+        $liveSize    = if ($liveExists)  { (Get-Item $live).Length } else { 0 }
+        $liveTime    = if ($liveExists)  { (Get-Item $live).LastWriteTime.ToString('s') } else { '' }
+
+        $draftExists = Test-Path $draft
+        $draftSize   = if ($draftExists) { (Get-Item $draft).Length } else { 0 }
+        $draftTime   = if ($draftExists) { (Get-Item $draft).LastWriteTime.ToString('s') } else { '' }
+
+        # Backups zählen
+        $backups = Get-ChildItem -Path $root -Filter 'index.html.backup-*.html' -ErrorAction SilentlyContinue
+        $backupCount = if ($backups) { $backups.Count } else { 0 }
+        $latestBackup = if ($backups) { ($backups | Sort-Object LastWriteTime -Descending | Select-Object -First 1).LastWriteTime.ToString('s') } else { '' }
+
+        # Config-E-Mail prüfen
+        $configEmail = ''
+        if (Test-Path $cfg) {
+            try {
+                $cfgObj = Get-Content $cfg -Raw | ConvertFrom-Json
+                $configEmail = $cfgObj.contact_email
+            } catch {}
+        }
+
+        # Uptime seit Server-Start
+        $uptime = ((Get-Date) - $serverStartTime).ToString('hh\:mm\:ss')
+
+        $body = @"
+{
+  "ok": true,
+  "safeMode": $($SAFE_SAVE_MODE.ToString().ToLower()),
+  "uptime": "$uptime",
+  "live":  { "exists": $($liveExists.ToString().ToLower()),  "size": $liveSize,  "time": "$liveTime" },
+  "draft": { "exists": $($draftExists.ToString().ToLower()), "size": $draftSize, "time": "$draftTime" },
+  "backups": { "count": $backupCount, "latest": "$latestBackup" },
+  "config": { "email": "$configEmail" }
+}
+"@
+        Send-Response $res 200 $body 'application/json; charset=utf-8'
+        continue
+    }
+
+    # ── POST /restart  →  Server-Neustart (neuer Prozess + Exit) ──
+    if ($method -eq 'POST' -and $urlPath -eq '/restart') {
+        Send-Response $res 200 "RESTARTING"
+        Write-Host ""
+        Write-Host "==> SERVER-NEUSTART angefordert vom Admin-Panel" -ForegroundColor Yellow
+        Start-Sleep -Milliseconds 500
+
+        # Neuen Server-Prozess starten (in 2 Sekunden, damit dieser Prozess vorher sauber zumachen kann)
+        $scriptPath = Join-Path $root 'server-starten.ps1'
+        Start-Process powershell -ArgumentList @(
+            '-NoProfile',
+            '-ExecutionPolicy', 'Bypass',
+            '-Command',
+            "Start-Sleep -Seconds 2; & '$scriptPath'"
+        ) -WindowStyle Normal
+
+        # Listener sauber stoppen und beenden
+        Write-Host "==> Aktueller Prozess beendet sich..." -ForegroundColor Yellow
+        Start-Sleep -Milliseconds 300
+        try { $listener.Stop() } catch {}
+        try { $listener.Close() } catch {}
+        exit
     }
 
     # ── POST /save-config  →  site-config.json schreiben ────────

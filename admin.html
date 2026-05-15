@@ -230,27 +230,51 @@
         </div>
       </div>
 
-      <div class="section-title">Website-Status</div>
+      <!-- Live-Status -->
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>📊 Live-Status</span>
+        <button class="btn btn-outline" id="health-refresh-btn" style="padding:5px 12px;font-size:.72rem;">↻ Aktualisieren</button>
+      </div>
       <div class="status-list">
         <div class="status-row">
-          <span class="status-label">Webseite</span>
-          <span class="badge-ok">✓ index.html vorhanden</span>
+          <span class="status-label">🌐 Live-Webseite</span>
+          <span id="status-live" class="badge-warn">Prüfe…</span>
         </div>
         <div class="status-row">
-          <span class="status-label">Anfrageformular</span>
+          <span class="status-label">📄 Größe</span>
+          <span class="status-val" id="status-live-size">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">🕒 Letzter Update</span>
+          <span class="status-val" id="status-live-time">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">📝 Draft</span>
+          <span class="status-val" id="status-draft">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">💾 Backups</span>
+          <span class="status-val" id="status-backups">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-label">✉️ Anfrageformular</span>
           <span id="form-status-badge" class="badge-warn">⚠ Noch keine E-Mail eingestellt</span>
         </div>
         <div class="status-row">
-          <span class="status-label">Kontakt-E-Mail</span>
+          <span class="status-label">📧 Empfänger-E-Mail</span>
           <span class="status-val" id="status-email">—</span>
         </div>
         <div class="status-row">
-          <span class="status-label">Letzte Bearbeitung</span>
-          <span class="status-val" id="last-edit-val">—</span>
+          <span class="status-label">⚙️ Server</span>
+          <span id="server-status" class="badge-warn">Prüfe…</span>
         </div>
         <div class="status-row">
-          <span class="status-label">Lokaler Server</span>
-          <span id="server-status" class="badge-warn">Prüfe…</span>
+          <span class="status-label">⏱ Server-Laufzeit</span>
+          <span class="status-val" id="status-uptime">—</span>
+        </div>
+        <div class="status-row" style="background:rgba(239,68,68,.04);">
+          <span class="status-label">🔄 Server neu starten</span>
+          <button class="btn btn-outline" id="restart-btn" style="font-size:.78rem;color:var(--yellow);border-color:var(--yellow);">↻ Neu starten</button>
         </div>
       </div>
 
@@ -1063,7 +1087,116 @@ function showApp() {
 
   populateFields();
   refreshSaveStatus();
+  refreshHealth();
 }
+
+/* ── Live-Status / Health ── */
+function fmtBytes(n) {
+  if (!n) return '—';
+  if (n > 1048576) return (n / 1048576).toFixed(1) + ' MB';
+  if (n > 1024)    return (n / 1024).toFixed(1) + ' KB';
+  return n + ' B';
+}
+function fmtTime(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString('de-DE'); }
+  catch(_) { return iso; }
+}
+
+async function refreshHealth() {
+  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
+  if (!isLocal) {
+    /* Auf Hoster: einfacher Check */
+    try {
+      const r = await fetch('./index.html', { method: 'HEAD' });
+      document.getElementById('status-live').textContent = r.ok ? '✓ Online' : '✗ Fehler';
+      document.getElementById('status-live').className   = r.ok ? 'badge-ok' : 'badge-err';
+    } catch(_) {
+      document.getElementById('status-live').textContent = '✗ Nicht erreichbar';
+      document.getElementById('status-live').className   = 'badge-err';
+    }
+    return;
+  }
+
+  try {
+    const r = await fetch('http://localhost:8080/health?v=' + Date.now());
+    const h = await r.json();
+
+    /* Live-Webseite */
+    document.getElementById('status-live').textContent = h.live.exists ? '✓ Online' : '✗ Fehlt';
+    document.getElementById('status-live').className   = h.live.exists ? 'badge-ok' : 'badge-err';
+    document.getElementById('status-live-size').textContent = fmtBytes(h.live.size);
+    document.getElementById('status-live-time').textContent = fmtTime(h.live.time);
+
+    /* Draft */
+    document.getElementById('status-draft').textContent = h.draft.exists
+      ? `${fmtBytes(h.draft.size)} · ${fmtTime(h.draft.time)}`
+      : 'Keine ungespeicherten Änderungen';
+
+    /* Backups */
+    document.getElementById('status-backups').textContent = h.backups.count > 0
+      ? `${h.backups.count} Stück (zuletzt ${fmtTime(h.backups.latest)})`
+      : 'Noch keine';
+
+    /* Uptime */
+    document.getElementById('status-uptime').textContent = h.uptime || '—';
+
+    /* Server */
+    document.getElementById('server-status').textContent = h.safeMode
+      ? '✓ Aktiv · Safe Mode AN'
+      : '⚠ Aktiv · Safe Mode AUS';
+    document.getElementById('server-status').className = h.safeMode ? 'badge-ok' : 'badge-warn';
+
+  } catch(_) {
+    document.getElementById('status-live').textContent = '✗ Server nicht erreichbar';
+    document.getElementById('status-live').className   = 'badge-err';
+    document.getElementById('server-status').textContent = '✗ Offline';
+    document.getElementById('server-status').className   = 'badge-err';
+  }
+}
+
+/* Refresh-Button */
+document.getElementById('health-refresh-btn')?.addEventListener('click', () => {
+  refreshHealth();
+  refreshSaveStatus();
+});
+
+/* Server-Restart */
+document.getElementById('restart-btn')?.addEventListener('click', async () => {
+  if (!confirm('Server wirklich neu starten?\n\nDie Webseite ist für ~3 Sekunden nicht erreichbar.')) return;
+  const btn = document.getElementById('restart-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Startet neu…';
+  try {
+    await fetch('http://localhost:8080/restart', { method: 'POST' });
+  } catch(_) { /* erwartet — Server beendet sich gerade */ }
+
+  /* Warten und neu prüfen */
+  let attempts = 0;
+  const checkUp = setInterval(async () => {
+    attempts++;
+    try {
+      await fetch('http://localhost:8080/health?v=' + Date.now());
+      clearInterval(checkUp);
+      btn.textContent = '✅ Neu gestartet';
+      btn.style.color = 'var(--green)';
+      btn.style.borderColor = 'var(--green)';
+      refreshHealth();
+      setTimeout(() => { btn.textContent='↻ Neu starten'; btn.disabled=false; btn.style.color=''; btn.style.borderColor=''; }, 3000);
+    } catch(_) {
+      if (attempts > 20) {
+        clearInterval(checkUp);
+        btn.textContent = '⚠ Timeout';
+        setTimeout(() => { btn.textContent='↻ Neu starten'; btn.disabled=false; }, 3000);
+      }
+    }
+  }, 500);
+});
+
+/* Auto-Refresh alle 20 Sekunden */
+setInterval(() => {
+  if (sessionStorage.getItem('admin_logged') === '1') refreshHealth();
+}, 20000);
 
 /* ── Safe-Mode + Draft-Status anzeigen ── */
 async function refreshSaveStatus() {
