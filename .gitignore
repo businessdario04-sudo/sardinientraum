@@ -1,3 +1,12 @@
 server.log
 *.mp4
 .claude/settings.local.json
+
+# Sandbox-Inhalt nicht versionieren (nur Struktur)
+sandbox/*
+!sandbox/.gitkeep
+
+# Auto-Backups vom Server
+index.html.backup-*.html
+index.html.bak
+index.draft.html
