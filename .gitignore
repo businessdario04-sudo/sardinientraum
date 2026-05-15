@@ -2,6 +2,10 @@ server.log
 *.mp4
 .claude/settings.local.json
 
+# Uploads landen nicht im Git (zu groß, dynamisch)
+uploads/*
+!uploads/.gitkeep
+
 # Sandbox-Inhalt nicht versionieren (nur Struktur)
 sandbox/*
 !sandbox/.gitkeep
