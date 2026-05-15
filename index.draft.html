@@ -380,9 +380,11 @@
       justify-content: space-between;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
     .apt-price { font-size: .92rem; color: var(--text-light); }
     .apt-price strong { color: var(--ocean); font-size: 1.05rem; font-weight: 700; }
+    .apt-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-sm {
       padding: 9px 18px;
       background: var(--ocean);
@@ -392,11 +394,210 @@
       font-weight: 600;
       border: none;
       cursor: pointer;
-      transition: background .2s;
+      transition: background .2s, color .2s, border-color .2s;
       text-decoration: none;
       display: inline-block;
+      font-family: 'Inter', sans-serif;
     }
     .btn-sm:hover { background: var(--ocean-light); color: #fff; }
+    .btn-sm.btn-info {
+      background: transparent;
+      color: var(--ocean);
+      border: 1.5px solid var(--ocean);
+      padding: 7.5px 16px;
+    }
+    .btn-sm.btn-info:hover { background: var(--ocean); color: #fff; }
+    @media (max-width: 480px) {
+      .apt-footer { flex-direction: column; align-items: stretch; }
+      .apt-price { text-align: center; }
+      .apt-buttons { justify-content: center; }
+    }
+
+    /* ── APARTMENT-MODAL ── */
+    .apt-modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,17,23,.85);
+      backdrop-filter: blur(8px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: fadeIn .25s ease;
+    }
+    .apt-modal-overlay.open { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .apt-modal {
+      background: var(--white);
+      border-radius: 20px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      box-shadow: 0 30px 80px rgba(0,0,0,.4);
+      animation: slideUp .35s cubic-bezier(.22,.94,.32,1.01);
+    }
+    @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .apt-modal-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.95);
+      border: none; cursor: pointer;
+      font-size: 1.4rem;
+      color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, transform .2s;
+      z-index: 10;
+      box-shadow: 0 4px 14px rgba(0,0,0,.18);
+    }
+    .apt-modal-close:hover { background: var(--gold); color: #fff; transform: rotate(90deg); }
+    .apt-modal-gallery {
+      position: relative;
+      aspect-ratio: 16/9;
+      background: var(--text);
+      overflow: hidden;
+    }
+    .apt-modal-slide {
+      position: absolute; inset: 0;
+      opacity: 0; transition: opacity .4s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .apt-modal-slide.active { opacity: 1; }
+    .apt-modal-slide img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .apt-modal-nav {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.95);
+      border: none; cursor: pointer;
+      font-size: 1.4rem;
+      color: var(--ocean);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .2s, transform .2s;
+      box-shadow: 0 4px 14px rgba(0,0,0,.18);
+      z-index: 3;
+    }
+    .apt-modal-nav:hover { background: var(--gold); color: #fff; }
+    .apt-modal-prev { left: 16px; }
+    .apt-modal-next { right: 16px; }
+    .apt-modal-dots {
+      position: absolute;
+      bottom: 16px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px;
+      z-index: 3;
+    }
+    .apt-modal-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.5);
+      border: none; cursor: pointer;
+      transition: background .2s, transform .2s;
+      padding: 0;
+    }
+    .apt-modal-dot.active { background: #fff; transform: scale(1.3); }
+    .apt-modal-counter {
+      position: absolute;
+      top: 16px; left: 16px;
+      padding: 6px 12px;
+      background: rgba(0,0,0,.5);
+      color: #fff;
+      border-radius: 50px;
+      font-size: .78rem;
+      font-weight: 600;
+      z-index: 3;
+      backdrop-filter: blur(6px);
+    }
+    .apt-modal-body {
+      padding: 32px 36px;
+      overflow-y: auto;
+    }
+    .apt-modal-body h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      color: var(--ocean);
+      margin-bottom: 6px;
+    }
+    .apt-modal-body .apt-modal-sub {
+      color: var(--gold);
+      font-weight: 600;
+      font-size: .82rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+    .apt-modal-body p { color: var(--text); line-height: 1.75; margin-bottom: 16px; }
+    .apt-modal-features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin: 24px 0;
+      padding: 20px;
+      background: var(--sand);
+      border-radius: 12px;
+    }
+    .apt-modal-feat {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .88rem;
+      color: var(--text);
+    }
+    .apt-modal-feat-icon {
+      width: 32px; height: 32px;
+      background: #fff;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .apt-modal-section { margin-top: 22px; }
+    .apt-modal-section h4 {
+      font-size: .78rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .apt-modal-list { list-style: none; display: grid; gap: 8px; }
+    .apt-modal-list li {
+      padding-left: 22px;
+      position: relative;
+      font-size: .92rem;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .apt-modal-list li::before {
+      content: '✓'; position: absolute; left: 0; top: 0;
+      color: var(--gold); font-weight: 700;
+    }
+    .apt-modal-cta {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid #e8ddc8;
+    }
+    .apt-modal-cta .btn-primary { padding: 12px 28px; }
+    .apt-modal-cta .price-tag {
+      display: flex; align-items: center;
+      font-size: 1rem; color: var(--text-light);
+      margin-right: auto;
+    }
+    .apt-modal-cta .price-tag strong {
+      color: var(--ocean); font-size: 1.2rem; font-weight: 700; margin: 0 4px;
+    }
+    @media (max-width: 768px) {
+      .apt-modal { max-height: 95vh; }
+      .apt-modal-body { padding: 24px 22px; }
+      .apt-modal-body h2 { font-size: 1.4rem; }
+      .apt-modal-features { padding: 14px; }
+    }
 
     /* ── REGION ── */
     #region { background: var(--sand); }
@@ -606,7 +807,7 @@
 <body class="">
 
 <!-- ══ NAV ══ -->
-<nav id="mainNav">
+<nav id="mainNav" class="scrolled">
   <a class="nav-logo" href="#">🌊 Sardinientraum</a>
   <ul class="nav-links" id="navLinks">
     <li><a href="#ueber">Über uns</a></li>
@@ -620,14 +821,12 @@
 
 <!-- ══ HERO ══ -->
 <section id="hero" class="">
-  <div class="hero-bg"></div>
-  <video autoplay="" muted="" loop="" playsinline="" poster="">
-    <source src="Scene-2.mp4" type="video/mp4">
-  </video>
+  <div class="hero-bg" style="background-image: url(&quot;uploads/20260515-211746-sardinien.png&quot;); background-size: cover; background-position: center center;"></div>
+  
   <div class="hero-overlay"></div>
   <div class="hero-content">
     <span class="hero-tag">La Caletta · Sardinien</span>
-    <h1 class="">WORKFLOW-TEST 19:24:51</h1>
+    <h1 class="">FIX-TEST 1778879065643</h1>
     <p>Persönlich geführte Ferienwohnungen direkt am türkisblauen Wasser Sardiniens – für unvergessliche Urlaubsmomente fernab vom Massentourismus.</p>
     <div class="hero-buttons">
       <a class="btn-primary" href="#wohnungen">Wohnungen entdecken</a>
@@ -676,7 +875,7 @@
   <p class="section-sub">Jede Wohnung hat ihren eigenen Charakter – wähle die, die zu deinem perfekten Urlaub passt.</p>
   <div class="apt-grid">
 
-    <article class="apt-card">
+    <article class="apt-card" data-apt="tramonto">
       <div class="apt-img">
         <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&amp;q=80" alt="Casa Tramonto" loading="lazy">
         <span class="apt-badge">Bis 4 Personen</span>
@@ -691,12 +890,15 @@
         </div>
         <div class="apt-footer">
           <div class="apt-price">ab <strong class="">120 €</strong> / Nacht</div>
-          <a class="btn-sm" href="#anfrage">Anfragen →</a>
+          <div class="apt-buttons">
+            <button class="btn-sm btn-info" type="button" data-modal="tramonto">Mehr Infos</button>
+            <a class="btn-sm" href="#anfrage" data-prefill="Casa Tramonto (bis 4 Pers.)">Anfragen →</a>
+          </div>
         </div>
       </div>
     </article>
 
-    <article class="apt-card">
+    <article class="apt-card" data-apt="mare">
       <div class="apt-img">
         <img src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&amp;q=80" alt="Casa Mare" loading="lazy">
         <span class="apt-badge">Bis 2 Personen</span>
@@ -711,7 +913,10 @@
         </div>
         <div class="apt-footer">
           <div class="apt-price">ab <strong class="">95 €</strong> / Nacht</div>
-          <a class="btn-sm" href="#anfrage">Anfragen →</a>
+          <div class="apt-buttons">
+            <button class="btn-sm btn-info" type="button" data-modal="mare">Mehr Infos</button>
+            <a class="btn-sm" href="#anfrage" data-prefill="Casa Mare (bis 2 Pers.)">Anfragen →</a>
+          </div>
         </div>
       </div>
     </article>
@@ -858,6 +1063,38 @@
   </div>
 </section>
 
+<!-- ══ APARTMENT-MODAL ══ -->
+<div class="apt-modal-overlay" id="apt-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="apt-modal-title">
+  <div class="apt-modal" id="apt-modal">
+    <div class="apt-modal-gallery" id="apt-modal-gallery">
+      <button class="apt-modal-close" id="apt-modal-close" aria-label="Schließen">✕</button>
+      <span class="apt-modal-counter" id="apt-modal-counter">1 / 1</span>
+      <!-- Slides werden per JS gefüllt -->
+      <button class="apt-modal-nav apt-modal-prev" id="apt-modal-prev" aria-label="Vorheriges Bild">‹</button>
+      <button class="apt-modal-nav apt-modal-next" id="apt-modal-next" aria-label="Nächstes Bild">›</button>
+      <div class="apt-modal-dots" id="apt-modal-dots"></div>
+    </div>
+    <div class="apt-modal-body">
+      <div class="apt-modal-sub" id="apt-modal-tagline">Ihre Unterkunft</div>
+      <h2 id="apt-modal-title" class="">Wohnung</h2>
+      <p id="apt-modal-desc"></p>
+      <div class="apt-modal-features" id="apt-modal-features"></div>
+      <div class="apt-modal-section">
+        <h4 class="">Ausstattung</h4>
+        <ul class="apt-modal-list" id="apt-modal-amenities"></ul>
+      </div>
+      <div class="apt-modal-section">
+        <h4 class="">Gut zu wissen</h4>
+        <ul class="apt-modal-list" id="apt-modal-info"></ul>
+      </div>
+      <div class="apt-modal-cta">
+        <div class="price-tag">ab <strong id="apt-modal-price">—</strong> / Nacht</div>
+        <a class="btn-primary" id="apt-modal-cta-btn" href="#anfrage">Jetzt anfragen →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ FOOTER ══ -->
 <footer class="">
   <div class="footer-grid">
@@ -922,6 +1159,221 @@
       alert('Verbindungsfehler. Bitte prüfen Sie Ihre Internetverbindung.');
       btn.disabled = false; btn.textContent = orig;
     }
+  });
+
+  /* ══════════════════════════════════════════════════════════════
+     APARTMENT-MODAL: Bilder-Slider + Detail-Infos
+  ══════════════════════════════════════════════════════════════ */
+  const APT_DATA = {
+    tramonto: {
+      title: 'Casa Tramonto',
+      tagline: 'Sonnenuntergangs-Wohnung',
+      price: '120 €',
+      formValue: 'Casa Tramonto (bis 4 Pers.)',
+      images: [
+        'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1400&q=85',
+        'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1400&q=85',
+        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1400&q=85',
+        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1400&q=85',
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1400&q=85'
+      ],
+      description: 'Die Casa Tramonto ist unsere großzügigste Unterkunft — perfekt für Familien oder Freunde, die zusammen einen unvergesslichen Sardinien-Urlaub erleben möchten. Die helle, moderne Wohnung verteilt sich auf 65 m² mit großer Sonnenterrasse, von der aus Sie jeden Abend einen atemberaubenden Blick auf den Sonnenuntergang über dem Meer genießen.',
+      features: [
+        { icon: '🛏', label: '2 Schlafzimmer' },
+        { icon: '👥', label: 'Bis 4 Personen' },
+        { icon: '🛁', label: '1 Bad mit Dusche' },
+        { icon: '📐', label: '65 m² Wohnfläche' },
+        { icon: '🌅', label: 'Terrasse mit Meerblick' },
+        { icon: '🚗', label: 'Eigener Parkplatz' }
+      ],
+      amenities: [
+        'Vollausgestattete Küche (Herd, Backofen, Kühlschrank, Geschirrspüler)',
+        'Klimaanlage in allen Räumen',
+        'Schnelles WLAN (kostenfrei)',
+        'Waschmaschine im Bad',
+        'Smart-TV mit Streaming',
+        'Bügeleisen, Föhn, Wasserkocher',
+        'Strandhandtücher und Sonnenschirme',
+        'Wickelauflage und Babybett auf Anfrage'
+      ],
+      info: [
+        'Check-in: ab 15:00 Uhr · Check-out: bis 11:00 Uhr',
+        '200 m zum Sandstrand',
+        'Bettwäsche und Endreinigung im Preis enthalten',
+        'Haustiere auf Anfrage möglich',
+        'Nichtraucher-Wohnung (Rauchen auf der Terrasse erlaubt)',
+        'Mindestaufenthalt 3 Nächte (Juli/August: 7 Nächte)'
+      ]
+    },
+    mare: {
+      title: 'Casa Mare',
+      tagline: 'Romantik direkt am Meer',
+      price: '95 €',
+      formValue: 'Casa Mare (bis 2 Pers.)',
+      images: [
+        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1400&q=85',
+        'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1400&q=85',
+        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1400&q=85',
+        'https://images.unsplash.com/photo-1574643156929-51fa098b0394?w=1400&q=85'
+      ],
+      description: 'Die Casa Mare ist unser kleines, romantisches Studio direkt am Wasser. Mit nur 40 m² und liebevoller Einrichtung im sardischen Stil ideal für Paare, die einen ruhigen, intimen Urlaub fernab vom Trubel suchen. Aufwachen mit dem Geräusch der Wellen, Kaffee auf der kleinen Terrasse, die Füße zwei Minuten später im türkisblauen Meer.',
+      features: [
+        { icon: '🛏', label: '1 Schlafzimmer' },
+        { icon: '👥', label: 'Bis 2 Personen' },
+        { icon: '🛁', label: '1 Bad mit Dusche' },
+        { icon: '📐', label: '40 m² Wohnfläche' },
+        { icon: '🌊', label: '50 m bis zum Strand' },
+        { icon: '🚗', label: 'Eigener Parkplatz' }
+      ],
+      amenities: [
+        'Kompakte Küchenzeile (Herd, Kühlschrank, Espressomaschine)',
+        'Klimaanlage',
+        'Schnelles WLAN (kostenfrei)',
+        'Smart-TV mit Streaming',
+        'Bügeleisen, Föhn, Wasserkocher',
+        'Strandhandtücher und Sonnenschirm',
+        'Kleine Terrasse mit Bistro-Set'
+      ],
+      info: [
+        'Check-in: ab 15:00 Uhr · Check-out: bis 11:00 Uhr',
+        '50 m zum Sandstrand',
+        'Bettwäsche und Endreinigung im Preis enthalten',
+        'Keine Haustiere',
+        'Nichtraucher-Wohnung',
+        'Mindestaufenthalt 3 Nächte (Juli/August: 5 Nächte)',
+        'Ideal für romantische Aufenthalte und Kurztrips'
+      ]
+    }
+  };
+
+  (function aptModal() {
+    const overlay   = document.getElementById('apt-modal-overlay');
+    const gallery   = document.getElementById('apt-modal-gallery');
+    const closeBtn  = document.getElementById('apt-modal-close');
+    const prevBtn   = document.getElementById('apt-modal-prev');
+    const nextBtn   = document.getElementById('apt-modal-next');
+    const dotsBox   = document.getElementById('apt-modal-dots');
+    const counter   = document.getElementById('apt-modal-counter');
+    const titleEl   = document.getElementById('apt-modal-title');
+    const subEl     = document.getElementById('apt-modal-tagline');
+    const descEl    = document.getElementById('apt-modal-desc');
+    const featBox   = document.getElementById('apt-modal-features');
+    const amBox     = document.getElementById('apt-modal-amenities');
+    const infoBox   = document.getElementById('apt-modal-info');
+    const priceEl   = document.getElementById('apt-modal-price');
+    const ctaBtn    = document.getElementById('apt-modal-cta-btn');
+
+    let currentImages = [];
+    let currentIdx = 0;
+    let currentFormValue = '';
+
+    function renderSlides(images) {
+      /* Alte Slides entfernen */
+      [...gallery.querySelectorAll('.apt-modal-slide')].forEach(el => el.remove());
+      dotsBox.innerHTML = '';
+      currentImages = images;
+      currentIdx = 0;
+      images.forEach((src, i) => {
+        const slide = document.createElement('div');
+        slide.className = 'apt-modal-slide' + (i === 0 ? ' active' : '');
+        const img = document.createElement('img');
+        img.src = src; img.alt = ''; img.loading = i === 0 ? 'eager' : 'lazy';
+        slide.appendChild(img);
+        gallery.insertBefore(slide, gallery.querySelector('.apt-modal-nav'));
+        const dot = document.createElement('button');
+        dot.className = 'apt-modal-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('aria-label', `Bild ${i+1}`);
+        dot.addEventListener('click', () => goTo(i));
+        dotsBox.appendChild(dot);
+      });
+      updateCounter();
+    }
+    function updateCounter() {
+      counter.textContent = `${currentIdx + 1} / ${currentImages.length}`;
+      [...gallery.querySelectorAll('.apt-modal-slide')].forEach((el, i) => el.classList.toggle('active', i === currentIdx));
+      [...dotsBox.children].forEach((el, i) => el.classList.toggle('active', i === currentIdx));
+    }
+    function goTo(i) { currentIdx = (i + currentImages.length) % currentImages.length; updateCounter(); }
+    function next() { goTo(currentIdx + 1); }
+    function prev() { goTo(currentIdx - 1); }
+
+    function openModal(key) {
+      const d = APT_DATA[key];
+      if (!d) return;
+      titleEl.textContent = d.title;
+      subEl.textContent   = d.tagline;
+      descEl.textContent  = d.description;
+      priceEl.textContent = d.price;
+      currentFormValue    = d.formValue;
+      ctaBtn.href         = '#anfrage';
+
+      featBox.innerHTML = d.features.map(f =>
+        `<div class="apt-modal-feat"><div class="apt-modal-feat-icon">${f.icon}</div><div>${f.label}</div></div>`
+      ).join('');
+      amBox.innerHTML   = d.amenities.map(a => `<li>${a}</li>`).join('');
+      infoBox.innerHTML = d.info.map(i => `<li>${i}</li>`).join('');
+
+      renderSlides(d.images);
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    /* Trigger-Buttons */
+    document.querySelectorAll('[data-modal]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        openModal(btn.dataset.modal);
+      });
+    });
+    /* Schließen */
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    /* Navigation */
+    prevBtn.addEventListener('click', prev);
+    nextBtn.addEventListener('click', next);
+    /* Keyboard */
+    document.addEventListener('keydown', e => {
+      if (!overlay.classList.contains('open')) return;
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    });
+    /* Touch-Swipe (mobile) */
+    let touchX = 0;
+    gallery.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+    gallery.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 50) { dx < 0 ? next() : prev(); }
+    });
+    /* CTA → Anfrageformular mit Vorbelegung */
+    ctaBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        const sel = document.getElementById('wohnung');
+        if (sel && currentFormValue) {
+          const opt = [...sel.options].find(o => o.textContent === currentFormValue);
+          if (opt) sel.value = opt.value || opt.textContent;
+        }
+        closeModal();
+      }, 100);
+    });
+  })();
+
+  /* "Anfragen →" Buttons: Wohnung im Formular vorauswählen */
+  document.querySelectorAll('[data-prefill]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setTimeout(() => {
+        const sel = document.getElementById('wohnung');
+        if (sel) {
+          const val = btn.dataset.prefill;
+          const opt = [...sel.options].find(o => o.textContent === val);
+          if (opt) sel.value = opt.value || opt.textContent;
+        }
+      }, 200);
+    });
   });
 </script>
 
@@ -1036,8 +1488,8 @@
     <span class="et-topbar-title">Bearbeitungsmodus</span>
   </div>
   <div class="et-topbar-right">
-    <button class="et-tbtn" id="et-save-btn" title="In index.draft.html speichern (sicher)" disabled="">⏳ Speichern…</button>
-    <button class="et-tbtn" id="et-save-live-btn" title="Direkt in index.html speichern (Live!)" disabled="">🚀 Direkt Live</button>
+    <button class="et-tbtn" id="et-save-btn" title="In index.draft.html speichern (sicher)">💾 Als Draft</button>
+    <button class="et-tbtn" id="et-save-live-btn" title="Direkt in index.html speichern (Live!)">🚀 Direkt Live</button>
     <button class="et-tbtn" id="et-exit-btn">✕ Beenden</button>
   </div>
 </div>
@@ -1099,7 +1551,7 @@
 
 <!-- Properties-Bar -->
 <div id="et-propsbar">
-  <span class="et-pb-hint" id="et-hint">↖ Element anklicken zum Bearbeiten</span>
+  <span class="et-pb-hint" id="et-hint" style="">↖ Element anklicken zum Bearbeiten</span>
 
   <div id="et-text-tools" style="display:none;align-items:center;gap:5px;">
     <span class="et-pb-label">Text:</span>
@@ -1149,14 +1601,14 @@
     <input type="text" class="et-link-input" id="et-btn-link" placeholder="🔗 Link-URL">
   </div>
 
-  <div id="et-media-tools" style="display:none;align-items:center;gap:10px;">
+  <div id="et-media-tools" style="display: none; align-items: center; gap: 10px;">
     <span class="et-pb-label">Medien:</span>
     <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.06);border-radius:6px;padding:4px 8px;">
-      <img id="et-media-thumb" src="" style="width:56px;height:38px;object-fit:cover;border-radius:4px;border:1px solid rgba(0,0,0,.1);display:none;">
-      <div id="et-media-no-thumb" style="width:56px;height:38px;border-radius:4px;border:1px dashed rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(0,0,0,.3);">🖼</div>
+      <img id="et-media-thumb" src="uploads/20260515-211746-sardinien.png" style="width: 56px; height: 38px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.1);">
+      <div id="et-media-no-thumb" style="width: 56px; height: 38px; border-radius: 4px; border: 1px dashed rgba(0, 0, 0, 0.2); align-items: center; justify-content: center; font-size: 18px; color: rgba(0, 0, 0, 0.3); display: none;">🎬</div>
       <div style="line-height:1.3;">
         <div id="et-media-type-label" style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;">Bild</div>
-        <div id="et-media-size-rec" style="font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;">–</div>
+        <div id="et-media-size-rec" style="font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;">Empfohlen: 1920 × 1080 px</div>
       </div>
     </div>
     <div class="et-pb-sep"></div>
@@ -1325,6 +1777,11 @@
       else select(mediaEl, 'media');
       return;
     }
+    /* Hero-Special: Klick irgendwo im #hero (Video, Overlay) → Hero-Background selektieren */
+    if (et.closest('#hero') && heroBg) {
+      select(heroBg, 'hero');
+      return;
+    }
     if (cardEl) { select(cardEl, 'card'); return; }
     if (secEl)  { select(secEl,  'section'); return; }
     deselect();
@@ -1474,54 +1931,77 @@
   $('et-sec-img').addEventListener('click', () => bgInput.click());
   $('et-sec-vid').addEventListener('click', () => bgInput.click());
 
-  function loadMedia(file, kind) {
+  /* Upload zum Server: gibt Datei-URL zurück (oder null bei Fehler) */
+  async function uploadToServer(file) {
+    const isLocal  = ['localhost','127.0.0.1'].includes(location.hostname);
+    const endpoint = isLocal ? 'http://localhost:8080/upload' : './upload.php';
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch(endpoint, { method: 'POST', body: fd });
+      if (!r.ok) return null;
+      const json = await r.json().catch(() => null);
+      return (json && json.ok && json.url) ? json.url : null;
+    } catch(_) { return null; }
+  }
+
+  function applyMediaSrc(src, kind) {
+    if (selType === 'hero') {
+      if (kind === 'video') {
+        let vid = document.querySelector('#hero video');
+        if (!vid) { vid = document.createElement('video'); vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; document.getElementById('hero').prepend(vid); }
+        vid.innerHTML = ''; vid.src = src;
+      } else {
+        const vid = document.querySelector('#hero video'); if (vid) vid.remove();
+        heroBg.style.backgroundImage = `url('${src}')`;
+        heroBg.style.backgroundSize = 'cover';
+        heroBg.style.backgroundPosition = 'center';
+      }
+    } else if (selType === 'media' && selEl) {
+      const img = selEl._etImg || selEl.querySelector('img');
+      if (!img) return;
+      if (kind === 'video') {
+        const vid = document.createElement('video');
+        vid.src = src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.className = 'et-video-el';
+        img.style.display = 'none';
+        img.insertAdjacentElement('afterend', vid);
+      } else {
+        const existVid = selEl.querySelector('video.et-video-el');
+        if (existVid) { existVid.remove(); img.style.display = ''; }
+        img.src = src;
+      }
+    } else if (selType === 'section' && selEl) {
+      if (kind === 'video') {
+        const old = selEl.querySelector('video.et-bg-vid'); if (old) old.remove();
+        const vid = document.createElement('video');
+        vid.src = src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.className = 'et-bg-vid';
+        vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
+        selEl.style.position = 'relative'; selEl.style.overflow = 'hidden';
+        selEl.prepend(vid);
+      } else {
+        selEl.style.backgroundImage = `url('${src}')`;
+        selEl.style.backgroundSize = 'cover';
+        selEl.style.backgroundPosition = 'center';
+      }
+    }
+    if (selType === 'media' || selType === 'hero') {
+      const thumb = $('et-media-thumb'), noThumb = $('et-media-no-thumb'), tLabel = $('et-media-type-label');
+      if (kind === 'image') { thumb.src = src; thumb.style.display = ''; noThumb.style.display = 'none'; tLabel.textContent = 'Bild'; }
+      else { thumb.style.display = 'none'; noThumb.style.display = ''; noThumb.textContent = '🎬'; tLabel.textContent = 'Video'; }
+    }
+  }
+
+  async function loadMedia(file, kind) {
+    /* Erst Upload zum Server versuchen (Datei statt base64) */
+    const uploadedUrl = await uploadToServer(file);
+    if (uploadedUrl) {
+      applyMediaSrc(uploadedUrl, kind);
+      return;
+    }
+    /* Fallback: base64 inline (wenn kein Server-Upload möglich) */
+    console.warn('[Editor] Upload fehlgeschlagen — Fallback auf base64 inline');
     const reader = new FileReader();
-    reader.onload = ev => {
-      const src = ev.target.result;
-      if (selType === 'hero') {
-        if (kind === 'video') {
-          let vid = document.querySelector('#hero video');
-          if (!vid) { vid = document.createElement('video'); vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; document.getElementById('hero').prepend(vid); }
-          vid.innerHTML = ''; vid.src = src;
-        } else {
-          const vid = document.querySelector('#hero video'); if (vid) vid.remove();
-          heroBg.style.backgroundImage = `url('${src}')`;
-          heroBg.style.backgroundSize = 'cover';
-          heroBg.style.backgroundPosition = 'center';
-        }
-      } else if (selType === 'media' && selEl) {
-        const img = selEl._etImg || selEl.querySelector('img');
-        if (!img) return;
-        if (kind === 'video') {
-          const vid = document.createElement('video');
-          vid.src = src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.className = 'et-video-el';
-          img.style.display = 'none';
-          img.insertAdjacentElement('afterend', vid);
-        } else {
-          const existVid = selEl.querySelector('video.et-video-el');
-          if (existVid) { existVid.remove(); img.style.display = ''; }
-          img.src = src;
-        }
-      } else if (selType === 'section' && selEl) {
-        if (kind === 'video') {
-          const old = selEl.querySelector('video.et-bg-vid'); if (old) old.remove();
-          const vid = document.createElement('video');
-          vid.src = src; vid.autoplay = true; vid.muted = true; vid.loop = true; vid.playsInline = true; vid.className = 'et-bg-vid';
-          vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;';
-          selEl.style.position = 'relative'; selEl.style.overflow = 'hidden';
-          selEl.prepend(vid);
-        } else {
-          selEl.style.backgroundImage = `url('${src}')`;
-          selEl.style.backgroundSize = 'cover';
-          selEl.style.backgroundPosition = 'center';
-        }
-      }
-      if (selType === 'media' || selType === 'hero') {
-        const thumb = $('et-media-thumb'), noThumb = $('et-media-no-thumb'), tLabel = $('et-media-type-label');
-        if (kind === 'image') { thumb.src = src; thumb.style.display = ''; noThumb.style.display = 'none'; tLabel.textContent = 'Bild'; }
-        else { thumb.style.display = 'none'; noThumb.style.display = ''; noThumb.textContent = '🎬'; tLabel.textContent = 'Video'; }
-      }
-    };
+    reader.onload = ev => applyMediaSrc(ev.target.result, kind);
     reader.readAsDataURL(file);
   }
 
@@ -1641,6 +2121,20 @@
     clone.querySelectorAll('[draggable]').forEach(el => el.removeAttribute('draggable'));
     clone.querySelectorAll('input[type="file"]').forEach(el => el.value = '');
 
+    /* ── Save-Button & Save-Live-Button Zustand zurücksetzen ──
+       Sonst landet "⏳ Speichern…" + disabled in der gespeicherten HTML! */
+    const cSave = clone.querySelector('#et-save-btn');
+    if (cSave) { cSave.textContent = '💾 Als Draft'; cSave.disabled = false; cSave.removeAttribute('disabled'); cSave.style.background = ''; }
+    const cSaveLive = clone.querySelector('#et-save-live-btn');
+    if (cSaveLive) { cSaveLive.textContent = '🚀 Direkt Live'; cSaveLive.disabled = false; cSaveLive.removeAttribute('disabled'); cSaveLive.style.background = ''; }
+
+    /* Settings-Panel im Clone schließen falls offen */
+    clone.querySelector('#et-settings-panel')?.classList.remove('open');
+    clone.querySelector('#et-settings-btn')?.classList.remove('open');
+
+    /* Apartment-Modal schließen falls offen */
+    clone.querySelector('#apt-modal-overlay')?.classList.remove('open');
+
     return '<!DOCTYPE html>\n' + clone.outerHTML;
   }
 
@@ -1659,7 +2153,12 @@
     btn.disabled = true;
     otherBtn.disabled = true;
     btn.textContent = '⏳ Speichern…';
-    exit();
+    /* WICHTIG: exit() NICHT mehr aufrufen — der Editor soll während des
+       Speicherns drinbleiben. buildCleanHTML() macht alle Cleanups
+       NUR auf dem Clone, der Live-DOM bleibt unverändert. */
+    /* Aktuelle Selektion temporär deselektieren (ohne deselect()) damit
+       der Clone keine Hover/Selected-Klassen mehr trägt — wird im Clone
+       sowieso entfernt. */
     const html  = buildCleanHTML();
     const token = sessionStorage.getItem('et_save_token') || '';
 
@@ -1716,7 +2215,7 @@
       btn.disabled = false;
       otherBtn.disabled = false;
     }
-    enter();
+    /* enter() entfernt — der Editor war nie aus, kein Re-Enter nötig */
   }
 
   /* ═══ HELPERS ═══ */
