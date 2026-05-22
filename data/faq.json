@@ -1,0 +1,35 @@
+{
+  "_schema_version": 1,
+  "_updated": "2026-05-16T00:00:00Z",
+
+  "items": [
+    {
+      "id": "faq-1",
+      "question": "Wie kann ich anreisen?",
+      "answer": "Der nächste Flughafen ist Olbia (~50 km). Wir empfehlen einen Mietwagen, da die Anlage ländlich gelegen ist. Auf Wunsch organisieren wir einen Transfer.",
+      "active": true,
+      "order": 1
+    },
+    {
+      "id": "faq-2",
+      "question": "Was ist im Preis enthalten?",
+      "answer": "Im Preis enthalten sind: WLAN, Bettwäsche, Handtücher, Endreinigung, Parkplatz. Strom und Wasser sind ebenfalls inklusive.",
+      "active": true,
+      "order": 2
+    },
+    {
+      "id": "faq-3",
+      "question": "Sind Haustiere erlaubt?",
+      "answer": "Kleine Haustiere sind nach Absprache willkommen. Bitte teilen Sie uns das bei Ihrer Anfrage mit.",
+      "active": true,
+      "order": 3
+    },
+    {
+      "id": "faq-4",
+      "question": "Gibt es eine Mindestaufenthaltsdauer?",
+      "answer": "In der Hauptsaison (Juli/August): 7 Nächte. In der Nebensaison: 3 Nächte.",
+      "active": true,
+      "order": 4
+    }
+  ]
+}

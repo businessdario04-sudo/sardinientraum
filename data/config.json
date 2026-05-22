@@ -1,0 +1,74 @@
+{
+  "_schema_version": 1,
+  "_updated": "2026-05-16T00:00:00Z",
+
+  "company": {
+    "name": "Sardinientraum",
+    "tagline": "Ferienwohnungen in La Caletta",
+    "location": "La Caletta, Siniscola, Sardinien",
+    "address": "",
+    "country": "IT",
+    "owner_name": "",
+    "vat_id": "",
+    "tax_id": ""
+  },
+
+  "contact": {
+    "email": "",
+    "phone": "",
+    "whatsapp": "",
+    "maps_url": ""
+  },
+
+  "social": {
+    "instagram": "",
+    "facebook": "",
+    "airbnb": "",
+    "booking": ""
+  },
+
+  "seo": {
+    "title": "Sardinientraum – Ferienwohnungen in La Caletta",
+    "description": "Moderne Ferienwohnungen direkt am Meer in La Caletta, Sardinien. Persönliche Anfrage, individueller Urlaub.",
+    "og_image": "",
+    "keywords": "Sardinien, Ferienwohnung, La Caletta, Urlaub, Italien"
+  },
+
+  "theme": {
+    "name": "modern-blue",
+    "colors": {
+      "primary": "#1e4d6b",
+      "primary_light": "#2e6d96",
+      "accent": "#c8975a",
+      "sand": "#f0e6d3",
+      "sand_dark": "#d9c9a8",
+      "white": "#fdfaf6",
+      "text": "#2a2a2a",
+      "text_light": "#6b6b6b"
+    },
+    "fonts": {
+      "heading": "'Playfair Display', serif",
+      "body": "'Inter', sans-serif"
+    },
+    "radius": "16px"
+  },
+
+  "form": {
+    "subject": "Neue Buchungsanfrage – Sardinientraum",
+    "honeypot_field": "website_url",
+    "min_submit_time_sec": 3
+  },
+
+  "legal": {
+    "impressum_published": false,
+    "datenschutz_published": false,
+    "cookie_hint_enabled": true,
+    "cookie_hint_text": "Diese Webseite verwendet keine Tracking-Cookies. Nur essenzielle technische Cookies für das Anfrageformular."
+  },
+
+  "features": {
+    "faq_enabled": true,
+    "inquiries_enabled": true,
+    "newsletter_enabled": false
+  }
+}

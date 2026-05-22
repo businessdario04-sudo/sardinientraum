@@ -1,0 +1,97 @@
+# ════════════════════════════════════════════════════════════
+#  Sardinientraum — Apache Konfiguration
+#  HTTPS-Zwang, Security-Header, Schutz von /data
+# ════════════════════════════════════════════════════════════
+
+# ──── HTTPS-Zwang ────
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # HTTP → HTTPS (nur in Production; lokales http://localhost ausgenommen)
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !^localhost
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# ──── Security-Header ────
+<IfModule mod_headers.c>
+    # HSTS — Browser merkt sich für 1 Jahr nur HTTPS
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+
+    # Verhindert dass die Seite in iframe geladen wird (Clickjacking-Schutz)
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # MIME-Sniffing aus
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Referrer-Verhalten
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Permissions-Policy: keine kritischen APIs erlauben
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=()"
+
+    # Content-Security-Policy (pragmatisch — Inline für Editor, externe Bilder/Fonts erlaubt)
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://images.unsplash.com; media-src 'self'; connect-src 'self'; frame-ancestors 'self'; form-action 'self'"
+</IfModule>
+
+# ──── Directory-Listing blockieren ────
+Options -Indexes
+
+# ──── Versteckte Dateien schützen ────
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Spezial-Erlaubnis: .well-known (für Let's Encrypt + sicherheit.txt)
+<IfModule mod_alias.c>
+    RedirectMatch 403 /\.(?!well-known)
+</IfModule>
+
+# ──── Backup-Dateien schützen ────
+<FilesMatch "\.(bak|backup|orig|old|log|sql|swp|tmp)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ──── Setup-Dateien schützen (nach Setup nicht mehr nötig) ────
+<FilesMatch "^(setup|install|composer)\.(json|lock|php)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ──── Caching für statische Assets ────
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# ──── Komprimierung ────
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json text/xml image/svg+xml
+</IfModule>
+
+# ──── Default-Charset ────
+AddDefaultCharset UTF-8
