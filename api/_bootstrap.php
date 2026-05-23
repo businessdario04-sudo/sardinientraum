@@ -34,7 +34,8 @@ header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
 // ─── CORS: nur eigene Domain erlauben ───────────────────────
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $host   = $_SERVER['HTTP_HOST']   ?? '';
-$isLocal = in_array($host, ['localhost:8080', '127.0.0.1:8080', 'localhost', '127.0.0.1'], true);
+$hostname = strtok($host, ':');
+$isLocal = in_array($hostname, ['localhost', '127.0.0.1'], true);
 
 $allowedOrigins = $isLocal
     ? ['http://localhost:8080', 'http://127.0.0.1:8080', 'http://localhost', 'http://127.0.0.1']
