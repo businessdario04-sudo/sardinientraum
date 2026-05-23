@@ -341,7 +341,8 @@
 
   // ─── Editor laden wenn ?edit=1 ───
   async function maybeLoadEditor() {
-    if (!new URLSearchParams(location.search).has('edit')) return;
+    const params = new URLSearchParams(location.search);
+    if (!params.has('edit')) return;
     try {
       const r = await fetch('/api/auth-status.php', { credentials: 'same-origin' });
       const j = await r.json();
@@ -362,6 +363,80 @@
     document.body.appendChild(js);
   }
 
+  // ─── Draft-Vorschau wenn ?preview_draft=1 ───
+  async function maybeShowDraftPreview() {
+    if (!new URLSearchParams(location.search).has('preview_draft')) return;
+    let csrf = '';
+    try {
+      const r = await fetch('/api/auth-status.php', { credentials: 'same-origin' });
+      const j = await r.json();
+      if (!j.ok || !j.logged_in) return;
+      csrf = j.csrf || '';
+    } catch (_) { return; }
+
+    // Draft-Inhalt laden und anwenden
+    try {
+      const r = await fetch('/api/load-content.php?target=pages&draft=1', { credentials: 'same-origin' });
+      const j = await r.json();
+      if (j.ok && j.data) {
+        applyData(j.data);
+        window.__SARDINIA_PAGES__ = j.data;
+      }
+    } catch (_) {}
+
+    // Draft-Leiste einblenden
+    const css = document.createElement('link');
+    css.rel = 'stylesheet'; css.href = '/assets/css/editor.css';
+    document.head.appendChild(css);
+
+    const bar = document.createElement('div');
+    bar.id = 'et-draft-bar';
+    bar.innerHTML = `
+      <div class="et-draft-bar-info">
+        <span style="font-size:1.4rem;">👁</span>
+        <div>
+          <div class="et-draft-bar-label">DRAFT-Vorschau — nicht Live</div>
+          <div class="et-draft-bar-sub">Besucher sehen diese Version noch nicht.</div>
+        </div>
+      </div>
+      <div class="et-draft-bar-actions">
+        <button class="et-draft-publish-btn" id="et-draft-publish-btn">🚀 Jetzt veröffentlichen</button>
+        <button class="et-draft-close-btn"   id="et-draft-close-btn">✕ Schließen</button>
+      </div>
+    `;
+    document.body.prepend(bar);
+    document.body.classList.add('et-draft-preview');
+
+    document.getElementById('et-draft-publish-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('et-draft-publish-btn');
+      btn.disabled = true; btn.textContent = '⏳ Veröffentliche…';
+      try {
+        const r = await fetch('/api/draft-promote.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+          credentials: 'same-origin',
+          body: JSON.stringify({})
+        });
+        const j = await r.json();
+        if (j.ok) {
+          btn.textContent = '✅ Veröffentlicht!';
+          btn.style.background = '#22c55e';
+          setTimeout(() => location.replace('/'), 1500);
+        } else {
+          alert('Fehler: ' + (j.error || 'unbekannt'));
+          btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
+        }
+      } catch (e) {
+        alert('Verbindungsfehler: ' + e.message);
+        btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
+      }
+    });
+
+    document.getElementById('et-draft-close-btn').addEventListener('click', () => {
+      location.replace('/');
+    });
+  }
+
   // ─── Boot ───
   async function boot() {
     bindNav();
@@ -377,6 +452,7 @@
     loadFAQ();   // parallel laden, blockt boot nicht
     document.dispatchEvent(new CustomEvent('sardinia:data-loaded', { detail: { pages, config } }));
     await maybeLoadEditor();
+    await maybeShowDraftPreview();
   }
 
   if (document.readyState === 'loading') {

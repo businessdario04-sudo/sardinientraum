@@ -51,6 +51,47 @@ if ($method === 'POST') {
     }
 
     $body = readJsonBody();
+
+    // ─── Manuelle Anfrage anlegen ────────────────────────────
+    if (($body['action'] ?? '') === 'create') {
+        $g = $body['guest']   ?? [];
+        $r = $body['request'] ?? [];
+        $email = sanitizeString((string)($g['email'] ?? ''), 150);
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            respondJson(['ok' => false, 'error' => 'invalid_email'], 422);
+        }
+        $id = 'inq-' . date('Ymd-His') . '-' . bin2hex(random_bytes(3)) . '-manual';
+        $newItem = [
+            'id'      => $id,
+            'created' => date('c'),
+            'status'  => 'neu',
+            'manual'  => true,
+            'guest'   => [
+                'vorname'  => sanitizeString((string)($g['vorname']  ?? ''), 80),
+                'nachname' => sanitizeString((string)($g['nachname'] ?? ''), 80),
+                'email'    => $email,
+                'telefon'  => sanitizeString((string)($g['telefon']  ?? ''), 50),
+            ],
+            'request' => [
+                'anreise'   => sanitizeString((string)($r['anreise']   ?? ''), 20),
+                'abreise'   => sanitizeString((string)($r['abreise']   ?? ''), 20),
+                'wohnung'   => sanitizeString((string)($r['wohnung']   ?? ''), 100),
+                'personen'  => sanitizeString((string)($r['personen']  ?? ''), 20),
+                'nachricht' => sanitizeString((string)($r['nachricht'] ?? ''), 5000),
+            ],
+            'notes'   => sanitizeString((string)($body['notes'] ?? ''), 5000),
+            'meta'    => ['source' => 'manual', 'ip' => clientIp()],
+        ];
+        $data  = readJson($file);
+        if (empty($data['items'])) $data = ['_schema_version' => 1, 'items' => []];
+        array_unshift($data['items'], $newItem);
+        if (count($data['items']) > 1000) $data['items'] = array_slice($data['items'], 0, 1000);
+        $data['_updated'] = date('c');
+        writeJson($file, $data);
+        logEvent('inquiry_manual', ['id' => $id]);
+        respondJson(['ok' => true, 'id' => $id]);
+    }
+
     $id = (string)($body['id'] ?? '');
     if ($id === '') respondJson(['ok' => false, 'error' => 'no_id'], 400);
 

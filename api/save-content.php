@@ -29,9 +29,10 @@ if (!rateLimit('save-content', 60, 60)) {
     respondJson(['ok' => false, 'error' => 'too_many_requests'], 429);
 }
 
-$body   = readJsonBody();
-$target = (string)($body['target'] ?? '');
-$patch  = $body['patch'] ?? null;
+$body    = readJsonBody();
+$target  = (string)($body['target'] ?? '');
+$patch   = $body['patch'] ?? null;
+$isDraft = !empty($body['draft']) && (bool)$body['draft'];
 
 // ─── Validierung: nur erlaubte Targets ──────────────────────
 $allowedTargets = ['pages', 'config'];
@@ -43,7 +44,9 @@ if (!is_array($patch) || empty($patch)) {
     respondJson(['ok' => false, 'error' => 'invalid_patch'], 400);
 }
 
-$file = DATA_DIR . '/' . $target . '.json';
+// Draft schreibt in TARGET.draft.json, Basis ist immer der Live-Stand
+$liveFile  = DATA_DIR . '/' . $target . '.json';
+$file      = $isDraft ? DATA_DIR . '/' . $target . '.draft.json' : $liveFile;
 
 // ─── Whitelist der Top-Level-Keys (Patch darf nicht alles ändern) ─
 $allowedKeys = [
@@ -68,10 +71,15 @@ if ($patchSize > 2 * 1024 * 1024) {   // 2 MB
     respondJson(['ok' => false, 'error' => 'patch_too_large'], 413);
 }
 
-// ─── Bestehende Daten laden ─────────────────────────────────
-$current = readJson($file);
+// ─── Bestehende Daten laden (Draft basiert immer auf Live) ──
+$current = readJson($liveFile);
 if (empty($current)) {
     respondJson(['ok' => false, 'error' => 'target_missing'], 500);
+}
+// Wenn Draft existiert, damit weitermergen (nicht wieder vom Live starten)
+if ($isDraft && file_exists($file)) {
+    $draftBase = readJson($file);
+    if (!empty($draftBase)) $current = $draftBase;
 }
 
 // ─── Snapshot vor Schreiben ─────────────────────────────────
@@ -116,13 +124,15 @@ if (!writeJson($file, $merged)) {
 }
 
 logEvent('content_saved', [
-    'target' => $target,
-    'keys'   => array_keys($patch),
-    'size'   => $patchSize
+    'target'  => $target,
+    'draft'   => $isDraft,
+    'keys'    => array_keys($patch),
+    'size'    => $patchSize
 ]);
 
 respondJson([
     'ok'        => true,
+    'draft'     => $isDraft,
     'updated'   => $merged['_updated'],
     'snapshot'  => basename($snapshotFile)
 ]);

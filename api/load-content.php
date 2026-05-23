@@ -9,11 +9,25 @@
 declare(strict_types=1);
 require_once __DIR__ . '/_bootstrap.php';
 
-$target = $_GET['target'] ?? 'pages';
+$target    = $_GET['target'] ?? 'pages';
+$wantDraft = ($_GET['draft'] ?? '') === '1';
 
 $public = ['pages', 'config', 'faq'];
 if (!in_array($target, $public, true)) {
     respondJson(['ok' => false, 'error' => 'invalid_target'], 400);
+}
+
+// Draft ist nicht öffentlich
+if ($wantDraft) {
+    requireLogin();
+    $draftFile = DATA_DIR . '/' . $target . '.draft.json';
+    $exists    = file_exists($draftFile);
+    respondJson([
+        'ok'       => $exists,
+        'exists'   => $exists,
+        'is_draft' => true,
+        'data'     => $exists ? readJson($draftFile) : null,
+    ]);
 }
 
 if (!rateLimit('load-content', 120, 60)) {
@@ -26,13 +40,10 @@ if (empty($data)) {
     respondJson(['ok' => false, 'error' => 'not_found'], 404);
 }
 
-// Bei config.json sensible Felder nicht ausliefern
 if ($target === 'config') {
     unset($data['_note']);
-    // contact.email ist ok (steht eh im HTML), aber wir geben nichts Verstecktes raus
 }
 
-// Cache-Control: kurz cachen (1 min)
 header('Cache-Control: public, max-age=60');
 
 respondJson([

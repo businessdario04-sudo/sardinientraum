@@ -244,8 +244,26 @@
         <div class="admin-card">
           <div class="admin-card-icon">🔒</div>
           <h3>Passwort ändern</h3>
-          <p>Admin-Passwort für mehr Sicherheit ändern.</p>
-          <button class="btn btn-outline" id="change-pw-btn">→ Passwort ändern</button>
+          <p>Admin-Passwort in den Einstellungen → Sicherheit ändern.</p>
+          <button class="btn btn-outline" onclick="document.querySelector('[data-tab=settings]').click();setTimeout(()=>document.getElementById('s-admin-pass-new')?.focus(),200);">→ Zu Einstellungen</button>
+        </div>
+      </div>
+
+      <!-- Draft-Status -->
+      <div id="draft-status-card" style="display:none;background:rgba(200,151,90,.08);border:1px solid rgba(200,151,90,.35);border-radius:14px;padding:20px 24px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:1.6rem;">📝</span>
+            <div>
+              <div style="font-weight:700;color:#c8975a;font-size:.95rem;">Entwurf (Draft) vorhanden</div>
+              <div style="font-size:.8rem;color:var(--muted);margin-top:2px;">Unveröffentlichte Änderungen warten auf Freigabe.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <a class="btn btn-outline" id="draft-preview-btn" href="/index.html?preview_draft=1" target="_blank">👁 Vorschau</a>
+            <button class="btn btn-green" id="draft-promote-btn">🚀 Jetzt veröffentlichen</button>
+            <button class="btn btn-outline" id="draft-discard-btn" style="border-color:var(--red);color:var(--red);">🗑 Verwerfen</button>
+          </div>
         </div>
       </div>
 
@@ -509,21 +527,24 @@
         <div class="settings-body">
           <div class="setting-row">
             <div class="setting-label">Benutzername</div>
-            <input type="text" class="field-sm" id="s-admin-user" placeholder="admin" />
+            <input type="text" class="field-sm" id="s-admin-user" readonly style="opacity:.6;cursor:default;" />
           </div>
           <div class="setting-row">
-            <div class="setting-label">Neues Passwort<span>Leer lassen = nicht ändern</span></div>
-            <input type="password" class="field-sm" id="s-admin-pass-new" placeholder="Neues Passwort (min. 6 Zeichen)" />
+            <div class="setting-label">Aktuelles Passwort</div>
+            <input type="password" class="field-sm" id="s-admin-pass-current" placeholder="Zur Bestätigung" autocomplete="current-password" />
           </div>
           <div class="setting-row">
-            <div class="setting-label">Passwort wiederholen</div>
-            <input type="password" class="field-sm" id="s-admin-pass-confirm" placeholder="Wiederholen" />
+            <div class="setting-label">Neues Passwort<span>Min. 8 Zeichen</span></div>
+            <input type="password" class="field-sm" id="s-admin-pass-new" placeholder="Neues Passwort" autocomplete="new-password" />
           </div>
-          <div id="admin-cred-msg" style="font-size:.82rem;display:none;"></div>
+          <div class="setting-row">
+            <div class="setting-label">Wiederholen</div>
+            <input type="password" class="field-sm" id="s-admin-pass-confirm" placeholder="Neues Passwort wiederholen" autocomplete="new-password" />
+          </div>
         </div>
         <div class="settings-footer">
-          <span class="settings-save-info">Zugangsdaten werden lokal im Browser gespeichert.</span>
-          <button class="btn btn-blue" id="save-credentials-btn">Zugangsdaten speichern</button>
+          <span id="pw-change-msg" style="font-size:.82rem;display:none;"></span>
+          <button class="btn btn-blue" id="settings-pw-save-btn">Passwort ändern</button>
         </div>
       </div>
 
@@ -538,6 +559,7 @@
 
       <!-- Filter-Leiste -->
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+        <button class="btn btn-blue" id="inq-create-btn" style="margin-right:8px;">＋ Anfrage manuell erfassen</button>
         <button class="btn btn-outline inq-filter-btn active" data-status="">Alle <span id="inq-count-all" style="margin-left:4px;"></span></button>
         <button class="btn btn-outline inq-filter-btn" data-status="neu">Neu <span id="inq-count-neu" style="margin-left:4px;"></span></button>
         <button class="btn btn-outline inq-filter-btn" data-status="beantwortet">Beantwortet <span id="inq-count-beantwortet" style="margin-left:4px;"></span></button>
@@ -551,6 +573,32 @@
         <p style="color:var(--muted);text-align:center;padding:40px 0;">Lädt…</p>
       </div>
     </div><!-- /tab-anfragen -->
+
+<!-- ── Modal: Manuelle Anfrage ── -->
+<div class="modal-overlay" id="inq-create-modal" style="display:none;">
+  <div class="modal-box" style="max-width:560px;width:100%;">
+    <h3 style="margin-bottom:20px;color:#fff;font-size:1.1rem;">＋ Anfrage manuell erfassen</h3>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;">Für Buchungen/Anfragen die nicht über das Webseiten-Formular kamen.</p>
+    <form id="inq-create-form">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Vorname *</label><input class="field-sm" id="new-inq-vorname" placeholder="Maria" required /></div>
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Nachname *</label><input class="field-sm" id="new-inq-nachname" placeholder="Mustermann" required /></div>
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">E-Mail *</label><input class="field-sm" type="email" id="new-inq-email" placeholder="maria@beispiel.de" required /></div>
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Telefon</label><input class="field-sm" type="tel" id="new-inq-telefon" placeholder="+49 123 456789" /></div>
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Anreise</label><input class="field-sm" type="date" id="new-inq-anreise" /></div>
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Abreise</label><input class="field-sm" type="date" id="new-inq-abreise" /></div>
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Wohnung</label><input class="field-sm" id="new-inq-wohnung" placeholder="z.B. Casa Tramonto" /></div>
+        <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Personen</label><input class="field-sm" id="new-inq-personen" placeholder="4 Personen" /></div>
+      </div>
+      <div style="margin-bottom:10px;"><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Nachricht des Gastes</label><textarea class="field-sm" id="new-inq-nachricht" rows="3" placeholder="z.B. Wir sind eine Familie mit zwei Kindern…" style="resize:vertical;"></textarea></div>
+      <div style="margin-bottom:16px;"><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Interne Notizen</label><input class="field-sm" id="new-inq-notes" placeholder="z.B. Telefonisch am 24.05 besprochen" /></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" id="inq-create-cancel">Abbrechen</button>
+        <button type="submit" class="btn btn-blue" id="inq-create-submit">Anfrage erstellen</button>
+      </div>
+    </form>
+  </div>
+</div>
 
     <!-- ══ TAB: E-MAIL VORLAGEN ══ -->
     <div class="tab-panel" id="tab-mailtpl">
@@ -621,19 +669,6 @@
   </main>
 </div>
 
-<!-- ── PW-Modal (legacy, kept for change-pw-btn) ── -->
-<div class="modal-overlay" id="pw-modal">
-  <div class="modal-box">
-    <h3>Passwort ändern</h3>
-    <input type="password" id="pw-new"     class="field" placeholder="Neues Passwort" />
-    <input type="password" id="pw-confirm" class="field" placeholder="Wiederholen" />
-    <div style="display:flex;gap:10px;margin-top:8px;">
-      <button class="btn btn-blue"    style="flex:1;" id="pw-save-btn">Speichern</button>
-      <button class="btn btn-outline" style="flex:1;" id="pw-cancel-btn">Abbrechen</button>
-    </div>
-    <p id="pw-msg" class="modal-msg"></p>
-  </div>
-</div>
 
 <script>
 /* ══════════════════════════════════════════════
@@ -1054,6 +1089,7 @@ function showApp() {
   refreshSaveStatus();
   refreshHealth();
   loadInquiries();
+  checkDraftStatus();
 }
 
 /* ── Live-Status / Health ── */
@@ -1250,15 +1286,37 @@ document.getElementById('export-btn').addEventListener('click', () => {
   Object.assign(document.createElement('a'), {href:'index.html', download:'sardinientraum.html'}).click();
 });
 
-/* PW-Modal — deaktiviert: Passwort-Änderung über API-Setup */
-const pwModal = document.getElementById('pw-modal');
-document.getElementById('change-pw-btn')?.addEventListener('click', () => { pwModal.style.display='flex'; });
-document.getElementById('pw-cancel-btn')?.addEventListener('click', () => { pwModal.style.display='none'; });
-document.getElementById('pw-save-btn')?.addEventListener('click', () => {
-  const msg = document.getElementById('pw-msg');
-  msg.style.color='var(--muted)';
-  msg.textContent='Passwort-Änderung über API noch nicht implementiert.';
-  setTimeout(()=>{ pwModal.style.display='none'; msg.textContent=''; }, 2000);
+/* ─── Passwort ändern (Einstellungen → Sicherheit) ─── */
+document.getElementById('settings-pw-save-btn')?.addEventListener('click', async () => {
+  const cur  = document.getElementById('s-admin-pass-current')?.value || '';
+  const nw   = document.getElementById('s-admin-pass-new')?.value     || '';
+  const conf = document.getElementById('s-admin-pass-confirm')?.value || '';
+  const msg  = document.getElementById('pw-change-msg');
+  if (msg) { msg.textContent = ''; msg.style.display = 'none'; }
+  if (!cur || !nw || !conf) {
+    if (msg) { msg.textContent = 'Alle Felder ausfüllen.'; msg.style.color='var(--red)'; msg.style.display='inline'; }
+    return;
+  }
+  const btn = document.getElementById('settings-pw-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ Speichern…';
+  try {
+    const r = await apiPost('/api/change-password.php', {
+      current_password: cur, new_password: nw, confirm_password: conf
+    });
+    const j = await r.json();
+    if (j.ok) {
+      if (msg) { msg.textContent = '✓ Passwort geändert.'; msg.style.color='var(--green)'; msg.style.display='inline'; }
+      document.getElementById('s-admin-pass-current').value = '';
+      document.getElementById('s-admin-pass-new').value     = '';
+      document.getElementById('s-admin-pass-confirm').value = '';
+    } else {
+      if (msg) { msg.textContent = j.msg || 'Fehler.'; msg.style.color='var(--red)'; msg.style.display='inline'; }
+    }
+  } catch(e) {
+    if (msg) { msg.textContent = 'Verbindungsfehler.'; msg.style.color='var(--red)'; msg.style.display='inline'; }
+  }
+  btn.disabled = false; btn.textContent = 'Passwort ändern';
+  setTimeout(() => { if (msg) { msg.style.display='none'; msg.textContent=''; } }, 4000);
 });
 
 /* ═══════════════════════════════
@@ -1437,6 +1495,105 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.dataset.tab === 'anfragen' && __CURRENT_USER__) loadInquiries();
   });
+});
+
+/* ═══════════════════════════════
+   DRAFT-STATUS
+═══════════════════════════════ */
+async function checkDraftStatus() {
+  const card = document.getElementById('draft-status-card');
+  if (!card) return;
+  try {
+    const r = await fetch('/api/load-content.php?target=pages&draft=1', { credentials: 'same-origin' });
+    const j = await r.json();
+    card.style.display = (j.exists) ? 'block' : 'none';
+  } catch(_) { card.style.display = 'none'; }
+}
+
+document.getElementById('draft-promote-btn')?.addEventListener('click', async () => {
+  if (!confirm('Entwurf jetzt Live schalten? Der aktuelle Live-Stand wird als Backup gesichert.')) return;
+  const btn = document.getElementById('draft-promote-btn');
+  btn.disabled = true; btn.textContent = '⏳ Veröffentliche…';
+  try {
+    const r = await fetch('/api/draft-promote.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({})
+    });
+    const j = await r.json();
+    if (j.ok) {
+      btn.textContent = '✅ Veröffentlicht!';
+      btn.style.background = '#22c55e';
+      setTimeout(() => { checkDraftStatus(); btn.textContent='🚀 Jetzt veröffentlichen'; btn.style.background=''; btn.disabled=false; }, 2000);
+    } else {
+      alert('Fehler: ' + (j.error || 'unbekannt'));
+      btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
+    }
+  } catch(e) {
+    alert('Verbindungsfehler: ' + e.message);
+    btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
+  }
+});
+
+document.getElementById('draft-discard-btn')?.addEventListener('click', async () => {
+  if (!confirm('Entwurf verwerfen? Alle nicht veröffentlichten Änderungen gehen verloren.')) return;
+  // Draft-Datei löschen durch Promote mit Discard-Flag noch nicht implementiert.
+  // Workaround: Leeren Promote durchführen ist nicht sinnvoll. Stattdessen Hinweis.
+  alert('Um den Draft zu verwerfen: /data/pages.draft.json auf dem Server löschen.\n\nAlternativ: Leere Änderung als Draft speichern überschreibt den alten Draft.');
+});
+
+/* ═══════════════════════════════
+   MANUELLE ANFRAGE ERSTELLEN
+═══════════════════════════════ */
+document.getElementById('inq-create-btn')?.addEventListener('click', () => {
+  const modal = document.getElementById('inq-create-modal');
+  if (modal) modal.style.display = 'flex';
+});
+document.getElementById('inq-create-cancel')?.addEventListener('click', () => {
+  document.getElementById('inq-create-modal').style.display = 'none';
+});
+document.getElementById('inq-create-form')?.addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = id => document.getElementById(id)?.value?.trim() || '';
+  const body = {
+    action: 'create',
+    guest: {
+      vorname:  f('new-inq-vorname'),
+      nachname: f('new-inq-nachname'),
+      email:    f('new-inq-email'),
+      telefon:  f('new-inq-telefon'),
+    },
+    request: {
+      anreise:   f('new-inq-anreise'),
+      abreise:   f('new-inq-abreise'),
+      wohnung:   f('new-inq-wohnung'),
+      personen:  f('new-inq-personen'),
+      nachricht: document.getElementById('new-inq-nachricht')?.value?.trim() || '',
+    },
+    notes: f('new-inq-notes'),
+  };
+  const btn = document.getElementById('inq-create-submit');
+  btn.disabled = true; btn.textContent = '⏳ Erstellen…';
+  try {
+    const r = await fetch('/api/inquiries.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    if (j.ok) {
+      document.getElementById('inq-create-modal').style.display = 'none';
+      document.getElementById('inq-create-form').reset();
+      loadInquiries();
+    } else {
+      alert('Fehler: ' + (j.error || 'Ungültige Eingabe'));
+    }
+  } catch(err) {
+    alert('Verbindungsfehler: ' + err.message);
+  }
+  btn.disabled = false; btn.textContent = 'Anfrage erstellen';
 });
 </script>
 </body>
