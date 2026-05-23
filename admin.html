@@ -129,6 +129,25 @@
       .tab-btn { padding:14px 12px; font-size:.8rem; }
       .settings-footer { flex-direction:column; align-items:stretch; text-align:center; }
     }
+
+    /* ── ANFRAGEN ──────────────────────────────── */
+    .inq-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 24px; }
+    .inq-card.status-neu        { border-left:3px solid var(--blue); }
+    .inq-card.status-beantwortet{ border-left:3px solid var(--yellow); }
+    .inq-card.status-gebucht    { border-left:3px solid var(--green); }
+    .inq-card.status-abgelehnt  { border-left:3px solid var(--muted); }
+    .inq-head { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+    .inq-name { font-weight:700; color:#fff; font-size:1rem; }
+    .inq-date { font-size:.78rem; color:var(--muted); }
+    .inq-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+    .inq-tag  { font-size:.75rem; background:rgba(255,255,255,.07); border-radius:6px; padding:3px 8px; color:var(--text); }
+    .inq-msg  { font-size:.85rem; color:var(--muted); background:rgba(255,255,255,.03); border-radius:8px; padding:10px 14px; margin-bottom:14px; white-space:pre-wrap; display:none; }
+    .inq-msg.show { display:block; }
+    .inq-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .inq-notes { flex:1; min-width:160px; }
+    .inq-status-sel { background:#0f1117; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:6px 10px; font-size:.8rem; font-family:'Inter',sans-serif; cursor:pointer; }
+    .inq-filter-btn.active { border-color:var(--blue); color:var(--blue); }
+    .badge-count { background:rgba(59,130,246,.2); color:var(--blue); border-radius:10px; padding:1px 7px; font-size:.72rem; font-weight:700; }
   </style>
 </head>
 <body>
@@ -162,6 +181,7 @@
 
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+    <button class="tab-btn" data-tab="anfragen">📬 Anfragen <span id="inq-badge" style="display:none;background:var(--red);color:#fff;font-size:.65rem;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></button>
     <button class="tab-btn" data-tab="settings">⚙️ Einstellungen</button>
     <button class="tab-btn" data-tab="mailtpl">✉️ E-Mail Vorlagen</button>
   </nav>
@@ -508,6 +528,29 @@
       </div>
 
     </div><!-- /tab-settings -->
+
+    <!-- ══ TAB: ANFRAGEN ══ -->
+    <div class="tab-panel" id="tab-anfragen">
+      <div class="admin-welcome">
+        <h2>Anfragen</h2>
+        <p>Alle eingegangenen Kontaktanfragen von der Webseite.</p>
+      </div>
+
+      <!-- Filter-Leiste -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+        <button class="btn btn-outline inq-filter-btn active" data-status="">Alle <span id="inq-count-all" style="margin-left:4px;"></span></button>
+        <button class="btn btn-outline inq-filter-btn" data-status="neu">Neu <span id="inq-count-neu" style="margin-left:4px;"></span></button>
+        <button class="btn btn-outline inq-filter-btn" data-status="beantwortet">Beantwortet <span id="inq-count-beantwortet" style="margin-left:4px;"></span></button>
+        <button class="btn btn-outline inq-filter-btn" data-status="gebucht">Gebucht <span id="inq-count-gebucht" style="margin-left:4px;"></span></button>
+        <button class="btn btn-outline inq-filter-btn" data-status="abgelehnt">Abgelehnt <span id="inq-count-abgelehnt" style="margin-left:4px;"></span></button>
+        <input type="text" id="inq-search" class="field-sm" placeholder="Suchen…" style="margin-left:auto;width:200px;" />
+        <button class="btn btn-outline" id="inq-refresh-btn" title="Neu laden">↻</button>
+      </div>
+
+      <div id="inq-list" style="display:flex;flex-direction:column;gap:14px;">
+        <p style="color:var(--muted);text-align:center;padding:40px 0;">Lädt…</p>
+      </div>
+    </div><!-- /tab-anfragen -->
 
     <!-- ══ TAB: E-MAIL VORLAGEN ══ -->
     <div class="tab-panel" id="tab-mailtpl">
@@ -1010,6 +1053,7 @@ function showApp() {
   populateFields();
   refreshSaveStatus();
   refreshHealth();
+  loadInquiries();
 }
 
 /* ── Live-Status / Health ── */
@@ -1215,6 +1259,184 @@ document.getElementById('pw-save-btn')?.addEventListener('click', () => {
   msg.style.color='var(--muted)';
   msg.textContent='Passwort-Änderung über API noch nicht implementiert.';
   setTimeout(()=>{ pwModal.style.display='none'; msg.textContent=''; }, 2000);
+});
+
+/* ═══════════════════════════════
+   ANFRAGEN-TAB
+═══════════════════════════════ */
+let __inqFilter__ = '';
+let __inqData__   = [];
+
+function inqFmtDate(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+  catch(_) { return iso; }
+}
+
+function inqStatusLabel(s) {
+  return {neu:'🔵 Neu', beantwortet:'🟡 Beantwortet', gebucht:'🟢 Gebucht', abgelehnt:'⚫ Abgelehnt'}[s] || s;
+}
+
+async function loadInquiries() {
+  const list = document.getElementById('inq-list');
+  if (!list) return;
+  try {
+    const r = await fetch('/api/inquiries.php', { credentials: 'same-origin' });
+    const j = await r.json();
+    if (!j.ok) { list.innerHTML = '<p style="color:var(--red);text-align:center;">Fehler: ' + (j.error||'?') + '</p>'; return; }
+
+    __inqData__ = j.items || [];
+
+    const c = j.counts || {};
+    const total = j.total || 0;
+    document.getElementById('inq-count-all')?.setAttribute('data-n', total);
+    document.getElementById('inq-count-neu')?.setAttribute('data-n', c.neu||0);
+    document.getElementById('inq-count-beantwortet')?.setAttribute('data-n', c.beantwortet||0);
+    document.getElementById('inq-count-gebucht')?.setAttribute('data-n', c.gebucht||0);
+    document.getElementById('inq-count-abgelehnt')?.setAttribute('data-n', c.abgelehnt||0);
+
+    // Badge im Tab
+    const badge = document.getElementById('inq-badge');
+    if (badge) {
+      if (c.neu > 0) { badge.textContent = c.neu; badge.style.display = 'inline'; }
+      else badge.style.display = 'none';
+    }
+
+    // Counts aktualisieren
+    ['all','neu','beantwortet','gebucht','abgelehnt'].forEach(k => {
+      const el = document.getElementById('inq-count-' + k);
+      if (el) { const n = el.getAttribute('data-n'); el.innerHTML = n ? '<span class="badge-count">'+n+'</span>' : ''; }
+    });
+
+    renderInquiries();
+  } catch(e) {
+    const list = document.getElementById('inq-list');
+    if (list) list.innerHTML = '<p style="color:var(--red);text-align:center;">Verbindungsfehler</p>';
+  }
+}
+
+function renderInquiries() {
+  const list = document.getElementById('inq-list');
+  if (!list) return;
+  const q = (document.getElementById('inq-search')?.value || '').toLowerCase();
+  let items = __inqData__;
+  if (__inqFilter__) items = items.filter(i => (i.status||'neu') === __inqFilter__);
+  if (q) items = items.filter(i => JSON.stringify(i).toLowerCase().includes(q));
+
+  if (!items.length) {
+    list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px 0;">Keine Anfragen gefunden.</p>';
+    return;
+  }
+
+  list.innerHTML = '';
+  items.forEach(item => {
+    const g = item.guest || {};
+    const r = item.request || {};
+    const status = item.status || 'neu';
+    const card = document.createElement('div');
+    card.className = 'inq-card status-' + status;
+    card.dataset.inqId = item.id;
+
+    const hasMsg = r.nachricht && r.nachricht.trim();
+    card.innerHTML = `
+      <div class="inq-head">
+        <div>
+          <div class="inq-name">${escHtml(g.vorname||'')} ${escHtml(g.nachname||'')}</div>
+          <div class="inq-date">${inqFmtDate(item.created)}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select class="inq-status-sel" data-inq-id="${escHtml(item.id)}">
+            <option value="neu"         ${status==='neu'?'selected':''}>🔵 Neu</option>
+            <option value="beantwortet" ${status==='beantwortet'?'selected':''}>🟡 Beantwortet</option>
+            <option value="gebucht"     ${status==='gebucht'?'selected':''}>🟢 Gebucht</option>
+            <option value="abgelehnt"   ${status==='abgelehnt'?'selected':''}>⚫ Abgelehnt</option>
+          </select>
+          <button class="btn btn-outline" style="padding:6px 10px;font-size:.75rem;" data-inq-delete="${escHtml(item.id)}">🗑</button>
+        </div>
+      </div>
+      <div class="inq-meta">
+        ${g.email ? `<a href="mailto:${escHtml(g.email)}" class="inq-tag" style="color:var(--blue);">✉ ${escHtml(g.email)}</a>` : ''}
+        ${g.telefon ? `<span class="inq-tag">📞 ${escHtml(g.telefon)}</span>` : ''}
+        ${r.anreise ? `<span class="inq-tag">📅 ${escHtml(r.anreise)} → ${escHtml(r.abreise||'?')}</span>` : ''}
+        ${r.wohnung ? `<span class="inq-tag">🏠 ${escHtml(r.wohnung)}</span>` : ''}
+        ${r.personen ? `<span class="inq-tag">👥 ${escHtml(r.personen)} Pers.</span>` : ''}
+      </div>
+      ${hasMsg ? `<div class="inq-msg show">${escHtml(r.nachricht)}</div>` : ''}
+      <div class="inq-actions">
+        <input type="text" class="field-sm inq-notes" placeholder="Notizen…" value="${escHtml(item.notes||'')}" data-inq-id="${escHtml(item.id)}" />
+        <button class="btn btn-outline" style="font-size:.8rem;" data-inq-save="${escHtml(item.id)}">Speichern</button>
+        ${g.email ? `<a class="btn btn-outline" style="font-size:.8rem;" href="mailto:${escHtml(g.email)}?subject=Ihre%20Anfrage%20-%20Sardinientraum">✉ Antworten</a>` : ''}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  // Status-Change
+  list.querySelectorAll('.inq-status-sel').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const id = sel.dataset.inqId;
+      const ok = await inqUpdate(id, { status: sel.value });
+      if (ok) loadInquiries();
+    });
+  });
+
+  // Save notes
+  list.querySelectorAll('[data-inq-save]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.inqSave;
+      const notes = list.querySelector(`.inq-notes[data-inq-id="${id}"]`)?.value || '';
+      const ok = await inqUpdate(id, { notes });
+      if (ok) { btn.textContent = '✓'; setTimeout(()=>{ btn.textContent='Speichern'; },1500); }
+    });
+  });
+
+  // Delete
+  list.querySelectorAll('[data-inq-delete]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Anfrage wirklich löschen?')) return;
+      const id = btn.dataset.inqDelete;
+      const ok = await inqUpdate(id, { delete: true });
+      if (ok) loadInquiries();
+    });
+  });
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function inqUpdate(id, body) {
+  try {
+    const r = await fetch('/api/inquiries.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({ id, ...body })
+    });
+    const j = await r.json();
+    return j.ok;
+  } catch(_) { return false; }
+}
+
+// Filter-Buttons
+document.querySelectorAll('.inq-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.inq-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    __inqFilter__ = btn.dataset.status || '';
+    renderInquiries();
+  });
+});
+
+// Suche
+document.getElementById('inq-search')?.addEventListener('input', renderInquiries);
+document.getElementById('inq-refresh-btn')?.addEventListener('click', loadInquiries);
+
+// Anfragen laden wenn Tab aktiviert wird
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'anfragen' && __CURRENT_USER__) loadInquiries();
+  });
 });
 </script>
 </body>
