@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impressum – Sardinientraum</title>
+  <meta name="robots" content="noindex, follow">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <style>
+    .legal-page { max-width: 760px; margin: 120px auto 80px; padding: 0 20px; }
+    .legal-page h1 { font-family: 'Playfair Display', serif; color: var(--ocean); font-size: 2.2rem; margin-bottom: 30px; }
+    .legal-page h2 { font-family: 'Playfair Display', serif; color: var(--ocean); font-size: 1.3rem; margin-top: 32px; margin-bottom: 12px; }
+    .legal-page p, .legal-page address { line-height: 1.7; margin-bottom: 14px; font-style: normal; color: var(--text); }
+    .legal-page a { color: var(--gold); }
+    .back-link { display: inline-block; margin-bottom: 28px; color: var(--ocean); text-decoration: none; font-size: .9rem; }
+    .back-link:hover { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+<nav id="mainNav" class="scrolled">
+  <a class="nav-logo" href="/" data-bind="nav.logo_text">🌊 Sardinientraum</a>
+</nav>
+
+<main class="legal-page">
+  <a class="back-link" href="/">← Zurück zur Startseite</a>
+  <h1>Impressum</h1>
+
+  <h2>Angaben gemäß § 5 TMG / Art. 56 EUDR</h2>
+  <address id="provider">
+    <strong data-bind="company.owner_name">[Inhaber-Name]</strong><br>
+    <span data-bind="company.name">Sardinientraum</span><br>
+    <span data-bind="company.address">[Straße, Hausnummer, PLZ, Ort]</span><br>
+    <span data-bind="company.country_label">Italien</span>
+  </address>
+
+  <h2>Kontakt</h2>
+  <p>
+    Telefon: <a id="contact-phone-link" href="#"><span data-bind="contact.phone">[Telefon]</span></a><br>
+    E-Mail: <a id="contact-email-link" href="#"><span data-bind="contact.email">[E-Mail]</span></a>
+  </p>
+
+  <h2>Umsatzsteuer-ID / Steuernummer</h2>
+  <p>
+    Umsatzsteuer-Identifikationsnummer: <span data-bind="company.vat_id">[USt-IdNr.]</span><br>
+    Steuernummer: <span data-bind="company.tax_id">[Steuernummer]</span>
+  </p>
+
+  <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
+  <address>
+    <span data-bind="company.owner_name">[Inhaber-Name]</span><br>
+    <span data-bind="company.address">[Adresse]</span>
+  </address>
+
+  <h2>Streitschlichtung</h2>
+  <p>
+    Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:
+    <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr/</a>.
+    Unsere E-Mail-Adresse finden Sie oben.
+  </p>
+  <p>
+    Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer
+    Verbraucherschlichtungsstelle teilzunehmen.
+  </p>
+
+  <h2>Haftung für Inhalte</h2>
+  <p>
+    Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach
+    den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter
+    jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen
+    oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.
+  </p>
+
+  <h2>Haftung für Links</h2>
+  <p>
+    Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen
+    Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen.
+    Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der
+    Seiten verantwortlich.
+  </p>
+
+  <h2>Urheberrecht</h2>
+  <p>
+    Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen
+    dem Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung
+    außerhalb der Grenzen des Urheberrechts bedürfen der schriftlichen Zustimmung des jeweiligen
+    Autors bzw. Erstellers.
+  </p>
+</main>
+
+<script>
+  /* Spezifisches Befüllen: Telefon/Email Links + Fallbacks */
+  fetch('/api/load-content.php?target=config').then(r => r.json()).then(j => {
+    if (!j.ok) return;
+    const c = j.data || {};
+
+    // data-bind füllen
+    document.querySelectorAll('[data-bind]').forEach(el => {
+      const path = el.dataset.bind;
+      const val = path.split('.').reduce((o, k) => (o ? o[k] : undefined), c);
+      if (val != null && val !== '') el.textContent = val;
+    });
+
+    // Tel-Link
+    if (c.contact?.phone) {
+      const a = document.getElementById('contact-phone-link');
+      if (a) a.href = 'tel:' + c.contact.phone.replace(/\s+/g, '');
+    }
+    // Mail-Link
+    if (c.contact?.email) {
+      const a = document.getElementById('contact-email-link');
+      if (a) a.href = 'mailto:' + c.contact.email;
+    }
+    // Land-Label
+    const cl = document.querySelector('[data-bind="company.country_label"]');
+    if (cl && c.company?.country) {
+      const map = { IT: 'Italien', DE: 'Deutschland', AT: 'Österreich', CH: 'Schweiz' };
+      cl.textContent = map[c.company.country] || c.company.country;
+    }
+  }).catch(() => {});
+</script>
+</body>
+</html>

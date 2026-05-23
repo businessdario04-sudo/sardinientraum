@@ -197,11 +197,12 @@
 
   function renderModal(overlay, apt) {
     const setText = (sel, val) => { const el = overlay.querySelector(sel); if (el) el.textContent = val ?? ''; };
-    const setSrc  = (sel, val) => { const el = overlay.querySelector(sel); if (el) el.src = val ?? ''; };
-    setText('.apt-modal-title', apt.name);
+    setText('.apt-modal-title',       apt.name);
     setText('.apt-modal-description', apt.description);
-    setText('.apt-modal-details', apt.details || '');
-    setText('.apt-modal-price', apt.price || '');
+    setText('.apt-modal-details',     apt.details || '');
+    setText('.apt-modal-price',       apt.price || '');
+    setText('.apt-modal-badge',       apt.badge || 'Unterkunft');
+
     const metaEl = overlay.querySelector('.apt-modal-meta');
     if (metaEl) {
       metaEl.innerHTML = '';
@@ -211,32 +212,131 @@
         metaEl.appendChild(span);
       });
     }
+
     const galleryEl = overlay.querySelector('.apt-modal-gallery');
-    if (galleryEl) {
-      galleryEl.innerHTML = '';
-      const imgs = (apt.gallery && apt.gallery.length) ? apt.gallery : [apt.image].filter(Boolean);
-      imgs.forEach((src, i) => {
-        const img = document.createElement('img');
-        img.src = src; img.alt = apt.name + ' Bild ' + (i+1); img.loading = 'lazy';
-        if (i === 0) img.classList.add('active');
-        galleryEl.appendChild(img);
-      });
-      // Pre/Next-Buttons
-      const prev = overlay.querySelector('[data-gallery-prev]');
-      const next = overlay.querySelector('[data-gallery-next]');
-      let idx = 0;
-      const show = i => {
-        const imgs = galleryEl.querySelectorAll('img');
-        if (!imgs.length) return;
-        idx = (i + imgs.length) % imgs.length;
-        imgs.forEach((m, j) => m.classList.toggle('active', j === idx));
-      };
-      if (prev) prev.onclick = () => show(idx - 1);
-      if (next) next.onclick = () => show(idx + 1);
+    const dotsEl    = overlay.querySelector('[data-gallery-dots]');
+    const counterEl = overlay.querySelector('[data-gallery-counter]');
+    const prev      = overlay.querySelector('[data-gallery-prev]');
+    const next      = overlay.querySelector('[data-gallery-next]');
+
+    // Bestehende img-Elemente entfernen (Nav/Dots/Counter bleiben)
+    if (galleryEl) galleryEl.querySelectorAll('img').forEach(img => img.remove());
+    if (dotsEl) dotsEl.innerHTML = '';
+
+    const imgs = (apt.gallery && apt.gallery.length) ? apt.gallery : [apt.image].filter(Boolean);
+    if (!imgs.length || !galleryEl) {
+      if (prev) prev.style.display = 'none';
+      if (next) next.style.display = 'none';
+      if (counterEl) counterEl.style.display = 'none';
+      return;
     }
-    // Anfrage-Link mit vorausgewählter Wohnung
+
+    imgs.forEach((src, i) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = apt.name + ' Bild ' + (i + 1);
+      img.loading = 'lazy';
+      if (i === 0) img.classList.add('active');
+      galleryEl.insertBefore(img, galleryEl.firstChild);
+    });
+
+    // Dots erstellen
+    if (dotsEl && imgs.length > 1) {
+      imgs.forEach((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'apt-modal-dot';
+        dot.setAttribute('aria-label', 'Bild ' + (i + 1));
+        if (i === 0) dot.classList.add('active');
+        dot.addEventListener('click', () => show(i));
+        dotsEl.appendChild(dot);
+      });
+    }
+
+    let idx = 0;
+    const single = imgs.length === 1;
+    if (prev) prev.style.display = single ? 'none' : '';
+    if (next) next.style.display = single ? 'none' : '';
+    if (counterEl) counterEl.style.display = single ? 'none' : '';
+
+    function show(i) {
+      const all = galleryEl.querySelectorAll('img');
+      if (!all.length) return;
+      idx = (i + all.length) % all.length;
+      all.forEach((m, j) => m.classList.toggle('active', j === idx));
+      if (dotsEl) dotsEl.querySelectorAll('.apt-modal-dot').forEach((d, j) => d.classList.toggle('active', j === idx));
+      if (counterEl) counterEl.textContent = (idx + 1) + ' / ' + all.length;
+    }
+    show(0);
+
+    if (prev) prev.onclick = () => show(idx - 1);
+    if (next) next.onclick = () => show(idx + 1);
+    // Tastatur-Navigation
+    overlay._galleryHandler = e => {
+      if (!overlay.classList.contains('open')) return;
+      if (e.key === 'ArrowLeft')  show(idx - 1);
+      if (e.key === 'ArrowRight') show(idx + 1);
+    };
+    document.removeEventListener('keydown', overlay._galleryHandler);
+    document.addEventListener('keydown', overlay._galleryHandler);
+
+    // CTA
     const cta = overlay.querySelector('[data-modal-cta]');
-    if (cta) cta.href = '#anfrage';
+    if (cta) {
+      cta.href = '#anfrage';
+      cta.addEventListener('click', () => {
+        overlay.classList.remove('open');
+        // Vorauswahl im Formular
+        setTimeout(() => {
+          const sel = document.getElementById('wohnung');
+          if (sel) {
+            const opt = [...sel.options].find(o => o.text.includes(apt.name));
+            if (opt) sel.value = opt.value || opt.text;
+          }
+        }, 300);
+      }, { once: true });
+    }
+  }
+
+  // ─── FAQ-Accordion ───
+  async function loadFAQ() {
+    const list = document.getElementById('faqList');
+    if (!list) return;
+    const data = await apiGet('faq');
+    const items = (data && Array.isArray(data.items)) ? data.items.filter(i => i.active) : [];
+    items.sort((a, b) => (a.order || 0) - (b.order || 0));
+    if (!items.length) {
+      list.innerHTML = '<p style="text-align:center;color:var(--text-light);">Noch keine FAQ-Einträge.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    items.forEach((it, idx) => {
+      const item = document.createElement('details');
+      item.className = 'faq-item';
+      if (idx === 0) item.open = true;
+      const q = document.createElement('summary');
+      q.className = 'faq-question';
+      q.textContent = it.question || '';
+      const a = document.createElement('div');
+      a.className = 'faq-answer';
+      a.textContent = it.answer || '';
+      item.append(q, a);
+      list.appendChild(item);
+    });
+  }
+
+  // ─── Cookie-Banner ───
+  function bindCookieBanner(config) {
+    const banner = document.getElementById('cookieBanner');
+    const btn    = document.getElementById('cookieDismiss');
+    if (!banner || !btn) return;
+    const enabled = config?.legal?.cookie_hint_enabled !== false;
+    if (!enabled) { banner.hidden = true; return; }
+    if (localStorage.getItem('cookie_dismissed') === '1') { banner.hidden = true; return; }
+    banner.hidden = false;
+    btn.addEventListener('click', () => {
+      localStorage.setItem('cookie_dismissed', '1');
+      banner.hidden = true;
+    });
   }
 
   // ─── Editor laden wenn ?edit=1 ───
@@ -273,6 +373,8 @@
     window.__SARDINIA_CONFIG__ = config;
     applyConfig(config);
     applyData(pages);
+    bindCookieBanner(config);
+    loadFAQ();   // parallel laden, blockt boot nicht
     document.dispatchEvent(new CustomEvent('sardinia:data-loaded', { detail: { pages, config } }));
     await maybeLoadEditor();
   }

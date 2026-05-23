@@ -1,263 +1,230 @@
-  /* ── Toolbar ── */
-  #et-topbar {
-    display: none; position: fixed;
-    top: 0; left: 0; right: 0; z-index: 1001;
-    background: var(--ocean); color: #fff;
-    height: 48px; padding: 0 20px;
-    align-items: center; justify-content: space-between;
-    font-family: 'Inter', sans-serif;
-    box-shadow: 0 2px 10px rgba(0,0,0,.2);
+/* ════════════════════════════════════════════════════════════
+   editor.css — Inline-Editor v2
+   Wird dynamisch von site.js geladen wenn ?edit=1 + Admin
+   Nutzt die Klassen aus editor.js (#et-toolbar, .et-editable, …)
+   ════════════════════════════════════════════════════════════ */
+
+/* Body-State wenn Editor aktiv */
+body.et-mode { padding-top: 56px; }
+
+/* ════════ TOOLBAR (top) ════════ */
+#et-toolbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  background: linear-gradient(180deg, #1a1d27 0%, #14171f 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 9999;
+  box-shadow: 0 2px 16px rgba(0,0,0,.25);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+}
+.et-tb-left, .et-tb-right { display: flex; align-items: center; gap: 10px; }
+.et-tb-title { font-weight: 600; letter-spacing: .3px; }
+.et-tb-dirty { color: #fbbf24; font-size: 12px; font-weight: 500; margin-left: 4px; }
+
+.et-tb-btn {
+  background: rgba(255,255,255,.08);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .1s;
+}
+.et-tb-btn:hover  { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.22); }
+.et-tb-btn:active { transform: translateY(1px); }
+.et-tb-btn:disabled { opacity: .5; cursor: wait; }
+
+.et-tb-save {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+.et-tb-save:hover { background: #2563eb; border-color: #2563eb; }
+.et-tb-save.has-changes {
+  background: #c8975a;
+  border-color: #c8975a;
+  animation: et-pulse 2s ease-in-out infinite;
+}
+@keyframes et-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200,151,90,.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(200,151,90,0); }
+}
+
+/* Settings-Button als Icon */
+#et-settings-btn {
+  width: 36px; height: 36px;
+  padding: 0;
+  font-size: 18px;
+  border-radius: 8px;
+}
+
+/* ════════ EDITIERBARE FELDER ════════ */
+.et-editable {
+  outline: 2px dashed transparent;
+  outline-offset: 4px;
+  cursor: pointer;
+  transition: outline-color .15s, background .15s;
+  position: relative;
+}
+.et-editable.et-text:hover {
+  outline-color: rgba(59,130,246,.6);
+  background: rgba(59,130,246,.04);
+}
+.et-editable.et-media:hover {
+  outline-color: rgba(200,151,90,.7);
+}
+.et-editable.et-media:hover::after {
+  content: '📷 Klicken zum Ersetzen';
+  position: absolute;
+  top: 8px; left: 8px;
+  background: rgba(0,0,0,.75);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Inter', system-ui, sans-serif;
+  pointer-events: none;
+  z-index: 10;
+}
+.et-editable.et-selected {
+  outline-color: #3b82f6 !important;
+  outline-style: solid !important;
+  background: rgba(59,130,246,.06);
+}
+
+/* ContentEditable Focus */
+.et-editable[contenteditable="true"] {
+  outline: 2px solid #3b82f6;
+  outline-offset: 4px;
+  background: rgba(59,130,246,.08);
+  cursor: text;
+}
+.et-editable[contenteditable="true"]:focus { outline-color: #2563eb; }
+
+/* ════════ SETTINGS-PANEL ════════ */
+#et-settings-panel {
+  position: fixed;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  width: 340px;
+  background: #1a1d27;
+  color: #e2e4eb;
+  border-left: 1px solid #2a2d3a;
+  box-shadow: -4px 0 18px rgba(0,0,0,.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 9998;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  animation: et-slide-in .25s ease-out;
+}
+@keyframes et-slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.et-sp-head {
+  padding: 18px 22px;
+  background: #14171f;
+  border-bottom: 1px solid #2a2d3a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 15px;
+  color: #fff;
+}
+#et-sp-close {
+  background: transparent;
+  border: 1px solid #2a2d3a;
+  color: #6b7280;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+#et-sp-close:hover { color: #fff; border-color: #ef4444; }
+
+.et-sp-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 22px;
+}
+.et-sp-section { margin-bottom: 28px; }
+.et-sp-section h4 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2a2d3a;
+}
+
+.et-sp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.et-sp-row label {
+  font-size: 13px;
+  color: #e2e4eb;
+  flex: 1;
+}
+.et-sp-row input[type="color"] {
+  width: 50px;
+  height: 32px;
+  border: 1px solid #2a2d3a;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #0f1117;
+  padding: 2px;
+}
+.et-sp-row select {
+  background: #0f1117;
+  color: #e2e4eb;
+  border: 1px solid #2a2d3a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.et-sp-row select:focus { border-color: #3b82f6; outline: none; }
+
+/* ════════ MOBILE ════════ */
+@media (max-width: 700px) {
+  body.et-mode { padding-top: 100px; }
+  #et-toolbar {
+    height: auto;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
-  body.edit-active #et-topbar { display: flex; }
-  body.edit-active { padding-top: 96px; }
-  .et-topbar-title { font-weight: 700; font-size: .88rem; }
-  .et-topbar-right { display: flex; gap: 8px; align-items: center; }
-  .et-tbtn {
-    padding: 7px 18px; border-radius: 50px; border: none;
-    font-size: .8rem; font-weight: 600; cursor: pointer;
-    font-family: 'Inter', sans-serif; transition: opacity .2s, background .2s;
+  .et-tb-title { display: none; }
+  .et-tb-btn { padding: 6px 12px; font-size: 12px; }
+  #et-settings-panel {
+    top: auto;
+    bottom: 0;
+    width: 100%;
+    height: 70vh;
+    border-left: none;
+    border-top: 1px solid #2a2d3a;
   }
-  .et-tbtn:hover { opacity: .85; }
-  #et-save-btn      { background: #3b82f6; color: #fff; }
-  #et-save-btn:hover{ background: #2563eb; }
-  #et-save-live-btn { background: var(--gold); color: #fff; }
-  #et-save-live-btn:hover { background: #b5823e; }
-  #et-exit-btn      { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
-  #et-settings-btn {
-    width: 36px; height: 36px; border-radius: 10px; border: none;
-    background: rgba(255,255,255,.15); color: #fff; font-size: 1.05rem;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: background .2s; flex-shrink: 0;
-  }
-  #et-settings-btn:hover, #et-settings-btn.open { background: rgba(255,255,255,.32); }
+}
 
-  /* ── Properties-Bar ── */
-  #et-propsbar {
-    display: none; position: fixed;
-    top: 48px; left: 0; right: 0; z-index: 1000;
-    background: #f7f3ee; border-bottom: 1px solid #ddd;
-    height: 48px; padding: 0 14px;
-    align-items: center; gap: 5px;
-    font-family: 'Inter', sans-serif;
-    overflow-x: auto; white-space: nowrap;
-  }
-  body.edit-active #et-propsbar { display: flex; }
-  .et-pb-hint { font-size: .78rem; color: #aaa; font-style: italic; padding: 0 8px; }
-  .et-pb-sep { width: 1px; height: 26px; background: #d0c8bc; margin: 0 3px; flex-shrink: 0; }
-  .et-pb-label { font-size: .75rem; color: #888; font-weight: 600; margin-right: 4px; flex-shrink: 0; }
-  .et-sel { height: 32px; padding: 0 8px; border: 1px solid #d0c8bc; border-radius: 7px; font-size: .78rem; font-family: 'Inter', sans-serif; background: #fff; color: #222; cursor: pointer; outline: none; flex-shrink: 0; }
-  .et-sel:focus { border-color: var(--gold); }
-  #et-sel-font { width: 148px; } #et-sel-size { width: 70px; } #et-sel-lh { width: 115px; } #et-btn-radius-sel { width: 110px; }
-  .et-ib { width: 32px; height: 32px; border-radius: 7px; border: 1px solid #d0c8bc; background: #fff; cursor: pointer; font-size: .85rem; font-weight: 700; color: #333; display: flex; align-items: center; justify-content: center; font-family: Georgia, serif; flex-shrink: 0; transition: background .15s, border-color .15s, color .15s; user-select: none; }
-  .et-ib:hover { background: #f0e6d3; border-color: var(--gold); }
-  .et-ib.on { background: var(--ocean); color: #fff; border-color: var(--ocean); }
-  .et-ib[data-align] { font-family: 'Inter', sans-serif; font-size: .75rem; font-weight: 400; }
-  .et-color-group { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
-  .et-color-label { font-size: .7rem; color: #666; white-space: nowrap; }
-  .et-color-inp { width: 32px; height: 32px; border: 1px solid #d0c8bc; border-radius: 7px; cursor: pointer; padding: 2px; background: #fff; flex-shrink: 0; }
-  .et-action-btn { height: 32px; padding: 0 14px; border-radius: 7px; border: 1px solid #d0c8bc; background: #fff; cursor: pointer; font-size: .78rem; font-weight: 600; color: var(--ocean); font-family: 'Inter', sans-serif; white-space: nowrap; flex-shrink: 0; transition: background .15s; }
-  .et-action-btn:hover { background: #f0e6d3; }
-  .et-link-input { height: 32px; padding: 0 10px; border: 1px solid #d0c8bc; border-radius: 7px; font-size: .78rem; font-family: 'Inter', sans-serif; width: 190px; outline: none; background: #fff; flex-shrink: 0; }
-  .et-link-input:focus { border-color: var(--gold); }
-
-  /* ── Selection states ── */
-  body.edit-active .et-hoverable:hover { outline: 2px dashed rgba(200,151,90,.65) !important; outline-offset: 3px; cursor: pointer; }
-  body.edit-active .et-selected { outline: 2.5px solid #1e4d6b !important; outline-offset: 3px; }
-  body.edit-active .et-selected.et-text-el { cursor: text; }
-  [contenteditable]:focus { outline: 2px solid var(--gold) !important; }
-  body.edit-active section.et-hoverable:hover, body.edit-active footer.et-hoverable:hover { outline: 2px dashed rgba(30,77,107,.4) !important; outline-offset: 0; }
-  body.edit-active section.et-selected, body.edit-active footer.et-selected { outline: 2.5px solid var(--ocean) !important; outline-offset: 0; }
-  body.edit-active .et-btn-el:hover { outline: 2px dashed var(--gold) !important; outline-offset: 3px; cursor: pointer; }
-  body.edit-active .et-media-el { position: relative; cursor: pointer; }
-  body.edit-active .et-media-el::after { content: attr(data-et-label); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.42); color: #fff; font-size: .82rem; font-weight: 600; font-family: 'Inter', sans-serif; border-radius: inherit; opacity: 0; transition: opacity .2s; pointer-events: none; }
-  body.edit-active .et-media-el:hover::after { opacity: 1; }
-  body.edit-active .hero-bg.et-media-el::after { border-radius: 0; font-size: .95rem; }
-  body.edit-active .et-card-el { cursor: grab; }
-  body.edit-active .et-card-el.et-dragging { opacity: .3; transform: scale(.96); cursor: grabbing; }
-  body.edit-active .et-card-el.et-drop-over { outline: 2.5px dashed var(--gold) !important; outline-offset: 4px; transform: scale(1.02); }
-  .et-video-el { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; }
-
-  /* ── Settings panel ── */
-  #et-settings-panel { display: none; position: fixed; top: 48px; left: 0; bottom: 0; width: 300px; z-index: 1002; background: #fff; border-right: 1px solid #ddd; box-shadow: 4px 0 18px rgba(0,0,0,.08); flex-direction: column; font-family: 'Inter', sans-serif; overflow: hidden; }
-  #et-settings-panel.open { display: flex; }
-  body.edit-active.settings-open #et-propsbar { left: 300px; }
-  .et-sp-head { padding: 14px 20px; background: var(--ocean); color: #fff; display: flex; justify-content: space-between; align-items: center; font-size: .92rem; font-weight: 700; flex-shrink: 0; }
-  #et-sp-close { width: 26px; height: 26px; border-radius: 6px; border: none; background: rgba(255,255,255,.15); color: #fff; cursor: pointer; font-size: .82rem; }
-  .et-sp-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
-  .et-sp-section { margin-bottom: 22px; }
-  .et-sp-section-title { font-size: .68rem; color: #888; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
-  .et-sp-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-  .et-sp-info { flex: 1; min-width: 0; }
-  .et-sp-info label { font-size: .82rem; font-weight: 600; color: #333; display: block; }
-  .et-sp-info span { font-size: .68rem; color: #999; }
-  .et-sp-colorwrap { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-  .et-sp-color { width: 38px; height: 30px; border: 1px solid #d0c8bc; border-radius: 6px; cursor: pointer; padding: 2px; background: #fff; }
-  .et-sp-hex { width: 78px; height: 30px; padding: 0 8px; border: 1px solid #d0c8bc; border-radius: 6px; font-size: .76rem; font-family: 'SF Mono', Consolas, monospace; outline: none; }
-  .et-sp-hex:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,151,90,.15); }
-  .et-sp-hex.invalid { border-color: #e55; background: #fff5f5; }
-</style>
-
-<!-- Toolbar -->
-<div id="et-topbar">
-  <div style="display:flex;align-items:center;gap:12px;">
-    <button id="et-settings-btn" title="Globale Einstellungen">⚙️</button>
-    <span class="et-topbar-title">Bearbeitungsmodus</span>
-  </div>
-  <div class="et-topbar-right">
-    <button class="et-tbtn" id="et-save-btn" title="In index.draft.html speichern (sicher)">💾 Als Draft</button>
-    <button class="et-tbtn" id="et-save-live-btn" title="Direkt in index.html speichern (Live!)">🚀 Direkt Live</button>
-    <button class="et-tbtn" id="et-exit-btn">✕ Beenden</button>
-  </div>
-</div>
-
-<!-- Settings Sidebar -->
-<div id="et-settings-panel">
-  <div class="et-sp-head"><span>⚙️ Globale Einstellungen</span><button id="et-sp-close">✕</button></div>
-  <div class="et-sp-body">
-    <div class="et-sp-section">
-      <div class="et-sp-section-title">🎨 Farben</div>
-      <div class="et-sp-row">
-        <div class="et-sp-info"><label>Primärfarbe</label><span>Navigation, Footer</span></div>
-        <div class="et-sp-colorwrap">
-          <input type="text" class="et-sp-hex" id="sp-primary-hex" value="#1e4d6b">
-          <input type="color" class="et-sp-color" id="sp-primary" value="#1e4d6b">
-        </div>
-      </div>
-      <div class="et-sp-row">
-        <div class="et-sp-info"><label>Akzentfarbe</label><span>Buttons, Highlights</span></div>
-        <div class="et-sp-colorwrap">
-          <input type="text" class="et-sp-hex" id="sp-gold-hex" value="#c8975a">
-          <input type="color" class="et-sp-color" id="sp-gold" value="#c8975a">
-        </div>
-      </div>
-      <div class="et-sp-row">
-        <div class="et-sp-info"><label>Hintergrund</label><span>Sand-Sektionen</span></div>
-        <div class="et-sp-colorwrap">
-          <input type="text" class="et-sp-hex" id="sp-sand-hex" value="#f0e6d3">
-          <input type="color" class="et-sp-color" id="sp-sand" value="#f0e6d3">
-        </div>
-      </div>
-      <div class="et-sp-row">
-        <div class="et-sp-info"><label>Helle Fläche</label><span>Body-Hintergrund</span></div>
-        <div class="et-sp-colorwrap">
-          <input type="text" class="et-sp-hex" id="sp-white-hex" value="#fdfaf6">
-          <input type="color" class="et-sp-color" id="sp-white" value="#fdfaf6">
-        </div>
-      </div>
-      <div class="et-sp-row">
-        <div class="et-sp-info"><label>Textfarbe</label><span>Standard-Text</span></div>
-        <div class="et-sp-colorwrap">
-          <input type="text" class="et-sp-hex" id="sp-text-hex" value="#2a2a2a">
-          <input type="color" class="et-sp-color" id="sp-text" value="#2a2a2a">
-        </div>
-      </div>
-    </div>
-    <div class="et-sp-section">
-      <div class="et-sp-section-title">📐 Design</div>
-      <div class="et-sp-row">
-        <div class="et-sp-info"><label>Eckenradius</label><span>Karten &amp; Bilder</span></div>
-        <select class="et-sel" id="sp-radius" style="width: 110px;">
-          <option value="0px">Eckig</option><option value="8px">Leicht</option>
-          <option value="16px" selected="">Rund</option><option value="24px">Sehr rund</option>
-        </select>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Properties-Bar -->
-<div id="et-propsbar">
-  <span class="et-pb-hint" id="et-hint" style="">↖ Element anklicken zum Bearbeiten</span>
-
-  <div id="et-text-tools" style="display:none;align-items:center;gap:5px;">
-    <span class="et-pb-label">Text:</span>
-    <select class="et-sel" id="et-sel-font">
-      <option value="'Inter', sans-serif">Inter</option>
-      <option value="'Playfair Display', serif">Playfair Display</option>
-      <option value="Georgia, serif">Georgia</option>
-      <option value="'Times New Roman', serif">Times New Roman</option>
-      <option value="Arial, sans-serif">Arial</option>
-      <option value="Verdana, sans-serif">Verdana</option>
-      <option value="'Courier New', monospace">Courier New</option>
-    </select>
-    <select class="et-sel" id="et-sel-size">
-      <option value="11">11px</option><option value="12">12px</option><option value="13">13px</option><option value="14">14px</option><option value="15">15px</option><option value="16">16px</option><option value="18">18px</option><option value="20">20px</option><option value="22">22px</option><option value="24">24px</option><option value="28">28px</option><option value="32">32px</option><option value="36">36px</option><option value="40">40px</option><option value="48">48px</option><option value="56">56px</option><option value="64">64px</option>
-    </select>
-    <div class="et-pb-sep"></div>
-    <button class="et-ib" id="et-bold" title="Fett"><b>B</b></button>
-    <button class="et-ib" id="et-italic" title="Kursiv"><i>I</i></button>
-    <button class="et-ib" id="et-underline" title="Unterstrichen" style="text-decoration:underline">U</button>
-    <div class="et-pb-sep"></div>
-    <button class="et-ib" data-align="left">⬅</button>
-    <button class="et-ib" data-align="center">☰</button>
-    <button class="et-ib" data-align="right">➡</button>
-    <div class="et-pb-sep"></div>
-    <div class="et-color-group"><span class="et-color-label">Text</span><input type="color" class="et-color-inp" id="et-text-color" value="#2a2a2a"></div>
-    <div class="et-color-group"><span class="et-color-label">BG</span><input type="color" class="et-color-inp" id="et-text-bg" value="#ffffff"></div>
-    <div class="et-pb-sep"></div>
-    <select class="et-sel" id="et-sel-lh">
-      <option value="1">Zeile 1×</option><option value="1.3">1.3×</option><option value="1.5" selected="">1.5×</option><option value="1.7">1.7×</option><option value="2">2×</option>
-    </select>
-  </div>
-
-  <div id="et-btn-tools" style="display:none;align-items:center;gap:5px;">
-    <span class="et-pb-label">Button:</span>
-    <div class="et-color-group"><span class="et-color-label">BG</span><input type="color" class="et-color-inp" id="et-btn-bg" value="#c8975a"></div>
-    <div class="et-color-group"><span class="et-color-label">Text</span><input type="color" class="et-color-inp" id="et-btn-fg" value="#ffffff"></div>
-    <div class="et-color-group"><span class="et-color-label">Rahmen</span><input type="color" class="et-color-inp" id="et-btn-border" value="#c8975a"></div>
-    <div class="et-pb-sep"></div>
-    <select class="et-sel" id="et-btn-radius-sel">
-      <option value="0px">Eckig</option><option value="6px">Leicht</option><option value="14px">Rund</option><option value="50px" selected="">Pill</option>
-    </select>
-    <div class="et-pb-sep"></div>
-    <select class="et-sel" id="et-btn-size-sel" style="width:70px;">
-      <option value="12">12px</option><option value="13">13px</option><option value="14">14px</option><option value="15">15px</option><option value="16">16px</option><option value="18">18px</option><option value="20">20px</option>
-    </select>
-    <div class="et-pb-sep"></div>
-    <input type="text" class="et-link-input" id="et-btn-link" placeholder="🔗 Link-URL">
-  </div>
-
-  <div id="et-media-tools" style="display: none; align-items: center; gap: 10px;">
-    <span class="et-pb-label">Medien:</span>
-    <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.06);border-radius:6px;padding:4px 8px;">
-      <img id="et-media-thumb" src="uploads/20260515-211746-sardinien.png" style="width: 56px; height: 38px; object-fit: cover; border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.1);">
-      <div id="et-media-no-thumb" style="width: 56px; height: 38px; border-radius: 4px; border: 1px dashed rgba(0, 0, 0, 0.2); align-items: center; justify-content: center; font-size: 18px; color: rgba(0, 0, 0, 0.3); display: none;">🎬</div>
-      <div style="line-height:1.3;">
-        <div id="et-media-type-label" style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;">Bild</div>
-        <div id="et-media-size-rec" style="font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;">Empfohlen: 1920 × 1080 px</div>
-      </div>
-    </div>
-    <div class="et-pb-sep"></div>
-    <button class="et-action-btn" id="et-replace-img">📷 Bild ersetzen</button>
-    <button class="et-action-btn" id="et-replace-vid">🎬 Video einsetzen</button>
-  </div>
-
-  <div id="et-card-tools" style="display:none;align-items:center;gap:6px;">
-    <span class="et-pb-label">Karte:</span>
-    <button class="et-action-btn" id="et-move-up">↑ Hoch</button>
-    <button class="et-action-btn" id="et-move-dn">↓ Runter</button>
-    <div class="et-pb-sep"></div>
-    <div class="et-color-group"><span class="et-color-label">Kartenfarbe</span><input type="color" class="et-color-inp" id="et-card-bg" value="#ffffff"></div>
-  </div>
-
-  <div id="et-sec-tools" style="display:none;align-items:center;gap:6px;">
-    <span class="et-pb-label">Abschnitt:</span>
-    <div class="et-color-group"><span class="et-color-label">BG-Farbe</span><input type="color" class="et-color-inp" id="et-sec-bg" value="#f0e6d3"></div>
-    <div class="et-pb-sep"></div>
-    <button class="et-action-btn" id="et-sec-img">📷 Hintergrundbild</button>
-    <button class="et-action-btn" id="et-sec-vid">🎬 Hintergrundvideo</button>
-    <div class="et-pb-sep"></div>
-    <select class="et-sel" id="et-sec-pad" style="width:130px;">
-      <option value="40px 5%">Kompakt</option><option value="64px 5%">Normal</option><option value="90px 5%" selected="">Großzügig</option><option value="130px 5%">Sehr groß</option>
-    </select>
-  </div>
-</div>
-
-<!-- Versteckter Toggle-Button (nur per Admin-Panel ansprechbar) -->
-<button id="edit-toggle" style="display:none" aria-hidden="true"></button>
-
-<!-- File-Inputs -->
-<input type="file" id="et-img-input" accept="image/*" style="display:none">
-<input type="file" id="et-vid-input" accept="video/*" style="display:none">
-<input type="file" id="et-bg-input" accept="image/*,video/*" style="display:none">
-
+/* Editor sollte FAQ-Accordion und Modal sichtbar lassen */
+body.et-mode .apt-modal-overlay { z-index: 9997; }
