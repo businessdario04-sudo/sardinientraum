@@ -2,6 +2,14 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "Sardinientraum – PHP Server",
+      "runtimeExecutable": "C:\\Users\\byzat\\AppData\\Local\\Microsoft\\WinGet\\Packages\\PHP.PHP.8.3_Microsoft.Winget.Source_8wekyb3d8bbwe\\php.exe",
+      "runtimeArgs": ["-S", "localhost:8081", "-t", "C:\\Users\\byzat\\.claude\\TEST"],
+      "cwd": "C:\\Users\\byzat\\.claude\\TEST",
+      "port": 8081,
+      "autoPort": false
+    },
+    {
       "name": "Sardinientraum – Static Server",
       "runtimeExecutable": "powershell",
       "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "server-starten.ps1"],

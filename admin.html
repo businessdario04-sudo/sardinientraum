@@ -143,7 +143,6 @@
     <input type="password" class="field" id="login-pass" placeholder="Passwort" autocomplete="current-password" />
     <button class="login-btn" id="login-btn">Anmelden</button>
     <div class="login-error" id="login-error">Falscher Benutzername oder Passwort.</div>
-    <p class="login-hint">Standard: admin / sardinien2025</p>
   </div>
 </div>
 
@@ -595,23 +594,38 @@
 
 <script>
 /* ══════════════════════════════════════════════
-   EINSTELLUNGEN — localStorage-Schema:
-   Key: "site_settings"  →  JSON-Objekt
+   AUTH — PHP-Session-basiert (v2)
+   Kein localStorage-Login mehr.
+   CSRF-Token wird vom Server geliefert.
 ══════════════════════════════════════════════ */
 
-const DEFAULT_USER = 'admin';
-const DEFAULT_PASS = 'sardinien2025';
-const SETTINGS_KEY = 'site_settings';
+let __CSRF_TOKEN__   = '';
+let __CURRENT_USER__ = '';
 
-function getPass() { return localStorage.getItem('admin_pass') || DEFAULT_PASS; }
-function getUser() { return localStorage.getItem('admin_user') || DEFAULT_USER; }
-
-function loadSettings() {
-  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || {}; } catch(_) { return {}; }
+async function apiPost(url, data) {
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+    credentials: 'same-origin',
+    body: JSON.stringify(data)
+  });
 }
-function saveSettings(obj) {
-  const cur = loadSettings();
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(Object.assign(cur, obj)));
+
+/* ── Einstellungen aus API laden ── */
+async function loadSettings() {
+  try {
+    const r = await fetch('/api/load-content.php?target=config', { credentials: 'same-origin' });
+    const j = await r.json();
+    return j.ok ? (j.data || {}) : {};
+  } catch(_) { return {}; }
+}
+
+/* ── Einstellungen via API speichern ── */
+async function saveSettings(patch) {
+  try {
+    const r = await apiPost('/api/save-content.php', { target: 'config', patch });
+    return r.ok;
+  } catch(_) { return false; }
 }
 
 /* ── Einstellungs-Felder ── */
@@ -639,15 +653,34 @@ const FIELDS = {
   's-booking':          'booking',
 };
 
-function populateFields() {
-  const s = loadSettings();
-  Object.entries(FIELDS).forEach(([id, key]) => {
+async function populateFields() {
+  const s = await loadSettings();
+  const contact = s.contact || {};
+  const company = s.company || {};
+  const seo     = s.seo     || {};
+  const social  = s.social  || {};
+  const form    = s.form    || {};
+
+  const fieldMap = {
+    's-contact-email': contact.email,
+    's-phone':         contact.phone,
+    's-whatsapp':      contact.whatsapp,
+    's-maps-url':      contact.maps_url,
+    's-prop-name':     company.name,
+    's-prop-location': company.location,
+    's-site-title':    seo.title,
+    's-meta-desc':     seo.description,
+    's-instagram':     social.instagram,
+    's-facebook':      social.facebook,
+    's-booking':       social.booking,
+    's-form-subject':  form.subject,
+  };
+  Object.entries(fieldMap).forEach(([id, val]) => {
     const el = document.getElementById(id);
-    if (el && s[key]) el.value = s[key];
+    if (el && val) el.value = val;
   });
-  document.getElementById('s-admin-user').value = getUser();
+  document.getElementById('s-admin-user').value = __CURRENT_USER__;
   updateFormspreeCheck();
-  updateFormStatusBadge();
   updateStatusEmail();
   updateMetaCount();
 }
@@ -669,18 +702,16 @@ function updateFormspreeCheck() {
 }
 
 function updateFormStatusBadge() {
-  const s   = loadSettings();
-  const id  = s.formspree_id || document.getElementById('s-formspree-id')?.value?.trim();
+  const email = document.getElementById('s-contact-email')?.value?.trim();
   const el  = document.getElementById('form-status-badge');
   if (!el) return;
-  if (id) { el.className='badge-ok'; el.textContent='✓ Formspree verbunden (ID: '+id+')'; }
-  else     { el.className='badge-warn'; el.textContent='⚠ Noch keine E-Mail eingestellt'; }
+  if (email) { el.className='badge-ok'; el.textContent='✓ Kontakt-E-Mail eingetragen'; }
+  else        { el.className='badge-warn'; el.textContent='⚠ Noch keine Kontakt-E-Mail eingetragen'; }
 }
 
 function updateStatusEmail() {
-  const s = loadSettings();
   const el = document.getElementById('status-email');
-  if (el) el.textContent = s.contact_email || '—';
+  if (el) el.textContent = document.getElementById('s-contact-email')?.value || '—';
 }
 
 function updateMetaCount() {
@@ -703,13 +734,42 @@ function flashMsg(elId, text, ok=true) {
   setTimeout(() => { el.style.display='none'; el.textContent=''; }, 3000);
 }
 
-/* ── Einstellungen zwischenspeichern ── */
-function justSave(msgId) {
-  saveSettings(collectFields());
+/* ── Felder aus Formular zu config-Patch ── */
+function collectConfigPatch() {
+  return {
+    contact: {
+      email:    (document.getElementById('s-contact-email')?.value  || '').trim(),
+      phone:    (document.getElementById('s-phone')?.value          || '').trim(),
+      whatsapp: (document.getElementById('s-whatsapp')?.value       || '').trim(),
+      maps_url: (document.getElementById('s-maps-url')?.value       || '').trim(),
+    },
+    company: {
+      name:     (document.getElementById('s-prop-name')?.value      || '').trim(),
+      location: (document.getElementById('s-prop-location')?.value  || '').trim(),
+    },
+    seo: {
+      title:       (document.getElementById('s-site-title')?.value  || '').trim(),
+      description: (document.getElementById('s-meta-desc')?.value   || '').trim(),
+    },
+    social: {
+      instagram: (document.getElementById('s-instagram')?.value     || '').trim(),
+      facebook:  (document.getElementById('s-facebook')?.value      || '').trim(),
+      booking:   (document.getElementById('s-booking')?.value       || '').trim(),
+    },
+    form: {
+      subject:   (document.getElementById('s-form-subject')?.value  || '').trim(),
+    },
+  };
+}
+
+/* ── Einstellungen via API speichern ── */
+async function justSave(msgId) {
+  const patch = collectConfigPatch();
+  const ok = await saveSettings(patch);
   updateFormspreeCheck();
   updateFormStatusBadge();
   updateStatusEmail();
-  if (msgId) flashMsg(msgId, '✓ Gespeichert');
+  if (msgId) flashMsg(msgId, ok ? '✓ Gespeichert' : '✗ Speichern fehlgeschlagen', ok);
 }
 
 document.getElementById('settings-save-only').addEventListener('click',   () => justSave('settings-save-msg'));
@@ -717,132 +777,11 @@ document.getElementById('settings-save-only-2').addEventListener('click',  () =>
 document.getElementById('settings-save-only-3').addEventListener('click',  () => justSave('settings-save-msg'));
 document.getElementById('settings-save-only-4').addEventListener('click',  () => justSave('settings-save-msg-2'));
 
-document.getElementById('s-formspree-id').addEventListener('input', updateFormspreeCheck);
-document.getElementById('s-meta-desc').addEventListener('input', updateMetaCount);
+document.getElementById('s-formspree-id')?.addEventListener('input', updateFormspreeCheck);
+document.getElementById('s-meta-desc')?.addEventListener('input', updateMetaCount);
 
-/* ── Einstellungen auf index.html anwenden ── */
-async function applyToWebsite(mode) {
-  justSave(null);   // Felder erst in localStorage sichern
-  const s = loadSettings();
-  const token = sessionStorage.getItem('et_save_token') || getPass();
-
-  let html;
-  try {
-    const r = await fetch('./index.html?nc='+Date.now());
-    html = await r.text();
-  } catch(e) {
-    alert('Konnte index.html nicht laden: '+e.message);
-    return;
-  }
-
-  if (mode === 'form') {
-    /* Formspree-ID in Form-Action schreiben */
-    const fid = s.formspree_id;
-    if (!fid) { alert('Bitte zuerst eine Formspree-ID eingeben.'); return; }
-
-    const subject = encodeURIComponent(s.form_subject || 'Neue Buchungsanfrage – Sardinientraum');
-    const action  = `https://formspree.io/f/${fid}`;
-
-    /* Bestehende action ersetzen oder neue hinzufügen */
-    if (/id="anfrage-form"[^>]*action=/.test(html)) {
-      html = html.replace(/(id="anfrage-form"[^>]*)action="[^"]*"/g,
-                          `$1action="${action}"`);
-    } else {
-      html = html.replace('id="anfrage-form"',
-                          `id="anfrage-form" action="${action}" method="POST"`);
-    }
-
-    /* Hidden _subject Feld einfügen wenn noch nicht vorhanden */
-    if (!html.includes('name="_subject"')) {
-      html = html.replace('id="anfrage-form"[^>]*>',
-        m => m + `\n      <input type="hidden" name="_subject" value="${s.form_subject || 'Neue Buchungsanfrage'}" />`);
-    }
-  }
-
-  if (mode === 'seo') {
-    /* Seitentitel */
-    if (s.site_title) {
-      html = html.replace(/<title>[^<]*<\/title>/, `<title>${s.site_title}</title>`);
-    }
-    /* Meta Description */
-    if (s.meta_desc) {
-      if (/<meta\s+name="description"/.test(html)) {
-        html = html.replace(/(<meta\s+name="description"\s+content=")[^"]*(")/,
-                            `$1${s.meta_desc}$2`);
-      } else {
-        html = html.replace('</title>', `</title>\n  <meta name="description" content="${s.meta_desc}" />`);
-      }
-    }
-  }
-
-  /* Speichern — Body-Check auf "OK" damit statisch ausgelieferte PHP-Datei nicht als Erfolg gewertet wird */
-  async function trySaveHtml(url, headers) {
-    try {
-      const r = await fetch(url, { method:'POST', headers, body: html });
-      if (!r.ok) return r.status;
-      const txt = await r.text();
-      return txt.trim() === 'OK' ? 'OK' : false;
-    } catch(_) { return false; }
-  }
-
-  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
-  let saved = false;
-
-  if (isLocal) {
-    saved = (await trySaveHtml('http://localhost:8080/save', {'Content-Type':'text/html; charset=utf-8'})) === 'OK';
-  } else {
-    let res = await trySaveHtml('./save.php', {'Content-Type':'text/html; charset=utf-8','X-Save-Token':token});
-    if (res === 401 || res === 403) {
-      const pw = prompt('Admin-Passwort eingeben:');
-      if (pw) {
-        sessionStorage.setItem('et_save_token', pw);
-        res = await trySaveHtml('./save.php', {'Content-Type':'text/html; charset=utf-8','X-Save-Token':pw});
-      }
-    }
-    saved = res === 'OK';
-  }
-
-  if (saved) {
-    localStorage.setItem('last_edit', new Date().toISOString());
-    const msgId = mode === 'seo' ? 'settings-save-msg-2' : 'settings-save-msg';
-    flashMsg(msgId, '✓ Auf Website angewendet!', true);
-    updateFormStatusBadge();
-  } else {
-    alert('Speichern fehlgeschlagen. Läuft der Server? (server-starten.ps1)');
-  }
-}
-
-document.getElementById('settings-apply-btn').addEventListener('click', async () => {
-  await applyToWebsite('form');
-  await saveConfigToServer();   // auch site-config.json aktualisieren
-});
-document.getElementById('settings-apply-seo-btn').addEventListener('click', async () => {
-  await applyToWebsite('seo');
-  await saveConfigToServer();
-});
-
-/* ── site-config.json auf Server schreiben ── */
-async function saveConfigToServer() {
-  const s     = loadSettings();
-  const token = sessionStorage.getItem('et_save_token') || getPass();
-  const body  = JSON.stringify(s, null, 2);
-  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
-
-  async function tryPost(url, headers) {
-    try {
-      const r = await fetch(url, { method:'POST', headers, body });
-      if (!r.ok) return false;
-      const txt = await r.text();
-      return txt.trim() === 'OK';
-    } catch(_) { return false; }
-  }
-
-  if (isLocal) {
-    return tryPost('http://localhost:8080/save-config', { 'Content-Type':'application/json; charset=utf-8' });
-  } else {
-    return tryPost('./save-config.php', { 'Content-Type':'application/json; charset=utf-8', 'X-Save-Token':token });
-  }
-}
+document.getElementById('settings-apply-btn')?.addEventListener('click', () => justSave('settings-save-msg'));
+document.getElementById('settings-apply-seo-btn')?.addEventListener('click', () => justSave('settings-save-msg-2'));
 
 /* ════════════════════════════════════════════
    E-MAIL VORLAGEN
@@ -859,7 +798,6 @@ function nightCount(a, b) {
 }
 
 function buildAngebotHTML() {
-  const s    = loadSettings();
   const name = (document.getElementById('tpl-a-vorname').value||'').trim();
   const nach = (document.getElementById('tpl-a-nachname').value||'').trim();
   const wohn = document.getElementById('tpl-a-wohnung').value  || '—';
@@ -870,10 +808,10 @@ function buildAngebotHTML() {
   const pG   = document.getElementById('tpl-a-preis-ges').value   || '—';
   const leis = document.getElementById('tpl-a-leistungen').value  || '';
   const noti = document.getElementById('tpl-a-notiz').value       || '';
-  const siteName = s.prop_name || 'Sardinientraum';
-  const siteLoc  = s.prop_location || 'La Caletta, Sardinien';
-  const ownerEmail = s.contact_email || '';
-  const ownerPhone = s.phone || '';
+  const siteName   = document.getElementById('s-prop-name')?.value     || 'Sardinientraum';
+  const siteLoc    = document.getElementById('s-prop-location')?.value || 'La Caletta, Sardinien';
+  const ownerEmail = document.getElementById('s-contact-email')?.value || '';
+  const ownerPhone = document.getElementById('s-phone')?.value         || '';
 
   return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f0e6d3;font-family:Arial,Helvetica,sans-serif;">
@@ -914,7 +852,6 @@ function buildAngebotHTML() {
 }
 
 function buildBuchungHTML() {
-  const s      = loadSettings();
   const name   = (document.getElementById('tpl-b-vorname').value||'').trim();
   const wohn   = document.getElementById('tpl-b-wohnung').value   || '—';
   const pers   = document.getElementById('tpl-b-personen').value  || '—';
@@ -926,10 +863,10 @@ function buildBuchungHTML() {
   const zd     = document.getElementById('tpl-b-zahldatum').value;
   const addr   = document.getElementById('tpl-b-adresse').value   || '';
   const hinw   = document.getElementById('tpl-b-hinweise').value  || '';
-  const siteName   = s.prop_name || 'Sardinientraum';
-  const siteLoc    = s.prop_location || 'La Caletta, Sardinien';
-  const ownerEmail = s.contact_email || '';
-  const ownerPhone = s.phone || '';
+  const siteName   = document.getElementById('s-prop-name')?.value     || 'Sardinientraum';
+  const siteLoc    = document.getElementById('s-prop-location')?.value || 'La Caletta, Sardinien';
+  const ownerEmail = document.getElementById('s-contact-email')?.value || '';
+  const ownerPhone = document.getElementById('s-phone')?.value         || '';
 
   return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f0e6d3;font-family:Arial,Helvetica,sans-serif;">
@@ -994,48 +931,47 @@ async function copyTemplate(type) {
 }
 
 /* ── Admin-Zugangsdaten speichern ── */
-document.getElementById('save-credentials-btn').addEventListener('click', () => {
-  const user    = document.getElementById('s-admin-user').value.trim();
-  const passNew = document.getElementById('s-admin-pass-new').value;
-  const passCon = document.getElementById('s-admin-pass-confirm').value;
-  const msg     = document.getElementById('admin-cred-msg');
-
-  msg.style.display = 'block';
-  if (!user) { msg.style.color='var(--red)'; msg.textContent='Benutzername darf nicht leer sein.'; return; }
-  if (passNew && passNew.length < 6) { msg.style.color='var(--red)'; msg.textContent='Passwort mindestens 6 Zeichen.'; return; }
-  if (passNew && passNew !== passCon) { msg.style.color='var(--red)'; msg.textContent='Passwörter stimmen nicht überein.'; return; }
-
-  localStorage.setItem('admin_user', user);
-  if (passNew) {
-    localStorage.setItem('admin_pass', passNew);
-    sessionStorage.setItem('et_save_token', passNew);
-    /* save.php-Passwort-Hinweis */
-    const needsPhp = passNew !== DEFAULT_PASS;
-    msg.style.color = 'var(--green)';
-    msg.textContent = 'Zugangsdaten gespeichert!' + (needsPhp ? ' Bitte auch save.php aktualisieren.' : '');
-  } else {
-    msg.style.color = 'var(--green)';
-    msg.textContent = 'Benutzername gespeichert!';
-  }
-  document.getElementById('s-admin-pass-new').value = '';
-  document.getElementById('s-admin-pass-confirm').value = '';
-  setTimeout(() => { msg.style.display='none'; }, 4000);
+document.getElementById('save-credentials-btn')?.addEventListener('click', () => {
+  const msg = document.getElementById('admin-cred-msg');
+  if (msg) { msg.style.color='var(--muted)'; msg.style.display='block'; msg.textContent='Passwort-Änderung: Bitte nutze das Setup oder wende dich an den Admin.'; setTimeout(() => msg.style.display='none', 4000); }
 });
 
 /* ═══════════════════════════════
-   LOGIN
+   LOGIN — PHP-Session (v2)
 ═══════════════════════════════ */
-function tryLogin() {
-  const u = document.getElementById('login-user').value.trim();
-  const p = document.getElementById('login-pass').value;
-  if (u === getUser() && p === getPass()) {
-    sessionStorage.setItem('admin_logged', '1');
-    sessionStorage.setItem('et_save_token', p);
-    showApp();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('login-pass').value = '';
+async function tryLogin() {
+  const u      = document.getElementById('login-user').value.trim();
+  const p      = document.getElementById('login-pass').value;
+  const errEl  = document.getElementById('login-error');
+  const btn    = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  try {
+    const r = await fetch('/api/login.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ username: u, password: p })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      __CSRF_TOKEN__   = j.csrf   || '';
+      __CURRENT_USER__ = j.user   || u;
+      showApp();
+    } else {
+      errEl.textContent = j.error === 'setup_required'
+        ? 'Setup noch nicht abgeschlossen. Bitte zuerst den Setup-Wizard ausführen.'
+        : j.error === 'totp_required'
+          ? '2FA-Code erforderlich (noch nicht im Admin-UI implementiert).'
+          : 'Falscher Benutzername oder Passwort.';
+      errEl.style.display = 'block';
+      document.getElementById('login-pass').value = '';
+    }
+  } catch(e) {
+    errEl.textContent = 'Verbindungsfehler: ' + e.message;
+    errEl.style.display = 'block';
   }
+  btn.disabled = false;
 }
 document.getElementById('login-btn').addEventListener('click', tryLogin);
 ['login-user','login-pass'].forEach(id =>
@@ -1048,40 +984,26 @@ document.getElementById('login-btn').addEventListener('click', tryLogin);
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('admin-app').style.display = 'flex';
-  document.getElementById('admin-user-label').textContent = 'Hallo, ' + getUser();
+  document.getElementById('admin-user-label').textContent = 'Hallo, ' + __CURRENT_USER__;
 
-  const lastEdit = localStorage.getItem('last_edit');
-  document.getElementById('last-edit-val').textContent = lastEdit
-    ? new Date(lastEdit).toLocaleString('de-DE') : 'Noch keine Bearbeitung';
+  document.getElementById('last-edit-val').textContent = 'Lädt…';
 
-  /* Server-Check */
+  /* Server-Check: neue API */
   (async () => {
     const el = document.getElementById('server-status');
-    const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
-    if (isLocal) {
-      try {
-        await fetch('http://localhost:8080/');
-        el.textContent = '✓ localhost:8080 (PowerShell-Server)';
+    try {
+      const r = await fetch('/api/auth-status.php', { credentials: 'same-origin' });
+      const j = await r.json();
+      if (j.ok) {
+        el.textContent = '✓ PHP-API aktiv';
         el.className   = 'badge-ok';
-      } catch(_) {
-        el.textContent = '✗ Server nicht erreichbar — server-starten.ps1 ausführen';
+      } else {
+        el.textContent = '⚠ API-Fehler';
         el.className   = 'badge-warn';
       }
-    } else {
-      /* Hosting: testen ob save.php korrekt antwortet (nicht nur als Text) */
-      try {
-        const r = await fetch('./save.php', { method:'OPTIONS' });
-        if (r.status === 204 || r.headers.get('Access-Control-Allow-Methods')) {
-          el.textContent = '✓ PHP-Hosting aktiv (save.php)';
-          el.className   = 'badge-ok';
-        } else {
-          el.textContent = '⚠ save.php nicht erreichbar — PHP-Hosting prüfen';
-          el.className   = 'badge-warn';
-        }
-      } catch(_) {
-        el.textContent = '✗ Server nicht erreichbar';
-        el.className   = 'badge-warn';
-      }
+    } catch(_) {
+      el.textContent = '✗ PHP-Server nicht erreichbar';
+      el.className   = 'badge-err';
     }
   })();
 
@@ -1104,61 +1026,28 @@ function fmtTime(iso) {
 }
 
 async function refreshHealth() {
-  const isLocal = ['localhost','127.0.0.1'].includes(location.hostname);
-  if (!isLocal) {
-    /* Auf Hoster: einfacher Check */
-    try {
-      const r = await fetch('./index.html', { method: 'HEAD' });
-      document.getElementById('status-live').textContent = r.ok ? '✓ Online' : '✗ Fehler';
-      document.getElementById('status-live').className   = r.ok ? 'badge-ok' : 'badge-err';
-    } catch(_) {
-      document.getElementById('status-live').textContent = '✗ Nicht erreichbar';
-      document.getElementById('status-live').className   = 'badge-err';
-    }
-    return;
-  }
-
   try {
-    const r = await fetch('http://localhost:8080/health?v=' + Date.now());
-    const h = await r.json();
-
-    /* Live-Webseite */
-    document.getElementById('status-live').textContent = h.live.exists ? '✓ Online' : '✗ Fehlt';
-    document.getElementById('status-live').className   = h.live.exists ? 'badge-ok' : 'badge-err';
-    document.getElementById('status-live-size').textContent = fmtBytes(h.live.size);
-    document.getElementById('status-live-time').textContent = fmtTime(h.live.time);
-
-    /* Draft */
-    document.getElementById('status-draft').textContent = h.draft.exists
-      ? `${fmtBytes(h.draft.size)} · ${fmtTime(h.draft.time)}`
-      : 'Keine ungespeicherten Änderungen';
-
-    /* Backups */
-    document.getElementById('status-backups').textContent = h.backups.count > 0
-      ? `${h.backups.count} Stück (zuletzt ${fmtTime(h.backups.latest)})`
-      : 'Noch keine';
-
-    /* Uptime */
-    document.getElementById('status-uptime').textContent = h.uptime || '—';
-
-    /* Server */
-    document.getElementById('server-status').textContent = h.safeMode
-      ? '✓ Aktiv · Safe Mode AN'
-      : '⚠ Aktiv · Safe Mode AUS';
-    document.getElementById('server-status').className = h.safeMode ? 'badge-ok' : 'badge-warn';
-
+    const r = await fetch('/index.html', { method: 'HEAD' });
+    document.getElementById('status-live').textContent = r.ok ? '✓ Online' : '✗ Fehler';
+    document.getElementById('status-live').className   = r.ok ? 'badge-ok' : 'badge-err';
+    document.getElementById('status-live-size').textContent = fmtBytes(parseInt(r.headers.get('content-length')||'0'));
+    document.getElementById('status-live-time').textContent = fmtTime(r.headers.get('last-modified'));
+    document.getElementById('status-draft').textContent = 'n/a (v2: Änderungen über Editor)';
+    document.getElementById('status-backups').textContent = 'Git-Verlauf vorhanden';
+    document.getElementById('status-uptime').textContent = '✓ PHP-Server aktiv';
   } catch(_) {
-    document.getElementById('status-live').textContent = '✗ Server nicht erreichbar';
+    document.getElementById('status-live').textContent = '✗ Nicht erreichbar';
     document.getElementById('status-live').className   = 'badge-err';
-    document.getElementById('server-status').textContent = '✗ Offline';
-    document.getElementById('server-status').className   = 'badge-err';
   }
+}
+
+async function refreshSaveStatus() {
+  // v2: kein Draft-Status mehr via PS-Server — alles über Editor/API
 }
 
 /* Refresh-Button */
 document.getElementById('health-refresh-btn')?.addEventListener('click', () => {
   refreshHealth();
-  refreshSaveStatus();
 });
 
 /* Server-Restart */
@@ -1195,7 +1084,7 @@ document.getElementById('restart-btn')?.addEventListener('click', async () => {
 
 /* Auto-Refresh alle 20 Sekunden */
 setInterval(() => {
-  if (sessionStorage.getItem('admin_logged') === '1') refreshHealth();
+  if (__CURRENT_USER__) refreshHealth();
 }, 20000);
 
 /* ── Safe-Mode + Draft-Status anzeigen ── */
@@ -1266,15 +1155,29 @@ async function promoteDraft() {
 }
 document.getElementById('promote-btn')?.addEventListener('click', promoteDraft);
 
-/* Auto-Login */
-if (sessionStorage.getItem('admin_logged')) {
-  if (!sessionStorage.getItem('et_save_token')) sessionStorage.setItem('et_save_token', getPass());
-  showApp();
-}
+/* Auto-Login via Session-Check */
+(async () => {
+  try {
+    const r = await fetch('/api/auth-status.php', { credentials: 'same-origin' });
+    const j = await r.json();
+    if (j.ok && j.logged_in) {
+      __CSRF_TOKEN__   = j.csrf  || '';
+      __CURRENT_USER__ = j.user  || 'admin';
+      showApp();
+    }
+  } catch(_) { /* Session-Check fehlgeschlagen → Login-Screen bleibt */ }
+})();
 
 /* Logout */
-document.getElementById('logout-btn').addEventListener('click', () => {
-  sessionStorage.removeItem('admin_logged');
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  try {
+    await fetch('/api/logout.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({})
+    });
+  } catch(_) {}
   location.reload();
 });
 
@@ -1294,14 +1197,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
    DASHBOARD-AKTIONEN
 ═══════════════════════════════ */
 document.getElementById('open-editor-btn').addEventListener('click', () => {
-  localStorage.setItem('et_autoopen', '1');
-  localStorage.setItem('last_edit', new Date().toISOString());
-  /* Cache-Buster + benannter Tab "sardinien-editor": jeder Klick lädt die
-     index.html frisch UND verwendet immer den gleichen Editor-Tab wieder.
-     Verhindert "hängenden Editor"-Effekt durch Browser-Cache. */
-  const url = 'index.html?edit=' + Date.now();
+  const url = 'index.html?edit=1&t=' + Date.now();
   const win = window.open(url, 'sardinien-editor');
-  /* Falls Tab schon offen war → zwingen zu reloaden mit frischer URL */
   if (win) { try { win.location.replace(url); win.focus(); } catch(_) {} }
 });
 
@@ -1309,20 +1206,15 @@ document.getElementById('export-btn').addEventListener('click', () => {
   Object.assign(document.createElement('a'), {href:'index.html', download:'sardinientraum.html'}).click();
 });
 
-/* Legacy PW-Modal */
+/* PW-Modal — deaktiviert: Passwort-Änderung über API-Setup */
 const pwModal = document.getElementById('pw-modal');
-document.getElementById('change-pw-btn').addEventListener('click', () => { pwModal.style.display='flex'; });
-document.getElementById('pw-cancel-btn').addEventListener('click', () => { pwModal.style.display='none'; });
-document.getElementById('pw-save-btn').addEventListener('click', () => {
-  const n = document.getElementById('pw-new').value;
-  const c = document.getElementById('pw-confirm').value;
+document.getElementById('change-pw-btn')?.addEventListener('click', () => { pwModal.style.display='flex'; });
+document.getElementById('pw-cancel-btn')?.addEventListener('click', () => { pwModal.style.display='none'; });
+document.getElementById('pw-save-btn')?.addEventListener('click', () => {
   const msg = document.getElementById('pw-msg');
-  if (!n||n.length<6){ msg.style.color='var(--red)'; msg.textContent='Mindestens 6 Zeichen.'; return; }
-  if (n!==c){ msg.style.color='var(--red)'; msg.textContent='Passwörter stimmen nicht überein.'; return; }
-  localStorage.setItem('admin_pass', n);
-  sessionStorage.setItem('et_save_token', n);
-  msg.style.color='var(--green)'; msg.textContent='Passwort gespeichert!';
-  setTimeout(()=>{ pwModal.style.display='none'; msg.textContent=''; }, 1500);
+  msg.style.color='var(--muted)';
+  msg.textContent='Passwort-Änderung über API noch nicht implementiert.';
+  setTimeout(()=>{ pwModal.style.display='none'; msg.textContent=''; }, 2000);
 });
 </script>
 </body>
