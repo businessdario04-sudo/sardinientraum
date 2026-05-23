@@ -2,6 +2,11 @@ server.log
 *.mp4
 .claude/settings.local.json
 
+# Auth-Daten nie ins Git (enthält Passwort-Hash, TOTP-Secret)
+data/auth.json
+data/logs/
+data/snapshots/
+
 # Uploads landen nicht im Git (zu groß, dynamisch)
 uploads/*
 !uploads/.gitkeep
