@@ -148,6 +148,36 @@
     .inq-status-sel { background:#0f1117; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:6px 10px; font-size:.8rem; font-family:'Inter',sans-serif; cursor:pointer; }
     .inq-filter-btn.active { border-color:var(--blue); color:var(--blue); }
     .badge-count { background:rgba(59,130,246,.2); color:var(--blue); border-radius:10px; padding:1px 7px; font-size:.72rem; font-weight:700; }
+
+    /* ── Belegungsplan ─────────────────────────────── */
+    .kal-plan-nav { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--border); }
+    .kal-plan-nav span { font-weight:600; font-size:.95rem; }
+    .kal-plan-wrap { padding:16px; }
+    .kal-plan-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+    .kal-plan-dh   { text-align:center; font-size:.68rem; font-weight:600; color:var(--muted); padding:5px 0; }
+    .kal-plan-empty { min-height:54px; }
+    .kal-plan-cell {
+      border-radius:6px; min-height:54px; padding:5px 5px 4px;
+      background:rgba(255,255,255,.025); border:1px solid transparent;
+      position:relative; overflow:hidden;
+    }
+    .kal-plan-cell.today  { border-color:var(--gold) !important; }
+    .kal-plan-cell.past   { opacity:.4; }
+    .kal-plan-cell.past .kal-plan-num { color:var(--muted); }
+    .kal-plan-cell.weekend .kal-plan-num { color:var(--muted); }
+    .kal-plan-num  { font-size:.78rem; font-weight:500; line-height:1.2; }
+    .kal-plan-bar  {
+      margin-top:3px; border-radius:3px; font-size:.58rem; font-weight:700;
+      color:#fff; padding:2px 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      line-height:1.3;
+    }
+    .kal-plan-checkout { /* checkout day indicator */
+      position:absolute; bottom:4px; right:4px; width:6px; height:6px;
+      border-radius:50%; opacity:.5;
+    }
+    .kal-legend { display:flex; gap:16px; padding:0 16px 14px; flex-wrap:wrap; }
+    .kal-legend-item { display:flex; align-items:center; gap:5px; font-size:.75rem; color:var(--muted); }
+    .kal-legend-dot  { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
   </style>
 </head>
 <body>
@@ -672,7 +702,7 @@
 
       <div class="admin-welcome">
         <h2>Belegungskalender</h2>
-        <p>Buchungen und Sperrzeiten verwalten. Diese Daten werden auf der Website als „belegt" angezeigt.</p>
+        <p>Wer ist wann gebucht — Übersicht und Verwaltung aller Belegungen und Sperrzeiten.</p>
       </div>
 
       <!-- Property-Auswahl -->
@@ -681,7 +711,39 @@
         <button class="btn btn-outline" id="kal-btn-mare" onclick="kalSelectProperty('casa-mare')">🏠 Casa Mare</button>
       </div>
 
-      <!-- Buchung hinzufügen -->
+      <!-- ─── Visueller Belegungsplan ─── -->
+      <div class="settings-block" style="margin-bottom:24px;">
+        <div class="settings-block-head">
+          <span class="icon">📋</span>
+          <div>
+            <h3>Belegungsplan</h3>
+            <p style="margin:0;">Monatsansicht — wer ist wann vor Ort</p>
+          </div>
+        </div>
+        <div class="kal-plan-nav">
+          <button class="btn btn-outline" id="kal-plan-prev" style="padding:5px 14px;font-size:1rem;">‹</button>
+          <span id="kal-plan-label">—</span>
+          <button class="btn btn-outline" id="kal-plan-next" style="padding:5px 14px;font-size:1rem;">›</button>
+        </div>
+        <div class="kal-plan-wrap">
+          <div id="kal-planner">
+            <p style="color:var(--muted);text-align:center;padding:24px 0;">Lädt…</p>
+          </div>
+        </div>
+        <div class="kal-legend">
+          <div class="kal-legend-item">
+            <div class="kal-legend-dot" style="background:rgba(255,255,255,.04);border:1px solid var(--border);"></div> Frei
+          </div>
+          <div class="kal-legend-item">
+            <div class="kal-legend-dot" style="background:#60a5fa;"></div> Buchung / Sperrzeit
+          </div>
+          <div class="kal-legend-item">
+            <div class="kal-legend-dot" style="border:2px solid var(--gold);background:transparent;"></div> Heute
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Buchung hinzufügen ─── -->
       <div class="settings-block" style="margin-bottom:24px;">
         <div class="settings-block-head">
           <span class="icon">➕</span>
@@ -700,11 +762,11 @@
             <input type="date" class="field-sm" id="kal-to">
           </div>
           <div class="setting-row">
-            <div class="setting-label">Bezeichnung <span>Name des Gastes oder „Gesperrt"</span></div>
+            <div class="setting-label">Bezeichnung <span>Gastname oder „Gesperrt"</span></div>
             <input type="text" class="field-sm" id="kal-label" placeholder="z.B. Familie Müller">
           </div>
           <div class="setting-row">
-            <div class="setting-label">Notiz (intern) <span>Wird nicht auf der Website angezeigt</span></div>
+            <div class="setting-label">Notiz (intern) <span>Nicht auf der Website sichtbar</span></div>
             <input type="text" class="field-sm" id="kal-note" placeholder="Optional">
           </div>
         </div>
@@ -714,7 +776,7 @@
         </div>
       </div>
 
-      <!-- Belegungsliste -->
+      <!-- ─── Belegungsliste ─── -->
       <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
         <span id="kal-list-title">📅 Belegungen — Casa Tramonto</span>
       </div>
@@ -1702,6 +1764,13 @@ document.getElementById('inq-create-form')?.addEventListener('submit', async e =
    KALENDER-TAB
 ═══════════════════════════════ */
 let kalCurrentProperty = 'casa-tramonto';
+let _kalBookings  = [];
+let kalPlanYear   = new Date().getFullYear();
+let kalPlanMonth  = new Date().getMonth();
+
+const KAL_PLAN_MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const KAL_PLAN_DAYS   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const KAL_COLORS      = ['#60a5fa','#f97316','#22c55e','#a855f7','#ec4899','#14b8a6','#eab308','#f43f5e'];
 
 async function kalSelectProperty(prop) {
   kalCurrentProperty = prop;
@@ -1711,6 +1780,71 @@ async function kalSelectProperty(prop) {
   document.getElementById('kal-prop-label').textContent = label;
   document.getElementById('kal-list-title').textContent = '📅 Belegungen — ' + label;
   await kalLoadList();
+}
+
+/* ── Visueller Monatsplan ── */
+function kalRenderPlanner() {
+  const container = document.getElementById('kal-planner');
+  const label     = document.getElementById('kal-plan-label');
+  if (!container) return;
+
+  const bookings = _kalBookings;
+
+  // Stabile Farbe pro Buchung (nach sort by from)
+  const sorted = [...bookings].sort((a, b) => a.from.localeCompare(b.from));
+  const colorMap = {};
+  sorted.forEach((b, i) => { colorMap[b.id] = KAL_COLORS[i % KAL_COLORS.length]; });
+
+  const year     = kalPlanYear;
+  const month    = kalPlanMonth;
+  const firstDay = new Date(year, month, 1).getDay();
+  const numDays  = new Date(year, month + 1, 0).getDate();
+  const offset   = (firstDay + 6) % 7; // Mo=0
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  if (label) label.textContent = KAL_PLAN_MONTHS[month] + ' ' + year;
+
+  let html = '<div class="kal-plan-grid">';
+  KAL_PLAN_DAYS.forEach(d => { html += `<div class="kal-plan-dh">${d}</div>`; });
+  for (let i = 0; i < offset; i++) html += '<div class="kal-plan-empty"></div>';
+
+  for (let d = 1; d <= numDays; d++) {
+    const ds  = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(year, month, d).getDay(); // 0=So
+    const isPast    = ds < todayStr;
+    const isToday   = ds === todayStr;
+    const isWeekend = (dow === 0 || dow === 6);
+
+    // Buchung für diesen Tag (Checkout-Tag = frei)
+    const booking  = bookings.find(b => ds >= b.from && ds < b.to);
+    const isStart  = booking && ds === booking.from;
+
+    let cls   = 'kal-plan-cell';
+    if (isPast)    cls += ' past';
+    if (isToday)   cls += ' today';
+    if (isWeekend) cls += ' weekend';
+
+    let style = '';
+    let inner = `<div class="kal-plan-num">${d}</div>`;
+
+    if (booking) {
+      const col = colorMap[booking.id];
+      style = `background:${col}22;border-color:${col}66;`;
+      if (isStart) {
+        const short = (booking.label || 'Gesperrt').substring(0, 14);
+        inner += `<div class="kal-plan-bar" style="background:${col};">${escHtml(short)}</div>`;
+      }
+    }
+
+    const tip = booking
+      ? `${booking.label} (${booking.from} → ${booking.to})${booking.note ? ' — ' + booking.note : ''}`
+      : ds;
+
+    html += `<div class="${cls}" style="${style}" title="${escHtml(tip)}">${inner}</div>`;
+  }
+
+  html += '</div>';
+  container.innerHTML = html;
 }
 
 async function kalLoadList() {
@@ -1724,21 +1858,32 @@ async function kalLoadList() {
       list.innerHTML = '<p style="color:var(--red);text-align:center;">' + escHtml(j.error || 'Fehler') + '</p>';
       return;
     }
-    const bookings = (j.bookings || []).sort((a, b) => a.from.localeCompare(b.from));
-    if (!bookings.length) {
+    _kalBookings = (j.bookings || []).sort((a, b) => a.from.localeCompare(b.from));
+    kalRenderPlanner();
+
+    if (!_kalBookings.length) {
       list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:32px 0;">Keine Buchungen eingetragen.</p>';
       return;
     }
+
+    // Assign colors same order as planner
+    const colorMap = {};
+    _kalBookings.forEach((b, i) => { colorMap[b.id] = KAL_COLORS[i % KAL_COLORS.length]; });
+
     list.innerHTML = '';
-    bookings.forEach(b => {
+    _kalBookings.forEach(b => {
       const nights = Math.round((new Date(b.to) - new Date(b.from)) / 86400000);
-      const card = document.createElement('div');
+      const col    = colorMap[b.id];
+      const card   = document.createElement('div');
       card.className = 'inq-card';
-      card.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;';
+      card.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-left:3px solid ' + col + ';';
       card.innerHTML = `
         <div>
-          <div style="font-weight:600;">${escHtml(b.label || 'Blockiert')}</div>
-          <div style="color:var(--muted);font-size:.85rem;margin-top:2px;">
+          <div style="font-weight:600;display:flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0;"></span>
+            ${escHtml(b.label || 'Blockiert')}
+          </div>
+          <div style="color:var(--muted);font-size:.85rem;margin-top:3px;">
             📅 ${escHtml(b.from)} → ${escHtml(b.to)}
             <span style="margin-left:8px;opacity:.7;">(${nights} Nacht${nights !== 1 ? 'e' : ''})</span>
           </div>
@@ -1833,6 +1978,18 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.dataset.tab === 'kalender' && __CURRENT_USER__) kalLoadList();
   });
+});
+
+// Belegungsplan Monat-Navigation
+document.getElementById('kal-plan-prev')?.addEventListener('click', () => {
+  kalPlanMonth--;
+  if (kalPlanMonth < 0) { kalPlanMonth = 11; kalPlanYear--; }
+  kalRenderPlanner();
+});
+document.getElementById('kal-plan-next')?.addEventListener('click', () => {
+  kalPlanMonth++;
+  if (kalPlanMonth > 11) { kalPlanMonth = 0; kalPlanYear++; }
+  kalRenderPlanner();
 });
 </script>
 </body>

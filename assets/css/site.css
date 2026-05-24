@@ -1189,11 +1189,15 @@
 /* Tages-Zustände */
 .cal-d.past   { color: rgba(0,0,0,.22); cursor: default; }
 .cal-d.booked {
-  background: rgba(239,68,68,.1);
-  color: rgba(200,50,50,.5);
+  background: rgba(239,68,68,.08);
+  color: rgba(200,50,50,.4);
   cursor: not-allowed;
-  text-decoration: line-through;
+  flex-direction: column;
+  gap: 1px;
+  font-size: .75rem;
 }
+.cal-d.booked .cal-day-num { text-decoration: line-through; font-size: .8rem; line-height: 1; }
+.cal-d.booked .cal-belegt  { font-size: .6rem; font-weight: 700; color: rgba(239,68,68,.55); letter-spacing: .02em; text-transform: uppercase; text-decoration: none; }
 .cal-d.avail  { background: var(--white); }
 .cal-d.avail:hover:not(:disabled) { background: var(--ocean); color: #fff; }
 .cal-d.today  { outline: 2px solid var(--gold); outline-offset: -2px; }

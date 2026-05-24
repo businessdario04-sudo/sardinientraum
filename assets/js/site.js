@@ -175,7 +175,10 @@
         cls += ' sel-s sel-e';
       }
 
-      html += `<button type="button" class="${cls}" data-date="${ds}"${disabled ? ' disabled' : ''}>${d}</button>`;
+      const dayInner = isBook
+        ? `<span class="cal-day-num">${d}</span><span class="cal-belegt">Belegt</span>`
+        : `${d}`;
+      html += `<button type="button" class="${cls}" data-date="${ds}"${disabled ? ' disabled' : ''}${isBook ? ' title="Nicht verfügbar"' : ''}>${dayInner}</button>`;
     }
     html += '</div></div>';
     return html;
