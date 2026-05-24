@@ -71,8 +71,23 @@
       items.forEach((item, idx) => {
         const node = tpl.content.cloneNode(true);
         node.querySelectorAll('[data-bind-item]').forEach(b => applyValue(b, resolve(item, b.dataset.bindItem)));
+
+        // Attribut-Bindings: data-bind-item-attr-<attr>="itemKey"
+        const ATTR_PFX = 'data-bind-item-attr-';
+        node.querySelectorAll('*').forEach(el => {
+          [...el.attributes].forEach(attr => {
+            if (!attr.name.startsWith(ATTR_PFX)) return;
+            const targetAttr = attr.name.slice(ATTR_PFX.length); // z.B. "data-apt-info"
+            const val = resolve(item, attr.value);              // item.id etc.
+            if (val !== undefined && val !== null) el.setAttribute(targetAttr, String(val));
+          });
+        });
+
         const rootEl = node.firstElementChild;
-        if (rootEl) rootEl.dataset.bindIndex = String(idx);
+        if (rootEl) {
+          rootEl.dataset.bindIndex   = String(idx);
+          rootEl.dataset.bindListRef = path; // z.B. "region.items"
+        }
         container.appendChild(node);
       });
     });

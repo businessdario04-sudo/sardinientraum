@@ -212,6 +212,7 @@
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
     <button class="tab-btn" data-tab="anfragen">📬 Anfragen <span id="inq-badge" style="display:none;background:var(--red);color:#fff;font-size:.65rem;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></button>
+    <button class="tab-btn" data-tab="wohnungen">🏠 Wohnungen</button>
     <button class="tab-btn" data-tab="kalender">📅 Kalender</button>
     <button class="tab-btn" data-tab="settings">⚙️ Einstellungen</button>
     <button class="tab-btn" data-tab="mailtpl">✉️ E-Mail Vorlagen</button>
@@ -696,6 +697,25 @@
       </div>
 
     </div><!-- /tab-mailtpl -->
+
+    <!-- ══ TAB: WOHNUNGEN ══ -->
+    <div class="tab-panel" id="tab-wohnungen">
+
+      <div class="admin-welcome">
+        <h2>Wohnungen verwalten</h2>
+        <p>Name, Preis, Beschreibung, Bilder und Details jeder Unterkunft bearbeiten. Änderungen gehen sofort live.</p>
+      </div>
+
+      <div id="wohn-list">
+        <p style="color:var(--muted);text-align:center;padding:40px 0;">Lädt…</p>
+      </div>
+
+      <div style="margin-top:24px;text-align:right;">
+        <span id="wohn-save-msg" style="font-size:.85rem;color:var(--muted);margin-right:12px;"></span>
+        <button class="btn btn-blue" id="wohn-save-btn">💾 Alle Änderungen speichern</button>
+      </div>
+
+    </div><!-- /tab-wohnungen -->
 
     <!-- ══ TAB: KALENDER ══ -->
     <div class="tab-panel" id="tab-kalender">
@@ -1211,6 +1231,11 @@ function showApp() {
   loadInquiries();
   checkDraftStatus();
   kalLoadList();
+  // Wohnungen-Daten vorladen (leise, kein UI-Update bis Tab geöffnet)
+  fetch('/api/load-content.php?target=pages', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(j => { if (j.ok && j.data) _wohnData = j.data.wohnungen || null; })
+    .catch(() => {});
 }
 
 /* ── Live-Status / Health ── */
@@ -1977,6 +2002,261 @@ async function kalDeleteBooking(id) {
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     if (btn.dataset.tab === 'kalender' && __CURRENT_USER__) kalLoadList();
+  });
+});
+
+/* ═══════════════════════════════
+   WOHNUNGEN-TAB
+═══════════════════════════════ */
+let _wohnData = null; // pages.wohnungen aus API
+
+async function wohnLoad() {
+  const list = document.getElementById('wohn-list');
+  if (!list) return;
+  list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:40px 0;">Lädt…</p>';
+  try {
+    const r = await fetch('/api/load-content.php?target=pages', { credentials: 'same-origin' });
+    const j = await r.json();
+    if (!j.ok || !j.data) { list.innerHTML = '<p style="color:var(--red);text-align:center;">Laden fehlgeschlagen</p>'; return; }
+    _wohnData = j.data.wohnungen || { label:'', title:'', subtitle:'', items:[] };
+    wohnRender(list);
+  } catch(e) {
+    list.innerHTML = '<p style="color:var(--red);text-align:center;">Verbindungsfehler</p>';
+  }
+}
+
+function wohnRender(list) {
+  if (!_wohnData) return;
+  const items = _wohnData.items || [];
+  list.innerHTML = '';
+
+  // Abschnitt-Überschriften editieren
+  list.insertAdjacentHTML('beforeend', `
+    <div class="settings-block" style="margin-bottom:20px;">
+      <div class="settings-block-head"><span class="icon">📝</span><div><h3>Abschnitts-Texte</h3><p style="margin:0">Überschriften des Wohnungen-Bereichs</p></div></div>
+      <div class="settings-body">
+        <div class="setting-row"><div class="setting-label">Label <span>Kleines Label oben</span></div><input type="text" class="field-sm" id="wohn-label" value="${escHtml(_wohnData.label||'')}"></div>
+        <div class="setting-row"><div class="setting-label">Überschrift</div><input type="text" class="field-sm" id="wohn-title" value="${escHtml(_wohnData.title||'')}"></div>
+        <div class="setting-row"><div class="setting-label">Unterzeile</div><input type="text" class="field-sm" id="wohn-subtitle" value="${escHtml(_wohnData.subtitle||'')}"></div>
+      </div>
+    </div>
+  `);
+
+  items.forEach((apt, idx) => {
+    const card = document.createElement('div');
+    card.className = 'settings-block';
+    card.style.marginBottom = '24px';
+    card.dataset.wohnIdx = idx;
+    card.innerHTML = `
+      <div class="settings-block-head">
+        <span class="icon">🏠</span>
+        <div>
+          <h3>${escHtml(apt.name || 'Wohnung ' + (idx+1))}</h3>
+          <p style="margin:0">${escHtml(apt.id || '')}</p>
+        </div>
+      </div>
+      <div class="settings-body">
+        <div class="setting-row">
+          <div class="setting-label">Name <span>Anzeige-Titel der Wohnung</span></div>
+          <input type="text" class="field-sm wohn-field" data-idx="${idx}" data-key="name" value="${escHtml(apt.name||'')}">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">Badge <span>z.B. „Bis 4 Personen"</span></div>
+          <input type="text" class="field-sm wohn-field" data-idx="${idx}" data-key="badge" value="${escHtml(apt.badge||'')}">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">Preis-Text <span>Angezeigt auf der Karte</span></div>
+          <input type="text" class="field-sm wohn-field" data-idx="${idx}" data-key="price" value="${escHtml(apt.price||'')}">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">Preis (Zahl) <span>€ / Nacht, nur die Zahl</span></div>
+          <input type="number" class="field-sm wohn-field" data-idx="${idx}" data-key="price_value" value="${apt.price_value||''}">
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">Max. Gäste</div>
+          <input type="number" class="field-sm wohn-field" data-idx="${idx}" data-key="max_guests" value="${apt.max_guests||''}">
+        </div>
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
+          <div class="setting-label">Kurzbeschreibung <span>Auf der Karte sichtbar</span></div>
+          <textarea class="field-sm wohn-field" data-idx="${idx}" data-key="description" rows="2" style="width:100%;resize:vertical;">${escHtml(apt.description||'')}</textarea>
+        </div>
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;">
+          <div class="setting-label">Mehr Infos — Details <span>Im Popup-Fenster, wenn „Mehr Infos" geklickt wird. Markdown möglich.</span></div>
+          <textarea class="field-sm wohn-field" data-idx="${idx}" data-key="details" rows="4" style="width:100%;resize:vertical;">${escHtml(apt.details||'')}</textarea>
+        </div>
+
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div class="setting-label">Ausstattung <span>Icons + Text, eine pro Zeile: „🛏 2 Schlafzimmer"</span></div>
+          <textarea class="field-sm" id="wohn-meta-${idx}" rows="${Math.max(2,(apt.meta||[]).length+1)}" style="width:100%;resize:vertical;font-family:monospace;font-size:.82rem;">${(apt.meta||[]).map(m=>(m.icon||'')+' '+(m.text||'')).join('\n')}</textarea>
+        </div>
+
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div class="setting-label">Titelbild</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            ${apt.image ? `<img src="${escHtml(apt.image)}" style="height:60px;border-radius:8px;object-fit:cover;max-width:120px;">` : '<span style="color:var(--muted);font-size:.82rem;">Kein Bild</span>'}
+            <button class="btn btn-outline wohn-img-btn" style="font-size:.8rem;" data-idx="${idx}" data-key="image">📁 Bild hochladen</button>
+            <input type="text" class="field-sm wohn-field" data-idx="${idx}" data-key="image" placeholder="oder Bild-URL einfügen" value="${escHtml(apt.image||'')}" style="flex:1;min-width:160px;">
+          </div>
+        </div>
+
+        <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div class="setting-label">Galerie <span>Weitere Bilder im Popup (eine URL pro Zeile)</span></div>
+          <textarea class="field-sm" id="wohn-gallery-${idx}" rows="3" style="width:100%;resize:vertical;font-size:.82rem;">${(apt.gallery||[]).join('\n')}</textarea>
+          <button class="btn btn-outline wohn-gallery-upload-btn" style="font-size:.8rem;" data-idx="${idx}">📁 Galerie-Bild hochladen</button>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+
+  // Field-Change-Listener
+  list.querySelectorAll('.wohn-field').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const idx = parseInt(inp.dataset.idx);
+      const key = inp.dataset.key;
+      const val = inp.type === 'number' ? (inp.value ? Number(inp.value) : null) : inp.value;
+      if (!isNaN(idx) && key) {
+        if (!_wohnData.items[idx]) _wohnData.items[idx] = {};
+        _wohnData.items[idx][key] = val;
+      }
+      wohnMarkDirty();
+    });
+  });
+
+  // Bild-Upload-Buttons
+  list.querySelectorAll('.wohn-img-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*';
+      inp.style.cssText = 'position:absolute;left:-9999px;';
+      document.body.appendChild(inp);
+      inp.addEventListener('change', async () => {
+        const f = inp.files?.[0]; inp.remove();
+        if (!f) return;
+        btn.textContent = '⏳…'; btn.disabled = true;
+        const url = await wohnUpload(f);
+        if (url) {
+          _wohnData.items[idx].image = url;
+          wohnMarkDirty();
+          wohnRender(list); // neu rendern für Vorschau
+        }
+        btn.textContent = '📁 Bild hochladen'; btn.disabled = false;
+      });
+      inp.click();
+    });
+  });
+
+  // Galerie-Upload-Buttons
+  list.querySelectorAll('.wohn-gallery-upload-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+      inp.style.cssText = 'position:absolute;left:-9999px;';
+      document.body.appendChild(inp);
+      inp.addEventListener('change', async () => {
+        const files = [...(inp.files||[])]; inp.remove();
+        if (!files.length) return;
+        btn.textContent = '⏳ Hochladen…'; btn.disabled = true;
+        for (const f of files) {
+          const url = await wohnUpload(f);
+          if (url) {
+            if (!_wohnData.items[idx].gallery) _wohnData.items[idx].gallery = [];
+            _wohnData.items[idx].gallery.push(url);
+          }
+        }
+        wohnMarkDirty();
+        wohnRender(list);
+        btn.textContent = '📁 Galerie-Bild hochladen'; btn.disabled = false;
+      });
+      inp.click();
+    });
+  });
+}
+
+function wohnMarkDirty() {
+  const msg = document.getElementById('wohn-save-msg');
+  if (msg) { msg.textContent = '● Ungespeicherte Änderungen'; msg.style.color = 'var(--yellow)'; }
+}
+
+async function wohnUpload(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/upload.php', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: fd
+    });
+    const j = await r.json();
+    if (j.ok && j.url) return '/' + j.url;
+    alert('Upload fehlgeschlagen: ' + (j.error || '?'));
+    return null;
+  } catch(e) { alert('Verbindungsfehler'); return null; }
+}
+
+document.getElementById('wohn-save-btn')?.addEventListener('click', async () => {
+  if (!_wohnData) return;
+  const btn = document.getElementById('wohn-save-btn');
+  const msg = document.getElementById('wohn-save-msg');
+
+  // Meta-Tags und Galerie aus Textareas zurücklesen
+  const list = document.getElementById('wohn-list');
+  (_wohnData.items || []).forEach((apt, idx) => {
+    const metaTa = document.getElementById(`wohn-meta-${idx}`);
+    if (metaTa) {
+      apt.meta = metaTa.value.split('\n')
+        .map(l => l.trim()).filter(Boolean)
+        .map(l => {
+          const match = l.match(/^(\p{Emoji}\S*)\s+(.+)$/u);
+          return match ? { icon: match[1], text: match[2] } : { icon: '', text: l };
+        });
+    }
+    const gallTa = document.getElementById(`wohn-gallery-${idx}`);
+    if (gallTa) {
+      apt.gallery = gallTa.value.split('\n').map(l => l.trim()).filter(Boolean);
+    }
+  });
+
+  // Abschnitts-Texte
+  const lbl = document.getElementById('wohn-label');
+  const ttl = document.getElementById('wohn-title');
+  const sub = document.getElementById('wohn-subtitle');
+  if (lbl) _wohnData.label    = lbl.value;
+  if (ttl) _wohnData.title    = ttl.value;
+  if (sub) _wohnData.subtitle = sub.value;
+
+  btn.disabled = true; btn.textContent = '⏳ Speichern…';
+
+  try {
+    const r = await fetch('/api/save-content.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({ target: 'pages', patch: { wohnungen: _wohnData } })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      if (msg) { msg.textContent = '✓ Gespeichert'; msg.style.color = 'var(--green)'; }
+      btn.textContent = '✅ Gespeichert!';
+      btn.style.background = '#22c55e';
+      setTimeout(() => { btn.textContent = '💾 Alle Änderungen speichern'; btn.style.background = ''; btn.disabled = false; if (msg) msg.textContent = ''; }, 2500);
+    } else {
+      alert('Fehler: ' + (j.error || 'Unbekannt'));
+      btn.disabled = false; btn.textContent = '💾 Alle Änderungen speichern';
+    }
+  } catch(e) {
+    alert('Verbindungsfehler: ' + e.message);
+    btn.disabled = false; btn.textContent = '💾 Alle Änderungen speichern';
+  }
+});
+
+// Wohnungen laden wenn Tab aktiviert wird
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'wohnungen' && __CURRENT_USER__) wohnLoad();
   });
 });
 

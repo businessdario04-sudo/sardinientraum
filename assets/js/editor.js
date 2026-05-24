@@ -158,6 +158,7 @@
 
   // ════════════════ FELDER MARKIEREN ════════════════
   function markEditableFields() {
+    // Normale data-bind Felder
     document.querySelectorAll('[data-bind]').forEach(el => {
       if (el.closest('#et-toolbar,#et-img-bar,#et-settings-panel')) return;
       const path = el.dataset.bind;
@@ -170,14 +171,39 @@
         el.addEventListener('click', onTextClick);
       }
     });
+
+    // Listen-Elemente (data-bind-item) editierbar machen
+    document.querySelectorAll('[data-bind-list]').forEach(container => {
+      const listPath = container.dataset.bindList; // z.B. "region.items"
+      container.querySelectorAll('[data-bind-item]').forEach(el => {
+        if (el.closest('#et-toolbar,#et-img-bar,#et-settings-panel')) return;
+        if (el.classList.contains('et-editable')) return; // bereits markiert
+        const itemKey = el.dataset.bindItem;
+        const cardEl  = el.closest('[data-bind-index]');
+        if (!cardEl) return;
+        const idx      = cardEl.dataset.bindIndex;
+        const fullPath = `${listPath}.${idx}.${itemKey}`; // z.B. "region.items.0.label"
+        el.dataset.bind = fullPath; // reuse bestehenden Mechanismus
+
+        if (el.tagName === 'IMG') {
+          el.classList.add('et-editable', 'et-media');
+          el.addEventListener('click', onMediaClick);
+        } else {
+          el.classList.add('et-editable', 'et-text');
+          el.addEventListener('click', onListItemTextClick);
+        }
+      });
+    });
   }
 
   function unmarkEditableFields() {
     document.querySelectorAll('.et-editable').forEach(el => {
       el.classList.remove('et-editable','et-text','et-media','et-selected');
       el.removeEventListener('click', onTextClick);
+      el.removeEventListener('click', onListItemTextClick);
       el.removeEventListener('click', onMediaClick);
       el.removeAttribute('contenteditable');
+      delete el.dataset.bind; // nur wenn wir es gesetzt haben? Nein, das wäre zu invasiv
     });
   }
 
@@ -203,6 +229,60 @@
     val = val.trim();
     setPatchValue('pages', path, val);
     setDirty(true);
+  }
+
+  // ════════════════ LIST-ITEM TEXT EDITING ════════════════
+  // Für data-bind-item Texte (z.B. region-Karten-Labels)
+  function onListItemTextClick(e) {
+    e.preventDefault(); e.stopPropagation();
+    hideImageBar();
+    const el = e.currentTarget;
+    selectElement(el);
+    el.setAttribute('contenteditable', 'true');
+    el.focus();
+    el.addEventListener('blur', onListItemTextBlur, { once: true });
+  }
+
+  function onListItemTextBlur(e) {
+    const el = e.target;
+    el.removeAttribute('contenteditable');
+    const path = el.dataset.bind; // z.B. "region.items.0.label"
+    if (!path) return;
+    let val = el.innerHTML.includes('<br>')
+      ? el.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')
+      : el.textContent;
+    val = val.trim();
+
+    // Direkt in __SARDINIA_PAGES__ schreiben (damit Modal etc. aktuell bleibt)
+    const pages = window.__SARDINIA_PAGES__;
+    if (pages) setDeepValue(pages, path, val);
+
+    // Gesamtes Array in den Patch schreiben (einfachste zuverlässige Methode)
+    const parts   = path.split('.');
+    const numIdx  = parts.findIndex(p => /^\d+$/.test(p));
+    if (numIdx > 0 && pages) {
+      const arrayPath = parts.slice(0, numIdx).join('.');
+      const fullArr   = resolveDeep(pages, arrayPath);
+      if (Array.isArray(fullArr)) setPatchValue('pages', arrayPath, JSON.parse(JSON.stringify(fullArr)));
+    } else {
+      setPatchValue('pages', path, val);
+    }
+    setDirty(true);
+  }
+
+  function setDeepValue(obj, path, value) {
+    const keys = path.split('.');
+    let cur = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+      const k = keys[i];
+      if (cur[k] === undefined || cur[k] === null) cur[k] = {};
+      cur = cur[k];
+    }
+    cur[keys[keys.length - 1]] = value;
+  }
+
+  function resolveDeep(obj, path) {
+    return path.split('.').reduce((cur, k) => (cur && cur[k] !== undefined ? cur[k] : undefined), obj);
   }
 
   // ════════════════ MEDIA EDITING ════════════════
