@@ -26,9 +26,18 @@ if (!rateLimit('upload', 20, 60)) {
 }
 
 // ─── Datei aus FormData empfangen ───────────────────────────
-if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-    $err = $_FILES['file']['error'] ?? 'no_file';
-    respondJson(['ok' => false, 'error' => 'upload_failed', 'detail' => $err], 400);
+$phpErrMap = [
+    0 => 'OK', 1 => 'Datei zu groß (Server-Limit)', 2 => 'Datei zu groß (Formular-Limit)',
+    3 => 'Nur teilweise hochgeladen', 4 => 'Keine Datei empfangen',
+    6 => 'Kein Temp-Verzeichnis', 7 => 'Schreiben fehlgeschlagen', 8 => 'Extension blockiert'
+];
+if (!isset($_FILES['file'])) {
+    respondJson(['ok' => false, 'error' => 'no_file', 'msg' => 'Keine Datei empfangen — FormData leer'], 400);
+}
+if ($_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+    $code = (int)$_FILES['file']['error'];
+    $msg  = $phpErrMap[$code] ?? 'Unbekannter Fehler';
+    respondJson(['ok' => false, 'error' => 'upload_failed', 'msg' => $msg, 'code' => $code], 400);
 }
 
 $file = $_FILES['file'];
@@ -43,6 +52,9 @@ if ($size > $maxSize) {
 }
 
 // ─── MIME-Type prüfen (echter Inhalt, nicht client-Header!) ─
+if (!extension_loaded('fileinfo')) {
+    respondJson(['ok' => false, 'error' => 'server_config', 'msg' => 'PHP fileinfo-Extension fehlt. php.ini prüfen.'], 500);
+}
 $finfo = new finfo(FILEINFO_MIME_TYPE);
 $mime  = $finfo->file($tmp);
 

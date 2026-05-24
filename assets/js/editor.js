@@ -226,10 +226,10 @@
       });
       const j = await r.json();
       if (j.ok && j.url) return '/' + j.url;
-      alert('Upload fehlgeschlagen: ' + (j.error || 'unbekannt'));
+      alert('Upload fehlgeschlagen:\n' + (j.msg || j.error || 'Unbekannt') + (j.code ? ' (Code ' + j.code + ')' : ''));
       return null;
     } catch (e) {
-      alert('Upload-Fehler: ' + e.message);
+      alert('Upload-Fehler (Verbindung):\n' + e.message);
       return null;
     }
   }
@@ -253,19 +253,46 @@
   }
 
   // ════════════════ SETTINGS PANEL ════════════════
+  const SECTIONS = [
+    { id: 'hero',        label: 'Hero (Startbild)' },
+    { id: 'ueber',       label: 'Über uns' },
+    { id: 'wohnungen',   label: 'Wohnungen' },
+    { id: 'region',      label: 'Region' },
+    { id: 'bewertungen', label: 'Bewertungen' },
+    { id: 'faq',         label: 'FAQ' },
+    { id: 'anfrage',     label: 'Kontakt / Anfrage' },
+  ];
+
   function toggleSettings() {
     let panel = document.getElementById('et-settings-panel');
     if (panel) { panel.remove(); return; }
     panel = document.createElement('div');
     panel.id = 'et-settings-panel';
+
+    const currentRadius = getCssVar('--radius', '16px');
+    const radiusOptions = ['0px','8px','16px','24px'].map(v =>
+      `<option value="${v}"${v === currentRadius ? ' selected' : ''}>${
+        {  '0px':'Eckig', '8px':'Leicht rund', '16px':'Rund', '24px':'Sehr rund' }[v]
+      }</option>`
+    ).join('');
+
+    const sectionRows = SECTIONS.map(s => `
+      <div class="et-sp-row">
+        <label>${s.label}</label>
+        <div class="et-sp-color-wrap">
+          <input type="color" id="sp-bg-${s.id}" value="${getSectionBg(s.id)}">
+          <button class="et-sp-reset" data-section="${s.id}" title="Zurücksetzen">✕</button>
+        </div>
+      </div>`).join('');
+
     panel.innerHTML = `
       <div class="et-sp-head">
-        <span>⚙ Globale Einstellungen</span>
-        <button id="et-sp-close">✕</button>
+        <span>🎨 Design</span>
+        <button id="et-sp-close" title="Panel schließen">✕</button>
       </div>
       <div class="et-sp-body">
         <div class="et-sp-section">
-          <h4>🎨 Farben</h4>
+          <h4>🎨 Globale Farben</h4>
           <div class="et-sp-row"><label>Primärfarbe</label><input type="color" id="sp-primary" value="${getCssVar('--ocean','#1e4d6b')}"></div>
           <div class="et-sp-row"><label>Akzentfarbe</label><input type="color" id="sp-accent"  value="${getCssVar('--gold','#c8975a')}"></div>
           <div class="et-sp-row"><label>Hintergrund (Sand)</label><input type="color" id="sp-sand" value="${getCssVar('--sand','#f0e6d3')}"></div>
@@ -273,18 +300,19 @@
         </div>
         <div class="et-sp-section">
           <h4>📐 Eckenradius</h4>
-          <select id="sp-radius">
-            <option value="0px">Eckig</option>
-            <option value="8px">Leicht rund</option>
-            <option value="16px" selected>Rund</option>
-            <option value="24px">Sehr rund</option>
-          </select>
+          <select id="sp-radius">${radiusOptions}</select>
+        </div>
+        <div class="et-sp-section">
+          <h4>🏠 Abschnitt-Hintergründe</h4>
+          <p class="et-sp-hint">Klicke auf ✕ um den Original-Hintergrund wiederherzustellen.</p>
+          ${sectionRows}
         </div>
       </div>
     `;
     document.body.appendChild(panel);
     document.getElementById('et-sp-close').addEventListener('click', toggleSettings);
 
+    // Globale Farben binden
     const bind = (id, varName, cfgPath) => {
       document.getElementById(id)?.addEventListener('input', e => {
         document.documentElement.style.setProperty(varName, e.target.value);
@@ -296,16 +324,69 @@
     bind('sp-accent',  '--gold',  'theme.colors.accent');
     bind('sp-sand',    '--sand',  'theme.colors.sand');
     bind('sp-text',    '--text',  'theme.colors.text');
+
     document.getElementById('sp-radius')?.addEventListener('change', e => {
       document.documentElement.style.setProperty('--radius', e.target.value);
       setPatchValue('config', 'theme.radius', e.target.value);
       setDirty(true);
+    });
+
+    // Abschnitt-Hintergründe binden
+    SECTIONS.forEach(s => {
+      document.getElementById(`sp-bg-${s.id}`)?.addEventListener('input', e => {
+        const el = document.getElementById(s.id);
+        if (el) el.style.backgroundColor = e.target.value;
+        // Config lokal mitschreiben (für spätere getSectionBg-Lesungen)
+        if (!window.__SARDINIA_CONFIG__) window.__SARDINIA_CONFIG__ = {};
+        if (!window.__SARDINIA_CONFIG__.theme) window.__SARDINIA_CONFIG__.theme = {};
+        if (!window.__SARDINIA_CONFIG__.theme.section_bgs) window.__SARDINIA_CONFIG__.theme.section_bgs = {};
+        window.__SARDINIA_CONFIG__.theme.section_bgs[s.id] = e.target.value;
+        setPatchValue('config', `theme.section_bgs.${s.id}`, e.target.value);
+        setDirty(true);
+      });
+    });
+
+    // Reset-Buttons
+    panel.querySelectorAll('.et-sp-reset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.section;
+        const el  = document.getElementById(sid);
+        if (el) el.style.backgroundColor = '';
+        // Lokal löschen
+        if (window.__SARDINIA_CONFIG__?.theme?.section_bgs) {
+          window.__SARDINIA_CONFIG__.theme.section_bgs[sid] = null;
+        }
+        setPatchValue('config', `theme.section_bgs.${sid}`, null);
+        setDirty(true);
+        // Input auf Weiß zurücksetzen
+        const inp = document.getElementById(`sp-bg-${sid}`);
+        if (inp) inp.value = '#ffffff';
+      });
     });
   }
 
   function getCssVar(name, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return v || fallback;
+  }
+
+  function rgbToHex(rgb) {
+    if (!rgb || rgb === 'rgba(0, 0, 0, 0)' || rgb === 'transparent') return null;
+    const m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (!m) return null;
+    return '#' + [m[1], m[2], m[3]].map(n => Number(n).toString(16).padStart(2, '0')).join('');
+  }
+
+  function getSectionBg(sectionId) {
+    // Gespeicherten Wert aus config bevorzugen
+    const saved = window.__SARDINIA_CONFIG__?.theme?.section_bgs?.[sectionId];
+    if (saved) return saved;
+    // Fallback: inline-Style lesen (z.B. gesetzt durch applyConfig)
+    const el = document.getElementById(sectionId);
+    if (!el) return '#ffffff';
+    const inline = el.style.backgroundColor;
+    if (inline) return rgbToHex(inline) || '#ffffff';
+    return '#ffffff';
   }
 
   // ════════════════ SAVE ════════════════
@@ -369,6 +450,8 @@
   function boot() {
     buildToolbar();
     markEditableFields();
+    // Design-Panel automatisch öffnen
+    toggleSettings();
     document.addEventListener('sardinia:data-loaded', () => {
       unmarkEditableFields();
       markEditableFields();

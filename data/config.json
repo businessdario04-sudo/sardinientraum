@@ -50,7 +50,16 @@
       "heading": "'Playfair Display', serif",
       "body": "'Inter', sans-serif"
     },
-    "radius": "16px"
+    "radius": "16px",
+    "section_bgs": {
+      "hero": null,
+      "ueber": null,
+      "wohnungen": null,
+      "region": null,
+      "bewertungen": null,
+      "faq": null,
+      "anfrage": null
+    }
   },
 
   "form": {

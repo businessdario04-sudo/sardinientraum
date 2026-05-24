@@ -203,6 +203,21 @@ body.et-mode.et-has-imgbar { padding-top: 104px; }
 .et-sp-row input[type="color"] { width: 50px; height: 32px; border: 1px solid #2a2d3a; border-radius: 6px; cursor: pointer; background: #0f1117; padding: 2px; }
 .et-sp-row select { background: #0f1117; color: #e2e4eb; border: 1px solid #2a2d3a; border-radius: 6px; padding: 6px 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
 .et-sp-row select:focus { border-color: #3b82f6; outline: none; }
+.et-sp-color-wrap { display: flex; align-items: center; gap: 6px; }
+.et-sp-reset {
+  background: transparent;
+  border: 1px solid #2a2d3a;
+  color: #6b7280;
+  width: 24px; height: 24px;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color .15s, border-color .15s;
+}
+.et-sp-reset:hover { color: #ef4444; border-color: #ef4444; }
+.et-sp-hint { font-size: 11px; color: #6b7280; margin: -8px 0 12px; line-height: 1.4; }
 
 /* ════════ DRAFT-VORSCHAU-LEISTE (site.js) ════════ */
 #et-draft-bar {

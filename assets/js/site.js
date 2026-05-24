@@ -109,6 +109,14 @@
       [...document.body.classList].filter(c => c.startsWith('theme-')).forEach(c => document.body.classList.remove(c));
       document.body.classList.add('theme-' + theme.name);
     }
+
+    // Abschnitt-Hintergründe anwenden
+    const sectionBgs = theme.section_bgs || {};
+    Object.entries(sectionBgs).forEach(([id, color]) => {
+      if (!color) return;
+      const el = document.getElementById(id);
+      if (el) el.style.backgroundColor = color;
+    });
   }
 
   // ─── Anfrageformular ───
