@@ -13,6 +13,11 @@
  */
 declare(strict_types=1);
 
+// ─── Ausgabe-Puffer: verhindert PHP-Warning-HTML in JSON-Responses ──
+// Muss VOR allen anderen Anweisungen stehen, damit auch Warnings aus
+// ini_set / session_start / Extension-Initialisierung abgefangen werden.
+ob_start();
+
 // ─── Pfade ───────────────────────────────────────────────────
 define('APP_ROOT',  dirname(__DIR__));
 define('DATA_DIR',  APP_ROOT . '/data');
@@ -22,6 +27,7 @@ define('LOG_DIR',   DATA_DIR . '/logs');
 // ─── Error-Display: NUR in Logs, niemals an User ────────────
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
+ini_set('html_errors',    '0');
 ini_set('log_errors',     '1');
 ini_set('error_log',      LOG_DIR . '/php-errors.log');
 
@@ -195,6 +201,8 @@ function requireLogin(): void {
 // ─── Response-Helper ────────────────────────────────────────
 
 function respondJson(array $data, int $status = 200): void {
+    // Alles Gepufferte wegwerfen (PHP-Warnings, BOM, etc.) damit JSON sauber ist
+    while (ob_get_level() > 0) { ob_end_clean(); }
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);

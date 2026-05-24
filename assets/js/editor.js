@@ -335,7 +335,7 @@
     SECTIONS.forEach(s => {
       document.getElementById(`sp-bg-${s.id}`)?.addEventListener('input', e => {
         const el = document.getElementById(s.id);
-        if (el) el.style.backgroundColor = e.target.value;
+        if (el) el.style.background = e.target.value;
         // Config lokal mitschreiben (für spätere getSectionBg-Lesungen)
         if (!window.__SARDINIA_CONFIG__) window.__SARDINIA_CONFIG__ = {};
         if (!window.__SARDINIA_CONFIG__.theme) window.__SARDINIA_CONFIG__.theme = {};
@@ -351,7 +351,7 @@
       btn.addEventListener('click', () => {
         const sid = btn.dataset.section;
         const el  = document.getElementById(sid);
-        if (el) el.style.backgroundColor = '';
+        if (el) el.style.background = '';
         // Lokal löschen
         if (window.__SARDINIA_CONFIG__?.theme?.section_bgs) {
           window.__SARDINIA_CONFIG__.theme.section_bgs[sid] = null;
@@ -378,14 +378,14 @@
   }
 
   function getSectionBg(sectionId) {
-    // Gespeicherten Wert aus config bevorzugen
+    // Gespeicherten Wert aus config bevorzugen (zuverlässigste Quelle)
     const saved = window.__SARDINIA_CONFIG__?.theme?.section_bgs?.[sectionId];
     if (saved) return saved;
-    // Fallback: inline-Style lesen (z.B. gesetzt durch applyConfig)
+    // Fallback: inline background-Shorthand lesen
     const el = document.getElementById(sectionId);
     if (!el) return '#ffffff';
-    const inline = el.style.backgroundColor;
-    if (inline) return rgbToHex(inline) || '#ffffff';
+    const inline = el.style.background || el.style.backgroundColor;
+    if (inline) return rgbToHex(inline) || inline;
     return '#ffffff';
   }
 

@@ -115,7 +115,7 @@
     Object.entries(sectionBgs).forEach(([id, color]) => {
       if (!color) return;
       const el = document.getElementById(id);
-      if (el) el.style.backgroundColor = color;
+      if (el) el.style.background = color;
     });
   }
 
