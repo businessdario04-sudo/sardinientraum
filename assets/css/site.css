@@ -102,7 +102,10 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(135deg, #1e4d6b, #2e6d96);
+      background-size: cover;
+      background-position: center;
       z-index: 0;
+      transition: background-image .3s ease;
     }
     #hero video {
       position: absolute;

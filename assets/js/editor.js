@@ -254,7 +254,6 @@
 
   // ════════════════ SETTINGS PANEL ════════════════
   const SECTIONS = [
-    { id: 'hero',        label: 'Hero (Startbild)' },
     { id: 'ueber',       label: 'Über uns' },
     { id: 'wohnungen',   label: 'Wohnungen' },
     { id: 'region',      label: 'Region' },
@@ -262,6 +261,10 @@
     { id: 'faq',         label: 'FAQ' },
     { id: 'anfrage',     label: 'Kontakt / Anfrage' },
   ];
+
+  function getHeroMediaMode() {
+    return window.__SARDINIA_CONFIG__?.theme?.hero_media?.mode || 'video';
+  }
 
   function toggleSettings() {
     let panel = document.getElementById('et-settings-panel');
@@ -272,18 +275,24 @@
     const currentRadius = getCssVar('--radius', '16px');
     const radiusOptions = ['0px','8px','16px','24px'].map(v =>
       `<option value="${v}"${v === currentRadius ? ' selected' : ''}>${
-        {  '0px':'Eckig', '8px':'Leicht rund', '16px':'Rund', '24px':'Sehr rund' }[v]
+        { '0px':'Eckig', '8px':'Leicht rund', '16px':'Rund', '24px':'Sehr rund' }[v]
       }</option>`
     ).join('');
 
-    const sectionRows = SECTIONS.map(s => `
-      <div class="et-sp-row">
+    const heroMode = getHeroMediaMode();
+
+    const sectionRows = SECTIONS.map(s => {
+      const hasImg = !!(window.__SARDINIA_CONFIG__?.theme?.section_bg_images?.[s.id]);
+      return `
+      <div class="et-sp-row" id="sp-row-${s.id}">
         <label>${s.label}</label>
         <div class="et-sp-color-wrap">
-          <input type="color" id="sp-bg-${s.id}" value="${getSectionBg(s.id)}">
-          <button class="et-sp-reset" data-section="${s.id}" title="Zurücksetzen">✕</button>
+          <input type="color" id="sp-bg-${s.id}" value="${getSectionBg(s.id)}" title="Hintergrundfarbe">
+          <button class="et-bg-img-btn ${hasImg ? 'has-image' : ''}" data-section="${s.id}" title="Hintergrundbild hochladen">🖼${hasImg ? ' ✓' : ''}</button>
+          <button class="et-sp-reset" data-section="${s.id}" title="Alles zurücksetzen">✕</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     panel.innerHTML = `
       <div class="et-sp-head">
@@ -291,6 +300,19 @@
         <button id="et-sp-close" title="Panel schließen">✕</button>
       </div>
       <div class="et-sp-body">
+
+        <div class="et-sp-section">
+          <h4>🎬 Hero-Hintergrund</h4>
+          <div class="et-hero-toggle">
+            <button class="et-hero-toggle-btn ${heroMode === 'video' ? 'active' : ''}" id="hero-mode-video">📹 Video</button>
+            <button class="et-hero-toggle-btn ${heroMode === 'image' ? 'active' : ''}" id="hero-mode-image">🖼 Bild</button>
+          </div>
+          <button class="et-bg-img-btn" id="hero-upload-btn" style="width:100%;text-align:center;padding:8px;">
+            📁 ${heroMode === 'video' ? 'Video' : 'Bild'} hochladen
+          </button>
+          <div class="et-drag-hint">oder Datei direkt auf den Hero-Bereich ziehen</div>
+        </div>
+
         <div class="et-sp-section">
           <h4>🎨 Globale Farben</h4>
           <div class="et-sp-row"><label>Primärfarbe</label><input type="color" id="sp-primary" value="${getCssVar('--ocean','#1e4d6b')}"></div>
@@ -298,21 +320,72 @@
           <div class="et-sp-row"><label>Hintergrund (Sand)</label><input type="color" id="sp-sand" value="${getCssVar('--sand','#f0e6d3')}"></div>
           <div class="et-sp-row"><label>Textfarbe</label><input type="color" id="sp-text" value="${getCssVar('--text','#2a2a2a')}"></div>
         </div>
+
         <div class="et-sp-section">
           <h4>📐 Eckenradius</h4>
           <select id="sp-radius">${radiusOptions}</select>
         </div>
+
         <div class="et-sp-section">
           <h4>🏠 Abschnitt-Hintergründe</h4>
-          <p class="et-sp-hint">Klicke auf ✕ um den Original-Hintergrund wiederherzustellen.</p>
+          <p class="et-sp-hint">🎨 Farbe · 🖼 Bild hochladen · ✕ Zurücksetzen</p>
+          <p class="et-sp-hint" style="margin-top:-6px;">Tipp: Bild direkt auf den Abschnitt ziehen!</p>
           ${sectionRows}
         </div>
+
       </div>
     `;
     document.body.appendChild(panel);
     document.getElementById('et-sp-close').addEventListener('click', toggleSettings);
 
-    // Globale Farben binden
+    // ── Hero-Modus Toggle ──
+    document.getElementById('hero-mode-video')?.addEventListener('click', () => {
+      setHeroMedia('video', null);
+      document.getElementById('hero-mode-video').classList.add('active');
+      document.getElementById('hero-mode-image').classList.remove('active');
+      const btn = document.getElementById('hero-upload-btn');
+      if (btn) btn.textContent = '📁 Video hochladen';
+    });
+    document.getElementById('hero-mode-image')?.addEventListener('click', () => {
+      setHeroMedia('image', window.__SARDINIA_CONFIG__?.theme?.hero_media?.image_url || null);
+      document.getElementById('hero-mode-image').classList.add('active');
+      document.getElementById('hero-mode-video').classList.remove('active');
+      const btn = document.getElementById('hero-upload-btn');
+      if (btn) btn.textContent = '📁 Bild hochladen';
+    });
+
+    // ── Hero Upload Button ──
+    document.getElementById('hero-upload-btn')?.addEventListener('click', () => {
+      const mode = getHeroMediaMode();
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = mode === 'video' ? 'video/*' : 'image/*';
+      inp.style.cssText = 'position:absolute;left:-9999px;';
+      document.body.appendChild(inp);
+      inp.addEventListener('change', async () => {
+        const f = inp.files?.[0];
+        if (!f) { inp.remove(); return; }
+        const btn = document.getElementById('hero-upload-btn');
+        if (btn) { btn.textContent = '⏳ Lädt hoch…'; btn.disabled = true; }
+        const url = await uploadFile(f);
+        inp.remove();
+        if (!url) { if (btn) { btn.textContent = '✗ Fehlgeschlagen'; btn.disabled = false; } return; }
+        if (mode === 'video') {
+          setHeroMedia('video', url);
+          setPatchValue('config', 'theme.hero_media.mode',      'video');
+          setPatchValue('config', 'theme.hero_media.video_url', url);
+        } else {
+          setHeroMedia('image', url);
+          setPatchValue('config', 'theme.hero_media.mode',      'image');
+          setPatchValue('config', 'theme.hero_media.image_url', url);
+        }
+        setDirty(true);
+        if (btn) { btn.textContent = '✅ Übernommen!'; btn.disabled = false; setTimeout(() => { if (btn) btn.textContent = '📁 ' + (mode==='video'?'Video':'Bild') + ' hochladen'; }, 2000); }
+      });
+      inp.click();
+    });
+
+    // ── Globale Farben binden ──
     const bind = (id, varName, cfgPath) => {
       document.getElementById(id)?.addEventListener('input', e => {
         document.documentElement.style.setProperty(varName, e.target.value);
@@ -331,12 +404,11 @@
       setDirty(true);
     });
 
-    // Abschnitt-Hintergründe binden
+    // ── Abschnitt-Farben binden ──
     SECTIONS.forEach(s => {
       document.getElementById(`sp-bg-${s.id}`)?.addEventListener('input', e => {
         const el = document.getElementById(s.id);
         if (el) el.style.background = e.target.value;
-        // Config lokal mitschreiben (für spätere getSectionBg-Lesungen)
         if (!window.__SARDINIA_CONFIG__) window.__SARDINIA_CONFIG__ = {};
         if (!window.__SARDINIA_CONFIG__.theme) window.__SARDINIA_CONFIG__.theme = {};
         if (!window.__SARDINIA_CONFIG__.theme.section_bgs) window.__SARDINIA_CONFIG__.theme.section_bgs = {};
@@ -346,23 +418,97 @@
       });
     });
 
-    // Reset-Buttons
+    // ── Abschnitt Bild-Upload Buttons ──
+    panel.querySelectorAll('.et-bg-img-btn[data-section]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.section;
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/*';
+        inp.style.cssText = 'position:absolute;left:-9999px;';
+        document.body.appendChild(inp);
+        inp.addEventListener('change', async () => {
+          const f = inp.files?.[0];
+          if (!f) { inp.remove(); return; }
+          btn.textContent = '⏳';
+          const url = await uploadFile(f);
+          inp.remove();
+          if (!url) { btn.textContent = '✗'; return; }
+          applySectionBgImage(sid, url);
+          btn.textContent = '🖼 ✓';
+          btn.classList.add('has-image');
+          setDirty(true);
+        });
+        inp.click();
+      });
+    });
+
+    // ── Reset-Buttons (löscht Farbe UND Bild) ──
     panel.querySelectorAll('.et-sp-reset').forEach(btn => {
       btn.addEventListener('click', () => {
         const sid = btn.dataset.section;
         const el  = document.getElementById(sid);
-        if (el) el.style.background = '';
-        // Lokal löschen
-        if (window.__SARDINIA_CONFIG__?.theme?.section_bgs) {
-          window.__SARDINIA_CONFIG__.theme.section_bgs[sid] = null;
-        }
-        setPatchValue('config', `theme.section_bgs.${sid}`, null);
+        if (el) { el.style.background = ''; el.style.backgroundImage = ''; }
+        if (window.__SARDINIA_CONFIG__?.theme?.section_bgs)       window.__SARDINIA_CONFIG__.theme.section_bgs[sid]       = null;
+        if (window.__SARDINIA_CONFIG__?.theme?.section_bg_images) window.__SARDINIA_CONFIG__.theme.section_bg_images[sid] = null;
+        setPatchValue('config', `theme.section_bgs.${sid}`,       null);
+        setPatchValue('config', `theme.section_bg_images.${sid}`, null);
         setDirty(true);
-        // Input auf Weiß zurücksetzen
         const inp = document.getElementById(`sp-bg-${sid}`);
         if (inp) inp.value = '#ffffff';
+        const imgBtn = panel.querySelector(`.et-bg-img-btn[data-section="${sid}"]`);
+        if (imgBtn) { imgBtn.textContent = '🖼'; imgBtn.classList.remove('has-image'); }
       });
     });
+  }
+
+  // ── Hero-Hintergrund umschalten ──
+  function setHeroMedia(mode, url) {
+    const video  = document.querySelector('#hero video');
+    const heroBg = document.querySelector('#hero .hero-bg');
+
+    // Config lokal merken
+    if (!window.__SARDINIA_CONFIG__) window.__SARDINIA_CONFIG__ = {};
+    if (!window.__SARDINIA_CONFIG__.theme) window.__SARDINIA_CONFIG__.theme = {};
+    if (!window.__SARDINIA_CONFIG__.theme.hero_media) window.__SARDINIA_CONFIG__.theme.hero_media = {};
+    window.__SARDINIA_CONFIG__.theme.hero_media.mode = mode;
+
+    if (mode === 'image') {
+      if (video) video.style.display = 'none';
+      if (url) {
+        window.__SARDINIA_CONFIG__.theme.hero_media.image_url = url;
+        if (heroBg) {
+          heroBg.style.backgroundImage    = `url(${url})`;
+          heroBg.style.backgroundSize     = 'cover';
+          heroBg.style.backgroundPosition = 'center';
+        }
+      }
+    } else {
+      // Video-Modus
+      if (video) video.style.display = '';
+      if (heroBg) heroBg.style.backgroundImage = '';
+      if (url) {
+        window.__SARDINIA_CONFIG__.theme.hero_media.video_url = url;
+        const source = video?.querySelector('source');
+        if (source) source.src = url;
+        try { video?.load(); video?.play(); } catch(_) {}
+      }
+    }
+  }
+
+  // ── Sektion Hintergrundbild setzen ──
+  function applySectionBgImage(sectionId, url) {
+    const el = document.getElementById(sectionId);
+    if (!el) return;
+    el.style.backgroundImage    = `url(${url})`;
+    el.style.backgroundSize     = 'cover';
+    el.style.backgroundPosition = 'center';
+    // Config lokal merken
+    if (!window.__SARDINIA_CONFIG__) window.__SARDINIA_CONFIG__ = {};
+    if (!window.__SARDINIA_CONFIG__.theme) window.__SARDINIA_CONFIG__.theme = {};
+    if (!window.__SARDINIA_CONFIG__.theme.section_bg_images) window.__SARDINIA_CONFIG__.theme.section_bg_images = {};
+    window.__SARDINIA_CONFIG__.theme.section_bg_images[sectionId] = url;
+    setPatchValue('config', `theme.section_bg_images.${sectionId}`, url);
   }
 
   function getCssVar(name, fallback) {
@@ -440,6 +586,133 @@
     }
   }
 
+  // ════════════════ DRAG & DROP ════════════════
+  function showDropOk(el) {
+    // Verhindert mehrfache Overlays
+    el.querySelectorAll('.et-drop-ok').forEach(x => x.remove());
+    const msg = document.createElement('div');
+    msg.className = 'et-drop-ok';
+    msg.textContent = '✓ Übernommen!';
+    const parent = el.style.position ? el : el;
+    const savedPos = parent.style.position;
+    if (!savedPos || savedPos === 'static') parent.style.position = 'relative';
+    parent.appendChild(msg);
+    setTimeout(() => { msg.remove(); if (!savedPos || savedPos === 'static') parent.style.position = savedPos; }, 1900);
+  }
+
+  function setupDragDrop() {
+    // ── Drag auf IMG-Elemente ──
+    document.querySelectorAll('img.et-media').forEach(img => {
+      img.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); img.classList.add('et-drag-over'); });
+      img.addEventListener('dragleave', () => img.classList.remove('et-drag-over'));
+      img.addEventListener('drop', async e => {
+        e.preventDefault(); e.stopPropagation();
+        img.classList.remove('et-drag-over');
+        const file = e.dataTransfer.files?.[0];
+        if (!file || !file.type.startsWith('image/')) return;
+        const url = await uploadFile(file);
+        if (!url) return;
+        applyMedia(img, url);
+        const path = img.dataset.bind;
+        if (path) { setPatchValue('pages', path, url); setDirty(true); }
+        showDropOk(img);
+      });
+    });
+
+    // ── Drag auf Sections (Hintergrundbild) ──
+    document.querySelectorAll('section').forEach(section => {
+      section.addEventListener('dragover', e => {
+        // Nur reagieren wenn direkt auf der Section (nicht auf Kind-Elemente mit eigener Drag-Logik)
+        e.preventDefault();
+        section.classList.add('et-drag-over');
+      });
+      section.addEventListener('dragleave', e => {
+        if (!section.contains(e.relatedTarget)) section.classList.remove('et-drag-over');
+      });
+      section.addEventListener('drop', async e => {
+        e.preventDefault();
+        section.classList.remove('et-drag-over');
+        const file = e.dataTransfer.files?.[0];
+        if (!file) return;
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        if (!isImage && !isVideo) return;
+
+        const url = await uploadFile(file);
+        if (!url) return;
+
+        if (section.id === 'hero') {
+          if (isImage) {
+            setHeroMedia('image', url);
+            setPatchValue('config', 'theme.hero_media.mode',      'image');
+            setPatchValue('config', 'theme.hero_media.image_url', url);
+            // Panel updaten wenn offen
+            const mvBtn = document.getElementById('hero-mode-video');
+            const miBtn = document.getElementById('hero-mode-image');
+            if (mvBtn) mvBtn.classList.remove('active');
+            if (miBtn) miBtn.classList.add('active');
+          } else {
+            setHeroMedia('video', url);
+            setPatchValue('config', 'theme.hero_media.mode',      'video');
+            setPatchValue('config', 'theme.hero_media.video_url', url);
+            const mvBtn = document.getElementById('hero-mode-video');
+            const miBtn = document.getElementById('hero-mode-image');
+            if (mvBtn) mvBtn.classList.add('active');
+            if (miBtn) miBtn.classList.remove('active');
+          }
+        } else if (isImage) {
+          applySectionBgImage(section.id, url);
+          // Panel-Button updaten wenn offen
+          const imgBtn = document.querySelector(`#et-settings-panel .et-bg-img-btn[data-section="${section.id}"]`);
+          if (imgBtn) { imgBtn.textContent = '🖼 ✓'; imgBtn.classList.add('has-image'); }
+        }
+        setDirty(true);
+        showDropOk(section);
+      });
+    });
+  }
+
+  // ════════════════ CLICK-TO-SELECT SECTIONS ════════════════
+  function setupSectionClick() {
+    document.querySelectorAll('section').forEach(section => {
+      section.classList.add('et-section-editable');
+
+      section.addEventListener('click', e => {
+        // Nur auf den Hintergrund reagieren — nicht auf Text, Bilder, Buttons etc.
+        const tag = e.target.tagName;
+        const isBackground = (
+          e.target === section ||
+          e.target.classList.contains('hero-bg') ||
+          e.target.classList.contains('hero-overlay')
+        );
+        if (!isBackground) return;
+
+        e.preventDefault(); e.stopPropagation();
+
+        // Selektion setzen
+        document.querySelectorAll('section.et-section-selected').forEach(s => s.classList.remove('et-section-selected'));
+        section.classList.add('et-section-selected');
+
+        // Panel öffnen falls geschlossen
+        if (!document.getElementById('et-settings-panel')) toggleSettings();
+
+        // Zum passenden Row scrollen
+        const targetId = section.id === 'hero' ? 'hero-mode-video' : `sp-bg-${section.id}`;
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Kurz aufleuchten
+          const row = targetEl.closest('.et-sp-row') || targetEl.closest('.et-sp-section');
+          if (row) {
+            row.style.transition = 'background .15s';
+            row.style.background = 'rgba(200,151,90,.18)';
+            setTimeout(() => { row.style.background = ''; }, 1000);
+          }
+        }
+      });
+    });
+  }
+
   // ════════════════ EXIT ════════════════
   function exitEditor() {
     if (dirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
@@ -450,11 +723,16 @@
   function boot() {
     buildToolbar();
     markEditableFields();
+    setupSectionClick();
+    setupDragDrop();
     // Design-Panel automatisch öffnen
     toggleSettings();
     document.addEventListener('sardinia:data-loaded', () => {
       unmarkEditableFields();
       markEditableFields();
+      // Drag & Drop nach Reload neu aufsetzen
+      setupDragDrop();
+      setupSectionClick();
     });
     window.addEventListener('beforeunload', e => {
       if (dirty) { e.preventDefault(); e.returnValue = ''; return ''; }

@@ -264,3 +264,129 @@ body.et-draft-preview { padding-top: 52px; }
 }
 
 body.et-mode .apt-modal-overlay { z-index: 9996; }
+
+/* ════════ DRAG & DROP ════════ */
+.et-section-editable { cursor: default; transition: outline .15s; }
+.et-section-editable.et-drag-over {
+  outline: 3px dashed #c8975a !important;
+  outline-offset: -4px;
+}
+.et-section-editable.et-drag-over::after {
+  content: '📁 Bild hierher ziehen';
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(200,151,90,.92);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Inter', system-ui, sans-serif;
+  z-index: 9990;
+  pointer-events: none;
+}
+.et-editable.et-drag-over {
+  outline: 3px solid #c8975a !important;
+  filter: brightness(1.1);
+}
+.et-section-selected {
+  outline: 2px solid rgba(59,130,246,.5) !important;
+  outline-offset: -2px;
+}
+
+/* Drop-Erfolg-Feedback */
+.et-drop-ok {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(34,197,94,.92);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Inter', system-ui, sans-serif;
+  z-index: 9991;
+  pointer-events: none;
+  animation: et-fade-out 1.8s ease-out forwards;
+}
+@keyframes et-fade-out {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ════════ SETTINGS PANEL ERWEITERUNGEN ════════ */
+/* Hero-Media-Toggle */
+.et-hero-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.et-hero-toggle-btn {
+  flex: 1;
+  padding: 7px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+  border: 1px solid #2a2d3a;
+  border-radius: 8px;
+  cursor: pointer;
+  background: rgba(255,255,255,.04);
+  color: #6b7280;
+  transition: background .15s, color .15s, border-color .15s;
+  text-align: center;
+}
+.et-hero-toggle-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+.et-hero-toggle-btn:hover:not(.active) {
+  background: rgba(255,255,255,.08);
+  color: #e2e4eb;
+}
+
+/* Sektion Bild-Upload-Button */
+.et-bg-img-btn {
+  background: rgba(200,151,90,.12);
+  border: 1px solid rgba(200,151,90,.3);
+  color: #c8975a;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, sans-serif;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+.et-bg-img-btn:hover { background: #c8975a; color: #fff; }
+.et-bg-img-btn.has-image {
+  background: rgba(34,197,94,.15);
+  border-color: rgba(34,197,94,.35);
+  color: #22c55e;
+}
+
+/* Mini Upload-Area unter Hero-Toggle */
+.et-hero-upload-hint {
+  font-size: 11px;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Drag-Hinweis im Settings Panel */
+.et-drag-hint {
+  font-size: 11px;
+  color: #6b7280;
+  border: 1px dashed #2a2d3a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+

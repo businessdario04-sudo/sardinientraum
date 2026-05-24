@@ -110,13 +110,45 @@
       document.body.classList.add('theme-' + theme.name);
     }
 
-    // Abschnitt-Hintergründe anwenden
+    // Abschnitt-Hintergründe anwenden (Farbe)
     const sectionBgs = theme.section_bgs || {};
     Object.entries(sectionBgs).forEach(([id, color]) => {
       if (!color) return;
       const el = document.getElementById(id);
       if (el) el.style.background = color;
     });
+
+    // Abschnitt-Hintergründe anwenden (Bild — überschreibt Farbe)
+    const sectionBgImages = theme.section_bg_images || {};
+    Object.entries(sectionBgImages).forEach(([id, url]) => {
+      if (!url) return;
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.backgroundImage    = `url(${url})`;
+        el.style.backgroundSize     = 'cover';
+        el.style.backgroundPosition = 'center';
+      }
+    });
+
+    // Hero-Hintergrund: Video oder Bild
+    const heroMedia = theme.hero_media || {};
+    if (heroMedia.mode === 'image' && heroMedia.image_url) {
+      const heroBg = document.querySelector('#hero .hero-bg');
+      const video  = document.querySelector('#hero video');
+      if (video)  video.style.display = 'none';
+      if (heroBg) {
+        heroBg.style.backgroundImage    = `url(${heroMedia.image_url})`;
+        heroBg.style.backgroundSize     = 'cover';
+        heroBg.style.backgroundPosition = 'center';
+      }
+    } else if (heroMedia.video_url) {
+      const video = document.querySelector('#hero video');
+      if (video) {
+        const source = video.querySelector('source');
+        if (source) source.src = heroMedia.video_url;
+        try { video.load(); } catch(_) {}
+      }
+    }
   }
 
   // ─── Anfrageformular + Verfügbarkeitskalender ───
