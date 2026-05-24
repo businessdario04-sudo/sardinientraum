@@ -6,6 +6,7 @@
  */
 declare(strict_types=1);
 require_once __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/_mailer.php';
 
 requireLogin();
 
@@ -92,6 +93,19 @@ if ($method === 'POST') {
         respondJson(['ok' => true, 'id' => $id]);
     }
 
+    // ─── Buchungsbestätigung manuell versenden ────────────────
+    if (($body['action'] ?? '') === 'send_confirmation') {
+        $id   = (string)($body['id'] ?? '');
+        $data = readJson($file);
+        $item = null;
+        foreach ($data['items'] ?? [] as $i) {
+            if (($i['id'] ?? '') === $id) { $item = $i; break; }
+        }
+        if (!$item) respondJson(['ok' => false, 'error' => 'not_found'], 404);
+        $sent = mailSendBookingConfirmation($item);
+        respondJson(['ok' => true, 'sent' => $sent]);
+    }
+
     $id = (string)($body['id'] ?? '');
     if ($id === '') respondJson(['ok' => false, 'error' => 'no_id'], 400);
 
@@ -107,10 +121,19 @@ if ($method === 'POST') {
         $data['items'] = $newItems;
     } else {
         $validStatus = ['neu', 'beantwortet', 'gebucht', 'abgelehnt'];
+        $bookingConfirmationNeeded = false;
+        $confirmedItem = null;
+
         foreach ($items as &$item) {
             if (($item['id'] ?? '') === $id) {
+                $prevStatus = $item['status'] ?? 'neu';
                 if (isset($body['status']) && in_array($body['status'], $validStatus, true)) {
                     $item['status'] = $body['status'];
+                    // Buchungsbestätigung auslösen wenn Status auf "gebucht" wechselt
+                    if ($body['status'] === 'gebucht' && $prevStatus !== 'gebucht') {
+                        $bookingConfirmationNeeded = true;
+                        $confirmedItem = $item;
+                    }
                 }
                 if (isset($body['notes'])) {
                     $item['notes'] = sanitizeString((string)$body['notes'], 5000);
@@ -129,7 +152,14 @@ if ($method === 'POST') {
     writeJson($file, $data);
 
     logEvent('inquiry_updated', ['id' => $id]);
-    respondJson(['ok' => true]);
+
+    // Buchungsbestätigung automatisch versenden
+    $mailSent = false;
+    if ($bookingConfirmationNeeded && $confirmedItem) {
+        $mailSent = mailSendBookingConfirmation($confirmedItem);
+    }
+
+    respondJson(['ok' => true, 'confirmation_sent' => $mailSent]);
 }
 
 respondJson(['ok' => false, 'error' => 'method_not_allowed'], 405);

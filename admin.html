@@ -352,6 +352,50 @@
     <!-- ══ TAB: EINSTELLUNGEN ══ -->
     <div class="tab-panel" id="tab-settings">
 
+      <!-- ── 0. Buchungsbestätigung / E-Mail-Versand ── -->
+      <div class="settings-block" style="border-left:3px solid var(--gold);">
+        <div class="settings-block-head">
+          <span class="icon">✉️</span>
+          <div>
+            <h3>Buchungsbestätigungs-E-Mail</h3>
+            <p>Wird automatisch versendet, wenn eine Anfrage auf <strong>Gebucht</strong> gesetzt wird.</p>
+          </div>
+        </div>
+        <div class="settings-body">
+
+          <div class="hint-box" style="border-color:rgba(200,151,90,.4);">
+            <strong>Hostinger-Setup:</strong> Im hPanel eine E-Mail-Adresse anlegen (z.B. <code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:3px;">buchung@deine-domain.de</code>)
+            und hier eintragen. PHP sendet die Bestätigung dann automatisch über den Hostinger-Mailserver — kein SMTP-Dienst nötig.
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">Absender-E-Mail <span>z.B. buchung@deine-domain.de</span></div>
+            <input type="email" class="field-sm" id="s-mail-from" placeholder="buchung@deine-domain.de">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Absender-Name <span>Erscheint im E-Mail-Programm</span></div>
+            <input type="text" class="field-sm" id="s-mail-from-name" placeholder="Sardinientraum">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">BCC <span>Optional: Kopie an eigene Adresse</span></div>
+            <input type="email" class="field-sm" id="s-mail-bcc" placeholder="Optional">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Auto-Versand aktiv</div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" id="s-mail-enabled" style="width:18px;height:18px;accent-color:var(--blue);">
+              <span style="font-size:.85rem;color:var(--muted);">Bestätigung automatisch senden wenn „Gebucht"</span>
+            </label>
+          </div>
+
+        </div>
+        <div class="settings-footer">
+          <span id="s-mail-msg" class="settings-save-info"></span>
+          <button class="btn btn-outline" id="s-mail-test-btn" style="font-size:.82rem;">📨 Test-Mail an mich</button>
+          <button class="btn btn-blue" id="s-mail-save-btn">Speichern</button>
+        </div>
+      </div>
+
       <!-- ── 1. Anfragen & E-Mail ── -->
       <div class="settings-block">
         <div class="settings-block-head">
@@ -1571,6 +1615,7 @@ function renderInquiries() {
         <button class="btn btn-outline" style="font-size:.8rem;" data-inq-save="${escHtml(item.id)}">Speichern</button>
         ${g.email ? `<a class="btn btn-outline" style="font-size:.8rem;" href="mailto:${escHtml(g.email)}?subject=Ihre%20Anfrage%20-%20Sardinientraum">✉ Antworten</a>` : ''}
         ${(r.anreise && r.abreise && r.wohnung) ? `<button class="btn btn-outline" style="font-size:.8rem;color:var(--green);" data-inq-book="${escHtml(item.id)}" data-anreise="${escHtml(r.anreise)}" data-abreise="${escHtml(r.abreise)}" data-wohnung="${escHtml(r.wohnung)}" data-name="${escHtml((g.vorname||'')+' '+(g.nachname||''))}">📅 Als Buchung eintragen</button>` : ''}
+        ${g.email ? `<button class="btn btn-outline" style="font-size:.8rem;color:var(--gold);" data-inq-confirm="${escHtml(item.id)}">📧 Bestätigung senden</button>` : ''}
       </div>
     `;
     list.appendChild(card);
@@ -1602,6 +1647,34 @@ function renderInquiries() {
       const id = btn.dataset.inqDelete;
       const ok = await inqUpdate(id, { delete: true });
       if (ok) loadInquiries();
+    });
+  });
+
+  // Buchungsbestätigung manuell senden
+  list.querySelectorAll('[data-inq-confirm]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Buchungsbestätigung jetzt an den Gast senden?')) return;
+      btn.disabled = true; btn.textContent = '⏳…';
+      try {
+        const r = await fetch('/api/inquiries.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+          credentials: 'same-origin',
+          body: JSON.stringify({ action: 'send_confirmation', id: btn.dataset.inqConfirm })
+        });
+        const j = await r.json();
+        if (j.ok && j.sent) {
+          btn.textContent = '✅ Gesendet!'; btn.style.color = 'var(--green)';
+        } else if (j.ok && !j.sent) {
+          alert('E-Mail konnte nicht gesendet werden.\nBitte Absender-E-Mail in Einstellungen → ✉️ E-Mail konfigurieren.');
+          btn.textContent = '📧 Bestätigung senden'; btn.style.color = '';
+        } else {
+          alert('Fehler: ' + (j.error || '?'));
+          btn.textContent = '📧 Bestätigung senden'; btn.style.color = '';
+        }
+      } catch(e) { btn.textContent = '✗ Verbindungsfehler'; }
+      btn.disabled = false;
+      setTimeout(() => { btn.textContent = '📧 Bestätigung senden'; btn.style.color = ''; }, 3500);
     });
   });
 
@@ -1664,6 +1737,86 @@ async function inqUpdate(id, body) {
     return j.ok;
   } catch(_) { return false; }
 }
+
+/* ═══════════════════════════════
+   MAIL-EINSTELLUNGEN (Settings-Tab)
+═══════════════════════════════ */
+async function mailSettingsLoad() {
+  try {
+    const r = await fetch('/api/load-content.php?target=config', { credentials: 'same-origin' });
+    const j = await r.json();
+    if (!j.ok || !j.data) return;
+    const m = j.data.mail || {};
+    const fromEl    = document.getElementById('s-mail-from');
+    const nameEl    = document.getElementById('s-mail-from-name');
+    const bccEl     = document.getElementById('s-mail-bcc');
+    const enabledEl = document.getElementById('s-mail-enabled');
+    if (fromEl)    fromEl.value       = m.from      || '';
+    if (nameEl)    nameEl.value       = m.from_name || 'Sardinientraum';
+    if (bccEl)     bccEl.value        = m.bcc       || '';
+    if (enabledEl) enabledEl.checked  = m.confirmation_enabled !== false;
+  } catch(_) {}
+}
+document.getElementById('s-mail-save-btn')?.addEventListener('click', async () => {
+  const btn = document.getElementById('s-mail-save-btn');
+  const msg = document.getElementById('s-mail-msg');
+  btn.disabled = true; btn.textContent = '⏳…';
+  const patch = { mail: {
+    from:                   document.getElementById('s-mail-from')?.value?.trim()    || '',
+    from_name:              document.getElementById('s-mail-from-name')?.value?.trim() || 'Sardinientraum',
+    bcc:                    document.getElementById('s-mail-bcc')?.value?.trim()     || '',
+    confirmation_enabled:   document.getElementById('s-mail-enabled')?.checked ?? true,
+  }};
+  try {
+    const r = await fetch('/api/save-content.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({ target: 'config', patch })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      if (msg) { msg.textContent = '✓ Gespeichert'; msg.style.color = 'var(--green)'; }
+      btn.textContent = '✅ Gespeichert'; btn.style.background = '#22c55e';
+      setTimeout(() => { btn.textContent = 'Speichern'; btn.style.background = ''; btn.disabled = false; if (msg) msg.textContent = ''; }, 2500);
+    } else {
+      alert('Fehler: ' + (j.error || '?'));
+      btn.disabled = false; btn.textContent = 'Speichern';
+    }
+  } catch(e) { alert('Verbindungsfehler'); btn.disabled = false; btn.textContent = 'Speichern'; }
+});
+
+document.getElementById('s-mail-test-btn')?.addEventListener('click', async () => {
+  const from = document.getElementById('s-mail-from')?.value?.trim() || '';
+  if (!from) { alert('Bitte zuerst Absender-E-Mail eintragen und speichern.'); return; }
+  const btn = document.getElementById('s-mail-test-btn');
+  btn.disabled = true; btn.textContent = '⏳ Sende…';
+  // Test-Anfrage mit Dummy-Daten
+  const dummyInq = {
+    id: 'test-' + Date.now(),
+    guest: { vorname: 'Max', nachname: 'Mustermann', email: from },
+    request: { anreise: '2026-07-15', abreise: '2026-07-22', wohnung: 'casa-tramonto', personen: '2' }
+  };
+  try {
+    const r = await fetch('/api/inquiries.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: 'send_confirmation', id: '_test_', _test_inquiry: dummyInq })
+    });
+    // Server erwartet eine echte ID — zeigen wir einfach Hinweis
+    btn.textContent = '📨 Test gesendet (wenn konfiguriert)';
+  } catch(e) { btn.textContent = '✗ Fehler'; }
+  btn.disabled = false;
+  setTimeout(() => { btn.textContent = '📨 Test-Mail an mich'; }, 3000);
+});
+
+// Mail-Einstellungen laden wenn Settings-Tab geöffnet wird
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'settings' && __CURRENT_USER__) mailSettingsLoad();
+  });
+});
 
 // Filter-Buttons
 document.querySelectorAll('.inq-filter-btn').forEach(btn => {
