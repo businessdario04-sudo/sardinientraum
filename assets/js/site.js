@@ -119,10 +119,149 @@
     });
   }
 
-  // ─── Anfrageformular ───
+  // ─── Anfrageformular + Verfügbarkeitskalender ───
+
+  // ── Kalender-State ──
+  const CAL = {
+    year: new Date().getFullYear(),
+    month: new Date().getMonth(),
+    bookings: [],
+    selStart: null,
+    selEnd:   null,
+  };
+  const CAL_MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  const CAL_DAYS   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+  function calFmtDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function calFmtDisplay(ds) {
+    if (!ds) return '—';
+    const [y,m,d] = ds.split('-');
+    return `${d}.${m}.${y}`;
+  }
+  function calIsBooked(ds) {
+    return CAL.bookings.some(b => ds >= b.from && ds < b.to);
+  }
+
+  function calRenderMonth(year, month) {
+    const today    = calFmtDate(new Date());
+    const firstDay = new Date(year, month, 1).getDay();
+    const numDays  = new Date(year, month + 1, 0).getDate();
+    const offset   = (firstDay + 6) % 7; // Monday = 0
+
+    let html = `<div><div class="cal-month-name">${CAL_MONTHS[month]} ${year}</div><div class="cal-grid">`;
+    CAL_DAYS.forEach(d => { html += `<div class="cal-dh">${d}</div>`; });
+    for (let i = 0; i < offset; i++) html += '<div class="cal-empty"></div>';
+
+    for (let d = 1; d <= numDays; d++) {
+      const ds      = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const isPast  = ds < today;
+      const isBook  = calIsBooked(ds);
+      const isToday = ds === today;
+      const disabled = isPast || isBook;
+
+      let cls = 'cal-d';
+      if (isPast)  cls += ' past';
+      else if (isBook) cls += ' booked';
+      else         cls += ' avail';
+      if (isToday) cls += ' today';
+
+      if (CAL.selStart && CAL.selEnd) {
+        if (ds === CAL.selStart) cls += ' sel-s';
+        else if (ds === CAL.selEnd) cls += ' sel-e';
+        else if (ds > CAL.selStart && ds < CAL.selEnd) cls += ' in-range';
+      } else if (CAL.selStart && ds === CAL.selStart) {
+        cls += ' sel-s sel-e';
+      }
+
+      html += `<button type="button" class="${cls}" data-date="${ds}"${disabled ? ' disabled' : ''}>${d}</button>`;
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function calRender() {
+    const container = document.getElementById('cal-months-container');
+    const navLabel  = document.getElementById('cal-nav-label');
+    if (!container) return;
+
+    let y2 = CAL.year, m2 = CAL.month + 1;
+    if (m2 > 11) { m2 = 0; y2++; }
+
+    container.innerHTML = calRenderMonth(CAL.year, CAL.month) + calRenderMonth(y2, m2);
+    if (navLabel) navLabel.textContent = `${CAL_MONTHS[CAL.month]} / ${CAL_MONTHS[m2]} ${y2}`;
+
+    container.querySelectorAll('.cal-d.avail').forEach(btn => {
+      btn.addEventListener('click', calDayClick);
+    });
+  }
+
+  function calDayClick(e) {
+    const ds = e.currentTarget.dataset.date;
+    if (!ds) return;
+
+    if (!CAL.selStart || (CAL.selStart && CAL.selEnd)) {
+      CAL.selStart = ds; CAL.selEnd = null;
+    } else {
+      if (ds <= CAL.selStart) {
+        CAL.selStart = ds; CAL.selEnd = null;
+      } else {
+        // Prüfen ob im Range eine Buchung liegt
+        const blocked = CAL.bookings.some(b => b.from < ds && b.to > CAL.selStart);
+        if (blocked) { CAL.selStart = ds; CAL.selEnd = null; }
+        else          { CAL.selEnd   = ds; }
+      }
+    }
+    calUpdateSummary();
+    calRender();
+  }
+
+  function calUpdateSummary() {
+    const sumEl  = document.getElementById('cal-summary');
+    const subBtn = document.getElementById('form-submit-btn');
+    const anrH   = document.getElementById('anreise-hidden');
+    const abrH   = document.getElementById('abreise-hidden');
+
+    if (CAL.selStart && CAL.selEnd) {
+      const el = id => document.getElementById(id);
+      if (el('cal-sum-from'))   el('cal-sum-from').textContent   = calFmtDisplay(CAL.selStart);
+      if (el('cal-sum-to'))     el('cal-sum-to').textContent     = calFmtDisplay(CAL.selEnd);
+      const nights = Math.round((new Date(CAL.selEnd) - new Date(CAL.selStart)) / 86400000);
+      if (el('cal-sum-nights')) el('cal-sum-nights').textContent = nights + (nights === 1 ? ' Nacht' : ' Nächte');
+      if (anrH) anrH.value = CAL.selStart;
+      if (abrH) abrH.value = CAL.selEnd;
+      if (sumEl)  sumEl.style.display  = 'flex';
+      if (subBtn) subBtn.disabled      = false;
+    } else {
+      if (sumEl)  sumEl.style.display  = 'none';
+      if (subBtn) subBtn.disabled      = true;
+      if (anrH)   anrH.value          = '';
+      if (abrH)   abrH.value          = '';
+    }
+  }
+
+  async function calLoad(property) {
+    CAL.selStart = null; CAL.selEnd = null; CAL.bookings = [];
+    calUpdateSummary();
+    const mc = document.getElementById('cal-months-container');
+    if (mc) mc.innerHTML = '<div class="cal-loading">Verfügbarkeit wird geladen…</div>';
+
+    if (property && property !== 'alle') {
+      try {
+        const r = await fetch(`/api/availability.php?property=${encodeURIComponent(property)}`, { credentials: 'same-origin' });
+        const j = await r.json();
+        CAL.bookings = j.ok ? (j.bookings || []) : [];
+      } catch (_) { CAL.bookings = []; }
+    }
+    calRender();
+  }
+
   function bindForm() {
-    const form = document.getElementById('anfrage-form');
+    const form  = document.getElementById('anfrage-form');
     if (!form) return;
+
+    // Honeypot
     let trap = form.querySelector('[name="website_url"]');
     if (!trap) {
       trap = document.createElement('input');
@@ -132,14 +271,76 @@
     }
     form.dataset.openedAt = String(Date.now());
 
+    // ── Multi-Step-Logik ──────────────────────────────────────
+    const step1 = document.getElementById('form-step1');
+    const step2 = document.getElementById('form-step2');
+    const dot1  = document.getElementById('step-dot-1');
+    const dot2  = document.getElementById('step-dot-2');
+    const conn  = document.getElementById('step-connector');
+
+    document.getElementById('step1-next-btn')?.addEventListener('click', async () => {
+      // Step 1 validieren
+      let valid = true;
+      step1?.querySelectorAll('[required]').forEach(f => {
+        const ok = f.value.trim() !== '';
+        f.style.borderColor = ok ? '' : 'var(--red, #ef4444)';
+        if (!ok) valid = false;
+      });
+      if (!valid) return;
+
+      // Schritt-Indikator
+      dot1?.classList.replace('step-active', 'step-done');
+      dot1?.querySelector('.step-num') && (dot1.querySelector('.step-num').textContent = '✓');
+      dot2?.classList.add('step-active');
+      conn?.classList.add('step-active');
+
+      // Property-Label aktualisieren
+      const sel = document.getElementById('wohnung');
+      const map = { 'casa-tramonto': 'Casa Tramonto', 'casa-mare': 'Casa Mare', 'alle': 'alle Wohnungen', '': 'alle Wohnungen' };
+      const disp = document.getElementById('cal-property-display');
+      if (disp) disp.textContent = map[sel?.value ?? ''] ?? 'alle Wohnungen';
+
+      // Kalender zeigen + laden
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+      CAL.year  = new Date().getFullYear();
+      CAL.month = new Date().getMonth();
+      await calLoad(sel?.value ?? '');
+      step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    document.getElementById('step2-back-btn')?.addEventListener('click', () => {
+      step2.style.display = 'none';
+      step1.style.display = 'block';
+      dot1?.classList.replace('step-done', 'step-active');
+      const sn = dot1?.querySelector('.step-num');
+      if (sn) sn.textContent = '1';
+      dot2?.classList.remove('step-active');
+      conn?.classList.remove('step-active');
+    });
+
+    // Kalender-Navigation
+    document.getElementById('cal-prev')?.addEventListener('click', () => {
+      CAL.month--;
+      if (CAL.month < 0) { CAL.month = 11; CAL.year--; }
+      calRender();
+    });
+    document.getElementById('cal-next')?.addEventListener('click', () => {
+      CAL.month++;
+      if (CAL.month > 11) { CAL.month = 0; CAL.year++; }
+      calRender();
+    });
+
+    // ── Form-Submit ───────────────────────────────────────────
     form.addEventListener('submit', async e => {
       e.preventDefault();
-      const btn  = form.querySelector('.form-submit');
-      const orig = btn ? btn.textContent : '';
-      if (btn) { btn.disabled = true; btn.textContent = '⏳ Wird gesendet…'; }
+      const submitBtn = document.getElementById('form-submit-btn');
+      const orig = submitBtn?.textContent || 'Anfrage absenden →';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Wird gesendet…'; }
       try {
         const data = new FormData(form);
-        data.append('elapsed_ms', String(Date.now() - Number(form.dataset.openedAt || 0)));
+        // _ts als Unix-Sekunden senden (submit-contact.php erwartet Sekunden, nicht ms)
+        data.append('_ts', Math.floor(Number(form.dataset.openedAt || 0) / 1000).toString());
         const r = await fetch('/api/submit-contact.php', { method: 'POST', body: data, credentials: 'same-origin' });
         const j = await r.json().catch(() => ({}));
         if (r.ok && j.ok) {
@@ -148,11 +349,11 @@
           if (success) success.style.display = 'block';
         } else {
           alert(j.msg || j.error || 'Fehler beim Senden. Bitte erneut versuchen.');
-          if (btn) { btn.disabled = false; btn.textContent = orig; }
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = orig; }
         }
       } catch (_) {
         alert('Verbindungsfehler. Bitte Internet prüfen.');
-        if (btn) { btn.disabled = false; btn.textContent = orig; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = orig; }
       }
     });
   }
@@ -449,7 +650,6 @@
   async function boot() {
     bindNav();
     bindForm();
-    bindDates();
     bindAptModal();
     const [pages, config] = await Promise.all([apiGet('pages'), apiGet('config')]);
     window.__SARDINIA_PAGES__  = pages;

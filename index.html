@@ -156,77 +156,140 @@
   </div>
 </section>
 
-<!-- ════════════════ ANFRAGE ════════════════ -->
+<!-- ════════════════ ANFRAGE (2-Step mit Kalender) ════════════════ -->
 <section id="anfrage">
   <span class="section-label" data-bind="anfrage.label">Kontakt</span>
   <h2 class="section-title" data-bind="anfrage.title">Anfrage stellen</h2>
-  <p class="section-sub" style="margin: 0 auto 40px;" data-bind="anfrage.subtitle">Kein Buchungssystem – nur persönlicher Kontakt. Füllen Sie das Formular aus, und wir melden uns schnellstmöglich bei Ihnen.</p>
+  <p class="section-sub" style="margin: 0 auto 32px;" data-bind="anfrage.subtitle">Kein Buchungssystem – nur persönlicher Kontakt. Füllen Sie das Formular aus, und wir melden uns schnellstmöglich bei Ihnen.</p>
+
+  <!-- Schritt-Indikator -->
+  <div class="anfrage-steps" id="anfrage-steps">
+    <div class="step-item step-active" id="step-dot-1">
+      <div class="step-num">1</div>
+      <span>Ihre Daten</span>
+    </div>
+    <div class="step-connector" id="step-connector"></div>
+    <div class="step-item" id="step-dot-2">
+      <div class="step-num">2</div>
+      <span>Reisedaten wählen</span>
+    </div>
+  </div>
+
   <div class="form-card">
     <form id="anfrage-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="vorname">Vorname</label>
-          <input type="text" id="vorname" name="vorname" placeholder="Maria" required>
+
+      <!-- ══ SCHRITT 1: Persönliche Daten ══ -->
+      <div id="form-step1" class="form-step">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="vorname">Vorname</label>
+            <input type="text" id="vorname" name="vorname" placeholder="Maria" required>
+          </div>
+          <div class="form-group">
+            <label for="nachname">Nachname</label>
+            <input type="text" id="nachname" name="nachname" placeholder="Mustermann" required>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="nachname">Nachname</label>
-          <input type="text" id="nachname" name="nachname" placeholder="Mustermann" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">E-Mail-Adresse</label>
+            <input type="email" id="email" name="email" placeholder="maria@beispiel.de" required>
+          </div>
+          <div class="form-group">
+            <label for="telefon">Telefon (optional)</label>
+            <input type="tel" id="telefon" name="telefon" placeholder="+49 123 456789">
+          </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="wohnung">Gewünschte Wohnung</label>
+            <select id="wohnung" name="wohnung">
+              <option value="">Bitte wählen …</option>
+              <option value="casa-tramonto">Casa Tramonto (bis 4 Pers.)</option>
+              <option value="casa-mare">Casa Mare (bis 2 Pers.)</option>
+              <option value="alle">Noch unentschieden</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="personen">Anzahl Personen</label>
+            <select id="personen" name="personen">
+              <option>1 Person</option>
+              <option>2 Personen</option>
+              <option>3 Personen</option>
+              <option>4 Personen</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="form-submit" id="step1-next-btn">
+          Verfügbarkeit prüfen →
+        </button>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="email">E-Mail-Adresse</label>
-          <input type="email" id="email" name="email" placeholder="maria@beispiel.de" required>
+
+      <!-- ══ SCHRITT 2: Kalender + Reisedaten ══ -->
+      <div id="form-step2" class="form-step" style="display:none">
+        <div class="cal-property-label">
+          Verfügbare Termine für: <strong id="cal-property-display">alle Wohnungen</strong>
         </div>
-        <div class="form-group">
-          <label for="telefon">Telefon (optional)</label>
-          <input type="tel" id="telefon" name="telefon" placeholder="+49 123 456789">
+
+        <!-- Kalender-Widget -->
+        <div class="cal-wrapper">
+          <div class="cal-nav">
+            <button type="button" class="cal-nav-btn" id="cal-prev" aria-label="Vorheriger Monat">‹</button>
+            <span class="cal-nav-label" id="cal-nav-label">Lädt…</span>
+            <button type="button" class="cal-nav-btn" id="cal-next" aria-label="Nächster Monat">›</button>
+          </div>
+          <div class="cal-months-container" id="cal-months-container">
+            <div class="cal-loading">Verfügbarkeit wird geladen…</div>
+          </div>
+          <div class="cal-legend">
+            <span><span class="cal-legend-dot ld-avail"></span>Verfügbar</span>
+            <span><span class="cal-legend-dot ld-booked"></span>Belegt</span>
+            <span><span class="cal-legend-dot ld-sel"></span>Ausgewählt</span>
+          </div>
         </div>
+
+        <!-- Auswahl-Zusammenfassung -->
+        <div class="cal-selection-summary" id="cal-summary" style="display:none">
+          <div class="cal-sum-item">
+            <span class="cal-sum-label">Anreise</span>
+            <strong id="cal-sum-from">—</strong>
+          </div>
+          <div class="cal-sum-divider">→</div>
+          <div class="cal-sum-item">
+            <span class="cal-sum-label">Abreise</span>
+            <strong id="cal-sum-to">—</strong>
+          </div>
+          <div class="cal-sum-sep">·</div>
+          <div class="cal-sum-item">
+            <span class="cal-sum-label">Aufenthalt</span>
+            <strong id="cal-sum-nights">—</strong>
+          </div>
+        </div>
+
+        <!-- Versteckte Datum-Inputs -->
+        <input type="hidden" name="anreise" id="anreise-hidden">
+        <input type="hidden" name="abreise" id="abreise-hidden">
+
+        <div class="form-group" style="margin-top:20px">
+          <label for="nachricht">Ihre Nachricht (optional)</label>
+          <textarea id="nachricht" name="nachricht" placeholder="Haben Sie spezielle Wünsche oder Fragen? Gerne hier eintragen …"></textarea>
+        </div>
+        <div class="form-group form-consent">
+          <label class="checkbox-label">
+            <input type="checkbox" name="datenschutz" required>
+            <span data-bind="anfrage.datenschutz_hinweis">Mit dem Absenden bestätige ich die <a href="datenschutz.html" target="_blank">Datenschutzerklärung</a> gelesen zu haben.</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="form-back-btn" id="step2-back-btn">← Zurück</button>
+          <button type="submit" class="form-submit" id="form-submit-btn" disabled data-bind="anfrage.submit_label">Anfrage absenden →</button>
+        </div>
+        <p class="form-note" data-bind="anfrage.note">Wir antworten in der Regel innerhalb von 24 Stunden. Ihre Daten werden vertraulich behandelt.</p>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="anreise">Anreise</label>
-          <input type="date" id="anreise" name="anreise" required>
-        </div>
-        <div class="form-group">
-          <label for="abreise">Abreise</label>
-          <input type="date" id="abreise" name="abreise" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="wohnung">Gewünschte Wohnung</label>
-          <select id="wohnung" name="wohnung">
-            <option value="">Bitte wählen …</option>
-            <option>Casa Tramonto</option>
-            <option>Casa Mare</option>
-            <option>Noch unentschieden</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="personen">Anzahl Personen</label>
-          <select id="personen" name="personen">
-            <option>1 Person</option>
-            <option>2 Personen</option>
-            <option>3 Personen</option>
-            <option>4 Personen</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="nachricht">Ihre Nachricht (optional)</label>
-        <textarea id="nachricht" name="nachricht" placeholder="Haben Sie spezielle Wünsche oder Fragen? Gerne hier eintragen …"></textarea>
-      </div>
-      <div class="form-group form-consent">
-        <label class="checkbox-label">
-          <input type="checkbox" name="datenschutz" required>
-          <span data-bind="anfrage.datenschutz_hinweis">Mit dem Absenden bestätige ich die <a href="datenschutz.html" target="_blank">Datenschutzerklärung</a> gelesen zu haben.</span>
-        </label>
-      </div>
-      <button type="submit" class="form-submit" data-bind="anfrage.submit_label">Anfrage absenden →</button>
-      <p class="form-note" data-bind="anfrage.note">Wir antworten in der Regel innerhalb von 24 Stunden. Ihre Daten werden vertraulich behandelt.</p>
+
     </form>
-    <div class="form-success" id="form-success">
+
+    <div class="form-success" id="form-success" style="display:none">
       <div class="check">✅</div>
       <h3 data-bind="anfrage.success_title">Vielen Dank!</h3>
       <p data-bind="anfrage.success_message" data-bind-html="1">Ihre Anfrage ist bei uns eingegangen.<br>Wir melden uns innerhalb von 24 Stunden bei Ihnen.</p>

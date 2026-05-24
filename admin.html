@@ -182,6 +182,7 @@
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
     <button class="tab-btn" data-tab="anfragen">📬 Anfragen <span id="inq-badge" style="display:none;background:var(--red);color:#fff;font-size:.65rem;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></button>
+    <button class="tab-btn" data-tab="kalender">📅 Kalender</button>
     <button class="tab-btn" data-tab="settings">⚙️ Einstellungen</button>
     <button class="tab-btn" data-tab="mailtpl">✉️ E-Mail Vorlagen</button>
   </nav>
@@ -666,6 +667,63 @@
 
     </div><!-- /tab-mailtpl -->
 
+    <!-- ══ TAB: KALENDER ══ -->
+    <div class="tab-panel" id="tab-kalender">
+
+      <div class="admin-welcome">
+        <h2>Belegungskalender</h2>
+        <p>Buchungen und Sperrzeiten verwalten. Diese Daten werden auf der Website als „belegt" angezeigt.</p>
+      </div>
+
+      <!-- Property-Auswahl -->
+      <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+        <button class="btn btn-blue" id="kal-btn-tramonto" onclick="kalSelectProperty('casa-tramonto')">🏠 Casa Tramonto</button>
+        <button class="btn btn-outline" id="kal-btn-mare" onclick="kalSelectProperty('casa-mare')">🏠 Casa Mare</button>
+      </div>
+
+      <!-- Buchung hinzufügen -->
+      <div class="settings-block" style="margin-bottom:24px;">
+        <div class="settings-block-head">
+          <span class="icon">➕</span>
+          <div>
+            <h3>Buchung / Sperrzeit eintragen</h3>
+            <p id="kal-prop-label" style="margin:0;">Casa Tramonto</p>
+          </div>
+        </div>
+        <div class="settings-body">
+          <div class="setting-row">
+            <div class="setting-label">Anreise <span>Datum des Check-ins</span></div>
+            <input type="date" class="field-sm" id="kal-from">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Abreise <span>Datum des Check-outs</span></div>
+            <input type="date" class="field-sm" id="kal-to">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Bezeichnung <span>Name des Gastes oder „Gesperrt"</span></div>
+            <input type="text" class="field-sm" id="kal-label" placeholder="z.B. Familie Müller">
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Notiz (intern) <span>Wird nicht auf der Website angezeigt</span></div>
+            <input type="text" class="field-sm" id="kal-note" placeholder="Optional">
+          </div>
+        </div>
+        <div class="settings-footer">
+          <span id="kal-add-msg" class="settings-save-info"></span>
+          <button class="btn btn-blue" id="kal-add-btn" onclick="kalAddBooking()">✓ Eintragen</button>
+        </div>
+      </div>
+
+      <!-- Belegungsliste -->
+      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span id="kal-list-title">📅 Belegungen — Casa Tramonto</span>
+      </div>
+      <div id="kal-list">
+        <p style="color:var(--muted);text-align:center;padding:32px 0;">Lädt…</p>
+      </div>
+
+    </div><!-- /tab-kalender -->
+
   </main>
 </div>
 
@@ -1090,6 +1148,7 @@ function showApp() {
   refreshHealth();
   loadInquiries();
   checkDraftStatus();
+  kalLoadList();
 }
 
 /* ── Live-Status / Health ── */
@@ -1424,6 +1483,7 @@ function renderInquiries() {
         <input type="text" class="field-sm inq-notes" placeholder="Notizen…" value="${escHtml(item.notes||'')}" data-inq-id="${escHtml(item.id)}" />
         <button class="btn btn-outline" style="font-size:.8rem;" data-inq-save="${escHtml(item.id)}">Speichern</button>
         ${g.email ? `<a class="btn btn-outline" style="font-size:.8rem;" href="mailto:${escHtml(g.email)}?subject=Ihre%20Anfrage%20-%20Sardinientraum">✉ Antworten</a>` : ''}
+        ${(r.anreise && r.abreise && r.wohnung) ? `<button class="btn btn-outline" style="font-size:.8rem;color:var(--green);" data-inq-book="${escHtml(item.id)}" data-anreise="${escHtml(r.anreise)}" data-abreise="${escHtml(r.abreise)}" data-wohnung="${escHtml(r.wohnung)}" data-name="${escHtml((g.vorname||'')+' '+(g.nachname||''))}">📅 Als Buchung eintragen</button>` : ''}
       </div>
     `;
     list.appendChild(card);
@@ -1455,6 +1515,48 @@ function renderInquiries() {
       const id = btn.dataset.inqDelete;
       const ok = await inqUpdate(id, { delete: true });
       if (ok) loadInquiries();
+    });
+  });
+
+  // Als Buchung im Kalender eintragen
+  list.querySelectorAll('[data-inq-book]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const anreise = btn.dataset.anreise;
+      const abreise = btn.dataset.abreise;
+      const wohnung = btn.dataset.wohnung;
+      const name    = btn.dataset.name?.trim() || 'Gast';
+      const inqId   = btn.dataset.inqBook;
+
+      // Wohnung → property slug
+      const propMap = { 'casa-tramonto': 'casa-tramonto', 'casa-mare': 'casa-mare', 'alle': 'casa-tramonto' };
+      const property = propMap[wohnung] || 'casa-tramonto';
+      const propLabel = property === 'casa-tramonto' ? 'Casa Tramonto' : 'Casa Mare';
+
+      if (!confirm(`Buchung für ${name} eintragen?\n\nWohnung: ${propLabel}\nAnreise: ${anreise}\nAbreise: ${abreise}\n\nDie Anfrage wird gleichzeitig auf „Gebucht" gesetzt.`)) return;
+
+      btn.disabled = true; btn.textContent = '⏳…';
+
+      try {
+        // 1. Buchung in availability.json eintragen
+        const ra = await fetch('/api/availability.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+          credentials: 'same-origin',
+          body: JSON.stringify({ action: 'create', property, from: anreise, to: abreise, label: name, inquiry_id: inqId })
+        });
+        const ja = await ra.json();
+        if (!ja.ok) { alert('Fehler beim Eintragen: ' + (ja.error || 'unbekannt')); btn.disabled = false; btn.textContent = '📅 Als Buchung eintragen'; return; }
+
+        // 2. Anfrage-Status auf "gebucht" setzen
+        await inqUpdate(inqId, { status: 'gebucht' });
+
+        btn.textContent = '✅ Eingetragen';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => loadInquiries(), 1000);
+      } catch(e) {
+        alert('Verbindungsfehler: ' + e.message);
+        btn.disabled = false; btn.textContent = '📅 Als Buchung eintragen';
+      }
     });
   });
 }
@@ -1594,6 +1696,143 @@ document.getElementById('inq-create-form')?.addEventListener('submit', async e =
     alert('Verbindungsfehler: ' + err.message);
   }
   btn.disabled = false; btn.textContent = 'Anfrage erstellen';
+});
+
+/* ═══════════════════════════════
+   KALENDER-TAB
+═══════════════════════════════ */
+let kalCurrentProperty = 'casa-tramonto';
+
+async function kalSelectProperty(prop) {
+  kalCurrentProperty = prop;
+  document.getElementById('kal-btn-tramonto').className = 'btn ' + (prop === 'casa-tramonto' ? 'btn-blue' : 'btn-outline');
+  document.getElementById('kal-btn-mare').className     = 'btn ' + (prop === 'casa-mare'     ? 'btn-blue' : 'btn-outline');
+  const label = prop === 'casa-tramonto' ? 'Casa Tramonto' : 'Casa Mare';
+  document.getElementById('kal-prop-label').textContent = label;
+  document.getElementById('kal-list-title').textContent = '📅 Belegungen — ' + label;
+  await kalLoadList();
+}
+
+async function kalLoadList() {
+  const list = document.getElementById('kal-list');
+  if (!list) return;
+  list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:32px 0;">Lädt…</p>';
+  try {
+    const r = await fetch('/api/availability.php?property=' + encodeURIComponent(kalCurrentProperty), { credentials: 'same-origin' });
+    const j = await r.json();
+    if (!j.ok) {
+      list.innerHTML = '<p style="color:var(--red);text-align:center;">' + escHtml(j.error || 'Fehler') + '</p>';
+      return;
+    }
+    const bookings = (j.bookings || []).sort((a, b) => a.from.localeCompare(b.from));
+    if (!bookings.length) {
+      list.innerHTML = '<p style="color:var(--muted);text-align:center;padding:32px 0;">Keine Buchungen eingetragen.</p>';
+      return;
+    }
+    list.innerHTML = '';
+    bookings.forEach(b => {
+      const nights = Math.round((new Date(b.to) - new Date(b.from)) / 86400000);
+      const card = document.createElement('div');
+      card.className = 'inq-card';
+      card.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;';
+      card.innerHTML = `
+        <div>
+          <div style="font-weight:600;">${escHtml(b.label || 'Blockiert')}</div>
+          <div style="color:var(--muted);font-size:.85rem;margin-top:2px;">
+            📅 ${escHtml(b.from)} → ${escHtml(b.to)}
+            <span style="margin-left:8px;opacity:.7;">(${nights} Nacht${nights !== 1 ? 'e' : ''})</span>
+          </div>
+          ${b.note ? `<div style="color:var(--muted);font-size:.8rem;margin-top:3px;">📝 ${escHtml(b.note)}</div>` : ''}
+        </div>
+        <button class="btn btn-outline" style="padding:6px 10px;font-size:.75rem;flex-shrink:0;color:var(--red);" data-kal-delete="${escHtml(b.id)}">🗑 Löschen</button>
+      `;
+      list.appendChild(card);
+    });
+    list.querySelectorAll('[data-kal-delete]').forEach(btn => {
+      btn.addEventListener('click', () => kalDeleteBooking(btn.dataset.kalDelete));
+    });
+  } catch(e) {
+    list.innerHTML = '<p style="color:var(--red);text-align:center;">Verbindungsfehler</p>';
+  }
+}
+
+async function kalAddBooking() {
+  const from  = document.getElementById('kal-from')?.value?.trim()  || '';
+  const to    = document.getElementById('kal-to')?.value?.trim()    || '';
+  const label = document.getElementById('kal-label')?.value?.trim() || '';
+  const note  = document.getElementById('kal-note')?.value?.trim()  || '';
+  const msg   = document.getElementById('kal-add-msg');
+  const btn   = document.getElementById('kal-add-btn');
+
+  if (msg) { msg.textContent = ''; }
+
+  if (!from || !to) {
+    if (msg) { msg.textContent = '⚠ Anreise und Abreise angeben.'; msg.style.color = 'var(--red)'; }
+    return;
+  }
+  if (from >= to) {
+    if (msg) { msg.textContent = '⚠ Abreise muss nach Anreise liegen.'; msg.style.color = 'var(--red)'; }
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = '⏳ Speichern…';
+
+  try {
+    const r = await fetch('/api/availability.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        action:   'create',
+        property: kalCurrentProperty,
+        from, to,
+        label:    label || 'Blockiert',
+        note
+      })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      if (msg) { msg.textContent = '✓ Eingetragen'; msg.style.color = 'var(--green)'; }
+      document.getElementById('kal-from').value  = '';
+      document.getElementById('kal-to').value    = '';
+      document.getElementById('kal-label').value = '';
+      document.getElementById('kal-note').value  = '';
+      await kalLoadList();
+      setTimeout(() => { if (msg) msg.textContent = ''; }, 2500);
+    } else {
+      if (msg) { msg.textContent = '⚠ ' + (j.error || 'Unbekannter Fehler'); msg.style.color = 'var(--red)'; }
+    }
+  } catch(e) {
+    if (msg) { msg.textContent = '⚠ Verbindungsfehler'; msg.style.color = 'var(--red)'; }
+  }
+  btn.disabled = false; btn.textContent = '✓ Eintragen';
+}
+
+async function kalDeleteBooking(id) {
+  if (!confirm('Buchung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
+  try {
+    const r = await fetch('/api/availability.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: 'delete', property: kalCurrentProperty, id })
+    });
+    const j = await r.json();
+    if (j.ok) {
+      await kalLoadList();
+    } else {
+      alert('Fehler beim Löschen: ' + (j.error || 'unbekannt'));
+    }
+  } catch(e) {
+    alert('Verbindungsfehler beim Löschen.');
+  }
+}
+
+// Kalender laden wenn Tab aktiviert wird
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.tab === 'kalender' && __CURRENT_USER__) kalLoadList();
+  });
 });
 </script>
 </body>
