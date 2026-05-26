@@ -1,141 +1,246 @@
 {
-  "_schema_version": 1,
-  "_updated": "2026-05-16T00:00:00Z",
-
-  "nav": {
-    "logo_text": "🌊 Sardinientraum",
-    "items": [
-      { "label": "Über uns",     "href": "#ueber" },
-      { "label": "Wohnungen",    "href": "#wohnungen" },
-      { "label": "Region",       "href": "#region" },
-      { "label": "Bewertungen",  "href": "#bewertungen" },
-      { "label": "FAQ",          "href": "#faq" }
-    ],
-    "cta": { "label": "Anfrage stellen", "href": "#anfrage" }
-  },
-
-  "hero": {
-    "tag": "La Caletta · Sardinien",
-    "title": "Dein Traum vom Meer\nbeginnt hier",
-    "subtitle": "Persönlich geführte Ferienwohnungen direkt am türkisblauen Wasser Sardiniens – für unvergessliche Urlaubsmomente fernab vom Massentourismus.",
-    "cta_primary":   { "label": "Wohnungen entdecken", "href": "#wohnungen" },
-    "cta_secondary": { "label": "Anfrage stellen",     "href": "#anfrage" },
-    "media": { "type": "video", "src": "Scene-2.mp4", "poster": "" }
-  },
-
-  "ueber": {
-    "label":   "Über uns",
-    "title":   "Mehr als nur ein Urlaubsort",
-    "subtitle":"Bei uns findest du keine anonyme Hotelanlage – sondern liebevoll eingerichtete Wohnungen, persönliche Betreuung und echte sardische Gastfreundschaft.",
-    "image":   "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?w=900&q=80",
-    "features": [
-      { "icon": "🏖", "title": "200m zum Strand",       "text": "Direkter Zugang zu kristallklarem Wasser und feinem Sand." },
-      { "icon": "🔑", "title": "Persönliche Übergabe",  "text": "Wir empfangen jeden Gast persönlich und geben unsere besten Tipps weiter." },
-      { "icon": "🅿", "title": "Kostenloser Parkplatz", "text": "Direkt am Haus, sicher und schattig." },
-      { "icon": "📶", "title": "Schnelles WLAN",        "text": "In allen Wohnungen kostenfrei verfügbar." }
-    ]
-  },
-
-  "wohnungen": {
-    "label":    "Unsere Unterkünfte",
-    "title":    "Zwei einzigartige Wohnungen",
-    "subtitle": "Jede Wohnung hat ihren eigenen Charakter – wähle die, die zu deinem perfekten Urlaub passt.",
-    "items": [
-      {
-        "id": "casa-tramonto",
-        "name": "Casa Tramonto",
-        "badge": "Bis 4 Personen",
-        "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
-        "gallery": [],
-        "description": "Helle, moderne Wohnung mit großer Terrasse und atemberaubendem Blick auf den Sonnenuntergang über dem Meer.",
-        "meta": [
-          { "icon": "🛏", "text": "2 Schlafzimmer" },
-          { "icon": "🛁", "text": "1 Bad" },
-          { "icon": "📐", "text": "65 m²" }
+    "_schema_version": 1,
+    "_updated": "2026-05-24T19:30:01+00:00",
+    "nav": {
+        "logo_text": "Sardinientraum",
+        "items": [
+            {
+                "label": "Über uns",
+                "href": "#ueber"
+            },
+            {
+                "label": "Wohnungen",
+                "href": "#wohnungen"
+            },
+            {
+                "label": "Region",
+                "href": "#region"
+            },
+            {
+                "label": "Bewertungen",
+                "href": "#bewertungen"
+            },
+            {
+                "label": "FAQ",
+                "href": "#faq"
+            }
         ],
-        "price": "ab 120 € / Nacht",
-        "price_value": 120,
-        "max_guests": 4,
-        "details": ""
-      },
-      {
-        "id": "casa-mare",
-        "name": "Casa Mare",
-        "badge": "Bis 2 Personen",
-        "image": "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
-        "gallery": [],
-        "description": "Romantisches Studio direkt am Meer – ideal für Paare, die einen ruhigen, intimen Urlaub in einzigartiger Lage suchen.",
-        "meta": [
-          { "icon": "🛏", "text": "1 Schlafzimmer" },
-          { "icon": "🛁", "text": "1 Bad" },
-          { "icon": "📐", "text": "40 m²" }
-        ],
-        "price": "ab 95 € / Nacht",
-        "price_value": 95,
-        "max_guests": 2,
-        "details": ""
-      }
-    ]
-  },
-
-  "region": {
-    "label":    "Die Region",
-    "title":    "Entdecke La Caletta",
-    "subtitle": "Vom paradiesischen Strand bis in die wilden Berge – Sardinien hat für jeden etwas zu bieten.",
-    "items": [
-      { "label": "Traumstrände",      "image": "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=600&q=80" },
-      { "label": "Wilde Berge",       "image": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80" },
-      { "label": "Charmante Dörfer",  "image": "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80" },
-      { "label": "Sardische Küche",   "image": "https://images.unsplash.com/photo-1551845728-6820a30c64e1?w=600&q=80" }
-    ]
-  },
-
-  "bewertungen": {
-    "label":    "Bewertungen",
-    "title":    "Was unsere Gäste sagen",
-    "subtitle": "Hunderte zufriedene Urlauber kommen immer wieder gerne zurück.",
-    "items": [
-      { "stars": 5, "text": "Ein absolut traumhafter Urlaub! Die Wohnung war wunderschön, die Lage perfekt und die Gastgeber super freundlich. Wir kommen definitiv wieder.", "name": "Sarah M.", "initials": "SM", "date": "Juli 2025" },
-      { "stars": 5, "text": "Persönlicher Empfang, makellose Sauberkeit und ein Strand, der jeden Postkartenmotiv übertrifft. Wir haben jeden Tag genossen.", "name": "Thomas K.", "initials": "TK", "date": "August 2025" },
-      { "stars": 5, "text": "Casa Mare ist das perfekte Versteck für Paare. Ruhig, romantisch, und das Meer direkt vor der Tür. Ein Geheimtipp!", "name": "Julia L.", "initials": "JL", "date": "Juni 2025" }
-    ]
-  },
-
-  "anfrage": {
-    "label":    "Kontakt",
-    "title":    "Anfrage stellen",
-    "subtitle": "Kein Buchungssystem – nur persönlicher Kontakt. Füllen Sie das Formular aus, und wir melden uns schnellstmöglich bei Ihnen.",
-    "submit_label": "Anfrage absenden →",
-    "note": "Wir antworten in der Regel innerhalb von 24 Stunden. Ihre Daten werden vertraulich behandelt.",
-    "success_title":   "Vielen Dank!",
-    "success_message": "Ihre Anfrage ist bei uns eingegangen.<br>Wir melden uns innerhalb von 24 Stunden bei Ihnen.",
-    "datenschutz_hinweis": "Mit dem Absenden bestätige ich die Datenschutzerklärung gelesen zu haben."
-  },
-
-  "footer": {
-    "brand": {
-      "title":  "🌊 Sardinientraum",
-      "text":   "Persönlich geführte Ferienwohnungen in La Caletta, Sardinien. Dein Zuhause auf Zeit – fernab vom Massentourismus."
+        "cta": {
+            "label": "Anfrage stellen",
+            "href": "#anfrage"
+        }
     },
-    "columns": [
-      {
-        "title": "Entdecken",
-        "links": [
-          { "label": "Über uns",     "href": "#ueber" },
-          { "label": "Wohnungen",    "href": "#wohnungen" },
-          { "label": "Region",       "href": "#region" },
-          { "label": "Bewertungen",  "href": "#bewertungen" }
+    "hero": {
+        "tag": "La Caletta · Sardinien",
+        "title": "Dein Traum vom Meer\nbeginnt hier",
+        "subtitle": "Persönlich geführte Ferienwohnungen nur wenige Minuten vom türkisblauen Wasser Sardiniens entfernt – für unvergessliche Urlaubsmomente",
+        "cta_primary": {
+            "label": "Wohnungen entdecken",
+            "href": "#wohnungen"
+        },
+        "cta_secondary": {
+            "label": "Anfrage stellen",
+            "href": "#anfrage"
+        },
+        "media": {
+            "type": "video",
+            "src": "Scene-2.mp4",
+            "poster": ""
+        }
+    },
+    "ueber": {
+        "label": "Über uns",
+        "title": "Mehr als nur ein Urlaubsort",
+        "subtitle": "Bei uns findest du keine anonyme Hotelanlage – sondern liebevoll eingerichtete Wohnungen, persönliche Betreuung und echte sardische Gastfreundschaft.",
+        "image": "/uploads/20260524190240-2ce151-3.jpg",
+        "features": [
+            {
+                "icon": "🏖",
+                "title": "200m zum Strand",
+                "text": "Direkter Zugang zu kristallklarem Wasser und feinem Sand."
+            },
+            {
+                "icon": "🔑",
+                "title": "Persönliche Übergabe",
+                "text": "Wir empfangen jeden Gast persönlich und geben unsere besten Tipps weiter."
+            },
+            {
+                "icon": "🅿",
+                "title": "Kostenloser Parkplatz",
+                "text": "Direkt am Haus, sicher und schattig."
+            },
+            {
+                "icon": "📶",
+                "title": "Schnelles WLAN",
+                "text": "In allen Wohnungen kostenfrei verfügbar."
+            }
         ]
-      },
-      {
-        "title": "Rechtliches",
-        "links": [
-          { "label": "Anfrage stellen", "href": "#anfrage" },
-          { "label": "Impressum",       "href": "impressum.html" },
-          { "label": "Datenschutz",     "href": "datenschutz.html" }
+    },
+    "wohnungen": {
+        "label": "Unsere Unterkünfte",
+        "title": "Zwei einzigartige Wohnungen",
+        "subtitle": "Jede Wohnung hat ihren eigenen Charakter – wähle die, die zu deinem perfekten Urlaub passt.",
+        "items": [
+            {
+                "id": "casa-tramonto",
+                "name": "Casa Tramonto",
+                "badge": "Bis 4 Personen",
+                "image": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
+                "gallery": [],
+                "description": "Helle, moderne Wohnung mit großer Terrasse und atemberaubendem Blick auf den Sonnenuntergang über dem Meer.",
+                "meta": [
+                    {
+                        "icon": "🛏",
+                        "text": "2 Schlafzimmer"
+                    },
+                    {
+                        "icon": "🛁",
+                        "text": "1 Bad"
+                    },
+                    {
+                        "icon": "📐",
+                        "text": "65 m²"
+                    }
+                ],
+                "price": "ab 120 € / Nacht",
+                "price_value": 120,
+                "max_guests": 4,
+                "details": ""
+            },
+            {
+                "id": "casa-mare",
+                "name": "Casa Mare",
+                "badge": "Bis 2 Personen",
+                "image": "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
+                "gallery": [],
+                "description": "Romantisches Studio direkt am Meer – ideal für Paare, die einen ruhigen, intimen Urlaub in einzigartiger Lage suchen.",
+                "meta": [
+                    {
+                        "icon": "🛏",
+                        "text": "1 Schlafzimmer"
+                    },
+                    {
+                        "icon": "🛁",
+                        "text": "1 Bad"
+                    },
+                    {
+                        "icon": "📐",
+                        "text": "40 m²"
+                    }
+                ],
+                "price": "ab 95 € / Nacht",
+                "price_value": 95,
+                "max_guests": 2,
+                "details": ""
+            }
         ]
-      }
-    ],
-    "copyright": "© 2026 Sardinientraum · Mit ❤️ in Sardinien"
-  }
+    },
+    "region": {
+        "label": "Die Region",
+        "title": "Entdecke La Caletta",
+        "subtitle": "Vom paradiesischen Strand bis in die wilden Berge – Sardinien hat für jeden etwas zu bieten.",
+        "items": [
+            {
+                "label": "Traumstrände",
+                "image": "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=600&q=80"
+            },
+            {
+                "label": "Wilde Berge",
+                "image": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&q=80"
+            },
+            {
+                "label": "Charmante Dörfer",
+                "image": "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80"
+            },
+            {
+                "label": "Sardische Küche",
+                "image": "https://images.unsplash.com/photo-1551845728-6820a30c64e1?w=600&q=80"
+            }
+        ]
+    },
+    "bewertungen": {
+        "label": "Bewertungen",
+        "title": "Was unsere Gäste sagen",
+        "subtitle": "Hunderte zufriedene Urlauber kommen immer wieder gerne zurück.",
+        "items": [
+            {
+                "stars": 5,
+                "text": "Ein absolut traumhafter Urlaub! Die Wohnung war wunderschön, die Lage perfekt und die Gastgeber super freundlich. Wir kommen definitiv wieder.",
+                "name": "Sarah M.",
+                "initials": "SM",
+                "date": "Juli 2025"
+            },
+            {
+                "stars": 5,
+                "text": "Persönlicher Empfang, makellose Sauberkeit und ein Strand, der jeden Postkartenmotiv übertrifft. Wir haben jeden Tag genossen.",
+                "name": "Thomas K.",
+                "initials": "TK",
+                "date": "August 2025"
+            },
+            {
+                "stars": 5,
+                "text": "Casa Mare ist das perfekte Versteck für Paare. Ruhig, romantisch, und das Meer direkt vor der Tür. Ein Geheimtipp!",
+                "name": "Julia L.",
+                "initials": "JL",
+                "date": "Juni 2025"
+            }
+        ]
+    },
+    "anfrage": {
+        "label": "Kontakt",
+        "title": "Verfügbarkeit anfragen",
+        "subtitle": "Schicken Sie uns Ihre Wunschdaten — wir prüfen persönlich und melden uns zurück. Der angefragte Zeitraum gilt erst nach unserer Bestätigung als belegt.",
+        "submit_label": "Unverbindlich anfragen →",
+        "note": "Unverbindlich & kostenlos · Antwort innerhalb von 24 Stunden · Ihre Daten werden vertraulich behandelt.",
+        "success_title": "Anfrage eingegangen!",
+        "success_message": "Vielen Dank – wir haben Ihre Anfrage erhalten und melden uns persönlich bei Ihnen.<br><br><small style='color:#9a8a78;'>Ihr Wunschtermin ist noch <strong>nicht als belegt eingetragen</strong> — das passiert erst nach Ihrer Bestätigung.</small>",
+        "datenschutz_hinweis": "Mit dem Absenden bestätige ich die <a href='datenschutz.html' target='_blank'>Datenschutzerklärung</a> gelesen zu haben."
+    },
+    "footer": {
+        "brand": {
+            "title": "Sardinientraum",
+            "text": "Persönlich geführte Ferienwohnungen in La Caletta, Sardinien. Dein Zuhause auf Zeit – fernab vom Massentourismus."
+        },
+        "columns": [
+            {
+                "title": "Entdecken",
+                "links": [
+                    {
+                        "label": "Über uns",
+                        "href": "#ueber"
+                    },
+                    {
+                        "label": "Wohnungen",
+                        "href": "#wohnungen"
+                    },
+                    {
+                        "label": "Region",
+                        "href": "#region"
+                    },
+                    {
+                        "label": "Bewertungen",
+                        "href": "#bewertungen"
+                    }
+                ]
+            },
+            {
+                "title": "Rechtliches",
+                "links": [
+                    {
+                        "label": "Anfrage stellen",
+                        "href": "#anfrage"
+                    },
+                    {
+                        "label": "Impressum",
+                        "href": "impressum.html"
+                    },
+                    {
+                        "label": "Datenschutz",
+                        "href": "datenschutz.html"
+                    }
+                ]
+            }
+        ],
+        "copyright": "© 2026 Sardinientraum · Mit ❤️ in Sardinien"
+    }
 }

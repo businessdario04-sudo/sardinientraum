@@ -18,7 +18,10 @@
 
 <!-- ════════════════ NAV ════════════════ -->
 <nav id="mainNav">
-  <a class="nav-logo" href="#" data-bind="nav.logo_text">🌊 Sardinientraum</a>
+  <a class="nav-logo" href="#">
+    <img class="site-logo-img" src="/uploads/logo.png" alt="" onerror="this.style.display='none'">
+    <span data-bind="nav.logo_text">Sardinientraum</span>
+  </a>
   <ul class="nav-links" id="navLinks" data-bind-list="nav.items" data-bind-template="tpl-nav-item">
     <li><a href="#ueber">Über uns</a></li>
     <li><a href="#wohnungen">Wohnungen</a></li>
@@ -160,7 +163,15 @@
 <section id="anfrage">
   <span class="section-label" data-bind="anfrage.label">Kontakt</span>
   <h2 class="section-title" data-bind="anfrage.title">Anfrage stellen</h2>
-  <p class="section-sub" style="margin: 0 auto 32px;" data-bind="anfrage.subtitle">Kein Buchungssystem – nur persönlicher Kontakt. Füllen Sie das Formular aus, und wir melden uns schnellstmöglich bei Ihnen.</p>
+  <p class="section-sub" style="margin: 0 auto 20px;" data-bind="anfrage.subtitle">Schicken Sie uns Ihre Wunschdaten — wir prüfen persönlich und melden uns zurück. Der angefragte Zeitraum gilt erst nach unserer Bestätigung als belegt.</p>
+
+  <!-- Trust-Badges -->
+  <div class="anfrage-trust">
+    <div class="trust-badge"><span class="trust-icon">✓</span>Unverbindlich</div>
+    <div class="trust-badge"><span class="trust-icon">🔒</span>Datenschutz</div>
+    <div class="trust-badge"><span class="trust-icon">⏱</span>Antwort in 24h</div>
+    <div class="trust-badge"><span class="trust-icon">📞</span>Persönlicher Kontakt</div>
+  </div>
 
   <!-- Schritt-Indikator -->
   <div class="anfrage-steps" id="anfrage-steps">
@@ -227,6 +238,10 @@
 
       <!-- ══ SCHRITT 2: Kalender + Reisedaten ══ -->
       <div id="form-step2" class="form-step" style="display:none">
+        <div class="cal-unverbindlich-hint">
+          <span>ℹ</span>
+          <span>Die angezeigten Termine sind <strong>noch nicht als belegt eingetragen</strong> — erst nach Ihrer Bestätigung reservieren wir verbindlich.</span>
+        </div>
         <div class="cal-property-label">
           Verfügbare Termine für: <strong id="cal-property-display">alle Wohnungen</strong>
         </div>
@@ -290,9 +305,18 @@
     </form>
 
     <div class="form-success" id="form-success" style="display:none">
-      <div class="check">✅</div>
-      <h3 data-bind="anfrage.success_title">Vielen Dank!</h3>
-      <p data-bind="anfrage.success_message" data-bind-html="1">Ihre Anfrage ist bei uns eingegangen.<br>Wir melden uns innerhalb von 24 Stunden bei Ihnen.</p>
+      <div class="check-circle">
+        <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+          <circle cx="26" cy="26" r="25" fill="#22c55e" opacity=".12"/>
+          <circle cx="26" cy="26" r="25" stroke="#22c55e" stroke-width="2"/>
+          <path d="M14 27l8 8 16-16" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3 data-bind="anfrage.success_title">Anfrage eingegangen!</h3>
+      <p data-bind="anfrage.success_message" data-bind-html="1">Vielen Dank – wir haben Ihre Anfrage erhalten und melden uns persönlich bei Ihnen.</p>
+      <div class="success-note">
+        Ihr Wunschtermin ist noch <strong>nicht als belegt eingetragen</strong> — das passiert erst nach Ihrer Bestätigung.
+      </div>
     </div>
   </div>
 </section>
@@ -331,7 +355,10 @@
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
-      <h2 data-bind="footer.brand.title">🌊 Sardinientraum</h2>
+      <h2 class="footer-brand-heading">
+        <img class="site-logo-img site-logo-footer" src="/uploads/logo.png" alt="" onerror="this.style.display='none'">
+        <span data-bind="footer.brand.title">Sardinientraum</span>
+      </h2>
       <p data-bind="footer.brand.text">Persönlich geführte Ferienwohnungen in La Caletta, Sardinien.</p>
     </div>
     <div class="footer-col">

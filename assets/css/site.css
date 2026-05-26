@@ -45,8 +45,27 @@
       color: #fff;
       transition: color .3s;
       text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     nav.scrolled .nav-logo { color: var(--ocean); }
+
+    /* ── SITE-LOGO (Bild) ── */
+    .site-logo-img {
+      height: 36px;
+      width: auto;
+      object-fit: contain;
+      display: inline-block;
+      flex-shrink: 0;
+      transition: filter .3s;
+    }
+    nav.scrolled .site-logo-img { filter: none; }
+    .site-logo-footer {
+      height: 44px;
+      margin-bottom: 4px;
+      filter: brightness(0) invert(1) opacity(.85);
+    }
     .nav-links {
       display: flex;
       align-items: center;
@@ -1290,4 +1309,88 @@
 @media (max-width: 520px) {
   .form-actions { flex-direction: column; }
   .form-back-btn, .form-actions .form-submit { width: 100%; text-align: center; }
+}
+
+/* ════════════════ TRUST-BADGES (Anfrage-Section) ════════════════ */
+.anfrage-trust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 28px;
+  max-width: 600px;
+}
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1.5px solid rgba(200,151,90,.35);
+  border-radius: 50px;
+  padding: 6px 16px 6px 12px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--ocean);
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+}
+.trust-icon {
+  font-size: .95rem;
+  line-height: 1;
+}
+
+/* ════════════════ FORM-CARD: subtiler Akzent oben ════════════════ */
+    .form-card {
+      border-top: 3px solid var(--gold);
+    }
+
+/* ════════════════ UNVERBINDLICH-HINT (Step 2) ════════════════ */
+.cal-unverbindlich-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(200,151,90,.1);
+  border: 1px solid rgba(200,151,90,.4);
+  border-radius: 10px;
+  padding: 11px 16px;
+  font-size: .82rem;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.cal-unverbindlich-hint > span:first-child {
+  font-size: 1rem;
+  flex-shrink: 0;
+  color: var(--gold);
+  font-style: italic;
+  font-weight: 700;
+}
+.cal-unverbindlich-hint strong { color: var(--ocean); }
+
+/* ════════════════ FORM-SUCCESS: Kreis-Check + Note ════════════════ */
+.check-circle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.check-circle svg { display: block; }
+.success-note {
+  display: inline-block;
+  background: rgba(30,77,107,.07);
+  border: 1px solid rgba(30,77,107,.15);
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: .82rem;
+  color: var(--text-light);
+  line-height: 1.6;
+  margin-top: 16px;
+  max-width: 400px;
+}
+.success-note strong { color: var(--ocean); }
+
+/* ════════════════ FOOTER BRAND HEADING ════════════════ */
+.footer-brand-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
