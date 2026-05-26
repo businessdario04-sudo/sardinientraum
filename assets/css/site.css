@@ -59,8 +59,9 @@
       display: inline-block;
       flex-shrink: 0;
       transition: filter .3s;
+      filter: brightness(0) invert(1); /* weiß auf dunklem Hero */
     }
-    nav.scrolled .site-logo-img { filter: none; }
+    nav.scrolled .site-logo-img { filter: none; /* Original-Braun auf weißer Nav */ }
     .site-logo-footer {
       height: 44px;
       margin-bottom: 4px;

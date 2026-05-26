@@ -10,6 +10,7 @@ data/snapshots/
 # Uploads landen nicht im Git (zu groß, dynamisch)
 uploads/*
 !uploads/.gitkeep
+!uploads/logo.svg
 
 # Sandbox-Inhalt nicht versionieren (nur Struktur)
 sandbox/*
