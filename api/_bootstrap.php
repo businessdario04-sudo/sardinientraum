@@ -44,7 +44,7 @@ $hostname = strtok($host, ':');
 $isLocal = in_array($hostname, ['localhost', '127.0.0.1'], true);
 
 $allowedOrigins = $isLocal
-    ? ['http://localhost:8080', 'http://127.0.0.1:8080', 'http://localhost', 'http://127.0.0.1']
+    ? ['http://localhost:8080', 'http://localhost:8082', 'http://127.0.0.1:8080', 'http://127.0.0.1:8082', 'http://localhost', 'http://127.0.0.1']
     : ['https://' . $host, 'http://' . $host];   // Production: gleiche Domain
 
 if (in_array($origin, $allowedOrigins, true)) {
