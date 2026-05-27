@@ -50,8 +50,8 @@ $file      = $isDraft ? DATA_DIR . '/' . $target . '.draft.json' : $liveFile;
 
 // ─── Whitelist der Top-Level-Keys (Patch darf nicht alles ändern) ─
 $allowedKeys = [
-    'pages'  => ['nav','hero','ueber','wohnungen','region','bewertungen','anfrage','footer'],
-    'config' => ['company','contact','social','seo','theme','form','legal','features']
+    'pages'  => ['nav','hero','ueber','wohnungen','region','bewertungen','anfrage','footer','site'],
+    'config' => ['company','contact','social','seo','theme','form','legal','features','branding']
 ];
 
 $protected = ['_schema_version','_updated','_note','_pending_setup'];

@@ -1092,23 +1092,17 @@ document.getElementById('logo-file-input')?.addEventListener('change', async fun
     document.getElementById('logo-preview-dark').src  = url + '?t=' + Date.now();
     document.getElementById('logo-preview-light').src = url + '?t=' + Date.now();
 
-    // In pages.json speichern — site.logo aktualisieren
-    const pagesReq = await fetch('/api/load-content.php?target=pages', { credentials: 'same-origin' });
-    const pagesJson = await pagesReq.json();
-    const pages = pagesJson.ok ? pagesJson.data : {};
-    if (!pages.site) pages.site = {};
-    pages.site.logo = url;
-
+    // In pages.json speichern — nur site.logo als Patch senden
     const saveReq = await fetch('/api/save-content.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
       credentials: 'same-origin',
-      body: JSON.stringify({ target: 'pages', data: pages })
+      body: JSON.stringify({ target: 'pages', patch: { site: { logo: url } } })
     });
     const saveJson = await saveReq.json();
     if (status) status.textContent = saveJson.ok
       ? '✅ Logo gespeichert — Seite neu laden um es zu sehen.'
-      : '❌ Speichern fehlgeschlagen: ' + (saveJson.msg || '');
+      : '❌ Speichern fehlgeschlagen: ' + (saveJson.error || saveJson.msg || JSON.stringify(saveJson));
   } catch(e) {
     if (status) status.textContent = '❌ Verbindungsfehler: ' + e.message;
   }

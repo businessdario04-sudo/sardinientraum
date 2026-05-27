@@ -44,7 +44,9 @@ $hostname = strtok($host, ':');
 $isLocal = in_array($hostname, ['localhost', '127.0.0.1'], true);
 
 $allowedOrigins = $isLocal
-    ? ['http://localhost:8080', 'http://localhost:8082', 'http://127.0.0.1:8080', 'http://127.0.0.1:8082', 'http://localhost', 'http://127.0.0.1']
+    ? ['http://localhost:8080', 'http://localhost:8081', 'http://localhost:8082',
+       'http://127.0.0.1:8080', 'http://127.0.0.1:8081', 'http://127.0.0.1:8082',
+       'http://localhost', 'http://127.0.0.1']
     : ['https://' . $host, 'http://' . $host];   // Production: gleiche Domain
 
 if (in_array($origin, $allowedOrigins, true)) {
@@ -240,7 +242,11 @@ function readJsonBody(): array {
 
 function sanitizeString(string $s, int $maxLen = 1000): string {
     $s = trim($s);
-    if (mb_strlen($s) > $maxLen) $s = mb_substr($s, 0, $maxLen);
+    // mb_strlen/mb_substr sind optional – Fallback auf strlen/substr wenn mbstring fehlt
+    $len = function_exists('mb_strlen') ? mb_strlen($s, 'UTF-8') : strlen($s);
+    if ($len > $maxLen) {
+        $s = function_exists('mb_substr') ? mb_substr($s, 0, $maxLen, 'UTF-8') : substr($s, 0, $maxLen);
+    }
     // Steuerzeichen raus (außer Tab/CR/LF)
     return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $s);
 }

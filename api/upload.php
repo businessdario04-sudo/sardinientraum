@@ -63,6 +63,7 @@ $allowedMime = [
     'image/png'       => 'png',
     'image/webp'      => 'webp',
     'image/gif'       => 'gif',
+    'image/svg+xml'   => 'svg',
     'video/mp4'       => 'mp4',
     'video/webm'      => 'webm',
     'video/quicktime' => 'mov',
@@ -99,7 +100,21 @@ $isImage = str_starts_with($mime, 'image/');
 $width = null; $height = null;
 $savedSize = $size;
 
-if ($isImage && extension_loaded('gd') && $mime !== 'image/gif') {
+// ─── SVG: kein GD möglich → Sanitisierung + direkt speichern ─
+if ($mime === 'image/svg+xml') {
+    $svgRaw = @file_get_contents($tmp);
+    if ($svgRaw === false) {
+        respondJson(['ok' => false, 'error' => 'read_failed'], 500);
+    }
+    // Basis-Sanitisierung: script-Tags, on*-Event-Handler, javascript:-URIs entfernen
+    $svgRaw = preg_replace('/<script\b[^>]*>.*?<\/script>/si', '', $svgRaw);
+    $svgRaw = preg_replace('/\s+on\w+\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s>]*)/i', '', $svgRaw);
+    $svgRaw = preg_replace('/\bjavascript\s*:/i', '', $svgRaw);
+    if (@file_put_contents($targetPath, $svgRaw) === false) {
+        respondJson(['ok' => false, 'error' => 'write_failed'], 500);
+    }
+    $savedSize = strlen($svgRaw);
+} elseif ($isImage && extension_loaded('gd') && $mime !== 'image/gif') {
     $info = @getimagesize($tmp);
     if ($info) {
         [$ow, $oh] = $info;
