@@ -19,7 +19,7 @@
 <!-- ════════════════ NAV ════════════════ -->
 <nav id="mainNav">
   <a class="nav-logo" href="#">
-    <img class="site-logo-img" src="/uploads/logo.svg" alt="" onerror="this.style.display='none'">
+    <img class="site-logo-img" src="/uploads/logo.svg" data-bind="site.logo" alt="Logo" onerror="this.style.display='none'">
     <span data-bind="nav.logo_text">Sardinientraum</span>
   </a>
   <ul class="nav-links" id="navLinks" data-bind-list="nav.items" data-bind-template="tpl-nav-item">
@@ -33,7 +33,7 @@
   <button class="mobile-menu-btn" id="menuBtn" aria-label="Menü">☰</button>
 </nav>
 <template id="tpl-nav-item">
-  <li><a data-bind-item="label" data-bind-href="1" data-bind-attr-target="href"></a></li>
+  <li><a data-bind-item="label" data-bind-item-attr-href="href"></a></li>
 </template>
 
 <!-- ════════════════ HERO ════════════════ -->
@@ -338,7 +338,7 @@
       <div class="apt-modal-meta"></div>
       <p class="apt-modal-details"></p>
       <div class="apt-modal-cta">
-        <div class="price-tag">ab <strong class="apt-modal-price">—</strong></div>
+        <div class="price-tag"><strong class="apt-modal-price">—</strong></div>
         <a class="btn-primary" data-modal-cta href="#anfrage">Jetzt anfragen →</a>
       </div>
     </div>
@@ -356,7 +356,7 @@
   <div class="footer-grid">
     <div class="footer-brand">
       <h2 class="footer-brand-heading">
-        <img class="site-logo-img site-logo-footer" src="/uploads/logo.svg" alt="" onerror="this.style.display='none'">
+        <img class="site-logo-img site-logo-footer" src="/uploads/logo.svg" data-bind="site.logo" alt="Logo" onerror="this.style.display='none'">
         <span data-bind="footer.brand.title">Sardinientraum</span>
       </h2>
       <p data-bind="footer.brand.text">Persönlich geführte Ferienwohnungen in La Caletta, Sardinien.</p>

@@ -352,6 +352,39 @@
     <!-- ══ TAB: EINSTELLUNGEN ══ -->
     <div class="tab-panel" id="tab-settings">
 
+      <!-- ── Logo / Branding ── -->
+      <div class="settings-block" style="border-left:3px solid var(--gold);">
+        <div class="settings-block-head">
+          <span class="icon">🖼</span>
+          <div>
+            <h3>Logo</h3>
+            <p>Erscheint in Navigation und Footer — SVG empfohlen für scharfe Darstellung.</p>
+          </div>
+        </div>
+        <div class="settings-body">
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px;">
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;display:flex;gap:20px;align-items:center;">
+              <div style="text-align:center;">
+                <img id="logo-preview-dark" src="/uploads/logo.svg" style="height:44px;width:auto;max-width:100px;object-fit:contain;display:block;margin:0 auto 6px;" alt="Logo">
+                <span style="font-size:.68rem;color:var(--muted);">Normal</span>
+              </div>
+              <div style="background:#1e4d6b;border-radius:8px;padding:10px 14px;text-align:center;">
+                <img id="logo-preview-light" src="/uploads/logo.svg" style="height:44px;width:auto;max-width:100px;object-fit:contain;display:block;margin:0 auto 6px;filter:brightness(0) invert(1);" alt="Logo hell">
+                <span style="font-size:.68rem;color:#99b4c4;">Auf dunkel</span>
+              </div>
+            </div>
+          </div>
+          <label style="display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border-radius:8px;padding:9px 18px;font-size:.85rem;font-weight:600;cursor:pointer;">
+            📤 Logo ersetzen
+            <input type="file" id="logo-file-input" accept=".svg,.png,.webp,.jpg" style="display:none;">
+          </label>
+          <span style="font-size:.75rem;color:var(--muted);margin-left:10px;">SVG · PNG · WebP · JPG</span>
+        </div>
+        <div class="settings-footer">
+          <span id="logo-upload-status" style="font-size:.82rem;"></span>
+        </div>
+      </div>
+
       <!-- ── 0. Buchungsbestätigung / E-Mail-Versand ── -->
       <div class="settings-block" style="border-left:3px solid var(--gold);">
         <div class="settings-block-head">
@@ -1033,6 +1066,54 @@ async function justSave(msgId) {
   updateStatusEmail();
   if (msgId) flashMsg(msgId, ok ? '✓ Gespeichert' : '✗ Speichern fehlgeschlagen', ok);
 }
+
+/* ── Logo-Upload ── */
+document.getElementById('logo-file-input')?.addEventListener('change', async function() {
+  const file = this.files?.[0];
+  if (!file) return;
+  const status = document.getElementById('logo-upload-status');
+  if (status) status.textContent = '⏳ Lädt hoch…';
+
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/upload.php', {
+      method: 'POST',
+      body: fd,
+      headers: { 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin'
+    });
+    const j = await r.json();
+    if (!j.ok) { if (status) status.textContent = '❌ ' + (j.msg || 'Fehler'); return; }
+
+    const url = '/' + j.url;
+
+    // Vorschau sofort aktualisieren
+    document.getElementById('logo-preview-dark').src  = url + '?t=' + Date.now();
+    document.getElementById('logo-preview-light').src = url + '?t=' + Date.now();
+
+    // In pages.json speichern — site.logo aktualisieren
+    const pagesReq = await fetch('/api/load-content.php?target=pages', { credentials: 'same-origin' });
+    const pagesJson = await pagesReq.json();
+    const pages = pagesJson.ok ? pagesJson.data : {};
+    if (!pages.site) pages.site = {};
+    pages.site.logo = url;
+
+    const saveReq = await fetch('/api/save-content.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+      credentials: 'same-origin',
+      body: JSON.stringify({ target: 'pages', data: pages })
+    });
+    const saveJson = await saveReq.json();
+    if (status) status.textContent = saveJson.ok
+      ? '✅ Logo gespeichert — Seite neu laden um es zu sehen.'
+      : '❌ Speichern fehlgeschlagen: ' + (saveJson.msg || '');
+  } catch(e) {
+    if (status) status.textContent = '❌ Verbindungsfehler: ' + e.message;
+  }
+  this.value = ''; // Input zurücksetzen für erneuten Upload
+});
 
 document.getElementById('settings-save-only').addEventListener('click',   () => justSave('settings-save-msg'));
 document.getElementById('settings-save-only-2').addEventListener('click',  () => justSave('settings-save-msg'));

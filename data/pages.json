@@ -193,7 +193,7 @@
         "submit_label": "Unverbindlich anfragen →",
         "note": "Unverbindlich & kostenlos · Antwort innerhalb von 24 Stunden · Ihre Daten werden vertraulich behandelt.",
         "success_title": "Anfrage eingegangen!",
-        "success_message": "Vielen Dank – wir haben Ihre Anfrage erhalten und melden uns persönlich bei Ihnen.<br><br><small style='color:#9a8a78;'>Ihr Wunschtermin ist noch <strong>nicht als belegt eingetragen</strong> — das passiert erst nach Ihrer Bestätigung.</small>",
+        "success_message": "Vielen Dank – wir haben Ihre Anfrage erhalten und melden uns persönlich bei Ihnen.",
         "datenschutz_hinweis": "Mit dem Absenden bestätige ich die <a href='datenschutz.html' target='_blank'>Datenschutzerklärung</a> gelesen zu haben."
     },
     "footer": {
@@ -242,5 +242,8 @@
             }
         ],
         "copyright": "© 2026 Sardinientraum · Mit ❤️ in Sardinien"
+    },
+    "site": {
+        "logo": "/uploads/logo.svg"
     }
 }

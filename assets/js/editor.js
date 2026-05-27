@@ -374,12 +374,27 @@
       </div>`;
     }).join('');
 
+    const currentLogoSrc = window.__SARDINIA_PAGES__?.site?.logo || '/uploads/logo.svg';
+
     panel.innerHTML = `
       <div class="et-sp-head">
         <span>🎨 Design</span>
         <button id="et-sp-close" title="Panel schließen">✕</button>
       </div>
       <div class="et-sp-body">
+
+        <div class="et-sp-section">
+          <h4>🖼 Logo</h4>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;background:rgba(255,255,255,.06);border-radius:8px;padding:10px;">
+            <img id="sp-logo-preview-dark" src="${currentLogoSrc}" style="height:36px;width:auto;max-width:80px;object-fit:contain;" alt="Logo (dunkel)">
+            <img id="sp-logo-preview-light" src="${currentLogoSrc}" style="height:36px;width:auto;max-width:80px;object-fit:contain;filter:brightness(0) invert(1);" alt="Logo (hell)">
+            <span style="font-size:.7rem;color:var(--muted,#888);line-height:1.3;">Dunkel &amp; Hell</span>
+          </div>
+          <button class="et-bg-img-btn" id="logo-upload-btn" style="width:100%;text-align:center;padding:8px;">
+            📤 Logo ersetzen (SVG · PNG · WebP)
+          </button>
+          <div class="et-drag-hint" id="logo-upload-msg"></div>
+        </div>
 
         <div class="et-sp-section">
           <h4>🎬 Hero-Hintergrund</h4>
@@ -417,6 +432,43 @@
     `;
     document.body.appendChild(panel);
     document.getElementById('et-sp-close').addEventListener('click', toggleSettings);
+
+    // ── Logo Upload ──
+    document.getElementById('logo-upload-btn')?.addEventListener('click', () => {
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'image/svg+xml,image/png,image/webp,image/jpeg';
+      inp.style.cssText = 'position:absolute;left:-9999px;';
+      document.body.appendChild(inp);
+      inp.addEventListener('change', async () => {
+        const f = inp.files?.[0];
+        inp.remove();
+        if (!f) return;
+        const btn = document.getElementById('logo-upload-btn');
+        const msg = document.getElementById('logo-upload-msg');
+        if (btn) { btn.textContent = '⏳ Lädt hoch…'; btn.disabled = true; }
+        const url = await uploadFile(f);
+        if (btn) { btn.textContent = '📤 Logo ersetzen (SVG · PNG · WebP)'; btn.disabled = false; }
+        if (!url) { if (msg) msg.textContent = '❌ Upload fehlgeschlagen.'; return; }
+
+        // Alle Logo-Imgs auf der Seite sofort aktualisieren
+        document.querySelectorAll('[data-bind="site.logo"]').forEach(img => { img.src = url; });
+        // Vorschau im Panel
+        const previewDark  = document.getElementById('sp-logo-preview-dark');
+        const previewLight = document.getElementById('sp-logo-preview-light');
+        if (previewDark)  previewDark.src  = url;
+        if (previewLight) previewLight.src = url;
+
+        // In den Patch-Sammler schreiben (wird bei Speichern gespeichert)
+        setPatchValue('pages', 'site.logo', url);
+        const pages = window.__SARDINIA_PAGES__;
+        if (pages) { if (!pages.site) pages.site = {}; pages.site.logo = url; }
+        setDirty(true);
+
+        if (msg) msg.textContent = '✅ Logo aktualisiert — Speichern nicht vergessen!';
+      });
+      inp.click();
+    });
 
     // ── Hero-Modus Toggle ──
     document.getElementById('hero-mode-video')?.addEventListener('click', () => {
