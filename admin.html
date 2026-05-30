@@ -358,30 +358,37 @@
           <span class="icon">🖼</span>
           <div>
             <h3>Logo</h3>
-            <p>Erscheint in Navigation und Footer — SVG empfohlen für scharfe Darstellung.</p>
+            <p>Zwei Versionen: eine für hellen Hintergrund (Nav), eine für dunklen (Hero &amp; Footer). SVG empfohlen.</p>
           </div>
         </div>
-        <div class="settings-body">
-          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:16px;">
-            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 20px;display:flex;gap:20px;align-items:center;">
-              <div style="text-align:center;">
-                <img id="logo-preview-dark" src="/uploads/logo.svg" style="height:44px;width:auto;max-width:100px;object-fit:contain;display:block;margin:0 auto 6px;" alt="Logo">
-                <span style="font-size:.68rem;color:var(--muted);">Normal</span>
-              </div>
-              <div style="background:#1e4d6b;border-radius:8px;padding:10px 14px;text-align:center;">
-                <img id="logo-preview-light" src="/uploads/logo.svg" style="height:44px;width:auto;max-width:100px;object-fit:contain;display:block;margin:0 auto 6px;filter:brightness(0) invert(1);" alt="Logo hell">
-                <span style="font-size:.68rem;color:#99b4c4;">Auf dunkel</span>
-              </div>
+        <div class="settings-body" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+          <!-- Dunkle / farbige Version -->
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase;">Auf hellem Hintergrund</div>
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;margin-bottom:10px;min-height:80px;display:flex;align-items:center;justify-content:center;">
+              <img id="logo-preview-dark" src="/uploads/logo.svg" style="height:50px;width:auto;max-width:120px;object-fit:contain;" alt="Logo dunkel">
             </div>
+            <label style="display:flex;align-items:center;justify-content:center;gap:7px;background:var(--blue);color:#fff;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;">
+              📤 Hochladen
+              <input type="file" id="logo-dark-file-input" accept=".svg,.png,.webp,.jpg" style="display:none;">
+            </label>
+            <div id="logo-dark-status" style="font-size:.78rem;margin-top:6px;min-height:18px;"></div>
           </div>
-          <label style="display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;border-radius:8px;padding:9px 18px;font-size:.85rem;font-weight:600;cursor:pointer;">
-            📤 Logo ersetzen
-            <input type="file" id="logo-file-input" accept=".svg,.png,.webp,.jpg" style="display:none;">
-          </label>
-          <span style="font-size:.75rem;color:var(--muted);margin-left:10px;">SVG · PNG · WebP · JPG</span>
-        </div>
-        <div class="settings-footer">
-          <span id="logo-upload-status" style="font-size:.82rem;"></span>
+
+          <!-- Helle / weiße Version -->
+          <div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase;">Auf dunklem Hintergrund</div>
+            <div style="background:#1e4d6b;border-radius:10px;padding:14px;text-align:center;margin-bottom:10px;min-height:80px;display:flex;align-items:center;justify-content:center;">
+              <img id="logo-preview-light" src="/uploads/logo.svg" style="height:50px;width:auto;max-width:120px;object-fit:contain;" alt="Logo hell">
+            </div>
+            <label style="display:flex;align-items:center;justify-content:center;gap:7px;background:var(--blue);color:#fff;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;">
+              📤 Hochladen
+              <input type="file" id="logo-light-file-input" accept=".svg,.png,.webp,.jpg" style="display:none;">
+            </label>
+            <div id="logo-light-status" style="font-size:.78rem;margin-top:6px;min-height:18px;"></div>
+          </div>
+
         </div>
       </div>
 
@@ -1067,11 +1074,10 @@ async function justSave(msgId) {
   if (msgId) flashMsg(msgId, ok ? '✓ Gespeichert' : '✗ Speichern fehlgeschlagen', ok);
 }
 
-/* ── Logo-Upload ── */
-document.getElementById('logo-file-input')?.addEventListener('change', async function() {
-  const file = this.files?.[0];
-  if (!file) return;
-  const status = document.getElementById('logo-upload-status');
+/* ── Logo-Upload (generischer Handler) ── */
+async function handleLogoUpload(file, previewId, statusId, patchKey) {
+  const status  = document.getElementById(statusId);
+  const preview = document.getElementById(previewId);
   if (status) status.textContent = '⏳ Lädt hoch…';
 
   const fd = new FormData();
@@ -1084,29 +1090,38 @@ document.getElementById('logo-file-input')?.addEventListener('change', async fun
       credentials: 'same-origin'
     });
     const j = await r.json();
-    if (!j.ok) { if (status) status.textContent = '❌ ' + (j.msg || 'Fehler'); return; }
+    if (!j.ok) { if (status) status.textContent = '❌ ' + (j.msg || j.error || 'Fehler'); return; }
 
     const url = '/' + j.url;
 
     // Vorschau sofort aktualisieren
-    document.getElementById('logo-preview-dark').src  = url + '?t=' + Date.now();
-    document.getElementById('logo-preview-light').src = url + '?t=' + Date.now();
+    if (preview) preview.src = url + '?t=' + Date.now();
 
-    // In pages.json speichern — nur site.logo als Patch senden
+    // In pages.json speichern
+    const patch = { site: {} };
+    patch.site[patchKey] = url;
     const saveReq = await fetch('/api/save-content.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
       credentials: 'same-origin',
-      body: JSON.stringify({ target: 'pages', patch: { site: { logo: url } } })
+      body: JSON.stringify({ target: 'pages', patch })
     });
     const saveJson = await saveReq.json();
     if (status) status.textContent = saveJson.ok
-      ? '✅ Logo gespeichert — Seite neu laden um es zu sehen.'
-      : '❌ Speichern fehlgeschlagen: ' + (saveJson.error || saveJson.msg || JSON.stringify(saveJson));
+      ? '✅ Gespeichert — Seite neu laden.'
+      : '❌ ' + (saveJson.error || saveJson.msg || JSON.stringify(saveJson));
   } catch(e) {
-    if (status) status.textContent = '❌ Verbindungsfehler: ' + e.message;
+    if (status) status.textContent = '❌ ' + e.message;
   }
-  this.value = ''; // Input zurücksetzen für erneuten Upload
+}
+
+document.getElementById('logo-dark-file-input')?.addEventListener('change', async function() {
+  if (this.files?.[0]) await handleLogoUpload(this.files[0], 'logo-preview-dark',  'logo-dark-status',  'logo');
+  this.value = '';
+});
+document.getElementById('logo-light-file-input')?.addEventListener('change', async function() {
+  if (this.files?.[0]) await handleLogoUpload(this.files[0], 'logo-preview-light', 'logo-light-status', 'logo_light');
+  this.value = '';
 });
 
 document.getElementById('settings-save-only').addEventListener('click',   () => justSave('settings-save-msg'));
@@ -1348,10 +1363,19 @@ function showApp() {
   loadInquiries();
   checkDraftStatus();
   kalLoadList();
-  // Wohnungen-Daten vorladen (leise, kein UI-Update bis Tab geöffnet)
+  // Wohnungen-Daten + Logo-Previews vorladen
   fetch('/api/load-content.php?target=pages', { credentials: 'same-origin' })
     .then(r => r.json())
-    .then(j => { if (j.ok && j.data) _wohnData = j.data.wohnungen || null; })
+    .then(j => {
+      if (!j.ok || !j.data) return;
+      _wohnData = j.data.wohnungen || null;
+      // Logo-Previews mit tatsächlichen Werten aus pages.json befüllen
+      const site = j.data.site || {};
+      const dark  = document.getElementById('logo-preview-dark');
+      const light = document.getElementById('logo-preview-light');
+      if (dark  && site.logo)       dark.src  = site.logo       + '?t=' + Date.now();
+      if (light && site.logo_light) light.src = site.logo_light + '?t=' + Date.now();
+    })
     .catch(() => {});
 }
 

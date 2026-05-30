@@ -374,7 +374,8 @@
       </div>`;
     }).join('');
 
-    const currentLogoSrc = window.__SARDINIA_PAGES__?.site?.logo || '/uploads/logo.svg';
+    const currentLogoDark  = window.__SARDINIA_PAGES__?.site?.logo       || '/uploads/logo.svg';
+    const currentLogoLight = window.__SARDINIA_PAGES__?.site?.logo_light || currentLogoDark;
 
     panel.innerHTML = `
       <div class="et-sp-head">
@@ -385,15 +386,32 @@
 
         <div class="et-sp-section">
           <h4>🖼 Logo</h4>
-          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;background:rgba(255,255,255,.06);border-radius:8px;padding:10px;">
-            <img id="sp-logo-preview-dark" src="${currentLogoSrc}" style="height:36px;width:auto;max-width:80px;object-fit:contain;" alt="Logo (dunkel)">
-            <img id="sp-logo-preview-light" src="${currentLogoSrc}" style="height:36px;width:auto;max-width:80px;object-fit:contain;filter:brightness(0) invert(1);" alt="Logo (hell)">
-            <span style="font-size:.7rem;color:var(--muted,#888);line-height:1.3;">Dunkel &amp; Hell</span>
+
+          <!-- Dunkle Version -->
+          <div style="margin-bottom:6px;">
+            <div style="font-size:.72rem;font-weight:600;color:var(--muted,#888);margin-bottom:4px;letter-spacing:.04em;">AUF HELLEM HINTERGRUND (gescrollte Nav)</div>
+            <div style="display:flex;gap:10px;align-items:center;background:#f5f5f5;border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+              <img id="sp-logo-preview-dark" src="${currentLogoDark}" style="height:34px;width:auto;max-width:90px;object-fit:contain;" alt="Logo dunkel">
+              <span style="font-size:.68rem;color:#555;line-height:1.3;">Deine dunkle/farbige Version</span>
+            </div>
+            <button class="et-bg-img-btn" id="logo-dark-upload-btn" style="width:100%;text-align:center;padding:7px;font-size:.8rem;">
+              📤 Logo (dunkel/farbig) hochladen
+            </button>
+            <div class="et-drag-hint" id="logo-dark-msg"></div>
           </div>
-          <button class="et-bg-img-btn" id="logo-upload-btn" style="width:100%;text-align:center;padding:8px;">
-            📤 Logo ersetzen (SVG · PNG · WebP)
-          </button>
-          <div class="et-drag-hint" id="logo-upload-msg"></div>
+
+          <!-- Helle Version -->
+          <div>
+            <div style="font-size:.72rem;font-weight:600;color:var(--muted,#888);margin-bottom:4px;letter-spacing:.04em;">AUF DUNKLEM HINTERGRUND (Hero + Footer)</div>
+            <div style="display:flex;gap:10px;align-items:center;background:#1e4d6b;border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+              <img id="sp-logo-preview-light" src="${currentLogoLight}" style="height:34px;width:auto;max-width:90px;object-fit:contain;" alt="Logo hell">
+              <span style="font-size:.68rem;color:rgba(255,255,255,.6);line-height:1.3;">Deine helle/weiße Version</span>
+            </div>
+            <button class="et-bg-img-btn" id="logo-light-upload-btn" style="width:100%;text-align:center;padding:7px;font-size:.8rem;">
+              📤 Logo (hell/weiß) hochladen
+            </button>
+            <div class="et-drag-hint" id="logo-light-msg"></div>
+          </div>
         </div>
 
         <div class="et-sp-section">
@@ -433,42 +451,46 @@
     document.body.appendChild(panel);
     document.getElementById('et-sp-close').addEventListener('click', toggleSettings);
 
-    // ── Logo Upload ──
-    document.getElementById('logo-upload-btn')?.addEventListener('click', () => {
-      const inp = document.createElement('input');
-      inp.type = 'file';
-      inp.accept = 'image/svg+xml,image/png,image/webp,image/jpeg';
-      inp.style.cssText = 'position:absolute;left:-9999px;';
-      document.body.appendChild(inp);
-      inp.addEventListener('change', async () => {
-        const f = inp.files?.[0];
-        inp.remove();
-        if (!f) return;
-        const btn = document.getElementById('logo-upload-btn');
-        const msg = document.getElementById('logo-upload-msg');
-        if (btn) { btn.textContent = '⏳ Lädt hoch…'; btn.disabled = true; }
-        const url = await uploadFile(f);
-        if (btn) { btn.textContent = '📤 Logo ersetzen (SVG · PNG · WebP)'; btn.disabled = false; }
-        if (!url) { if (msg) msg.textContent = '❌ Upload fehlgeschlagen.'; return; }
+    // ── Logo Upload Helper ──
+    function makeLogoUploader(btnId, msgId, bindKey, previewId) {
+      document.getElementById(btnId)?.addEventListener('click', () => {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/svg+xml,image/png,image/webp,image/jpeg';
+        inp.style.cssText = 'position:absolute;left:-9999px;';
+        document.body.appendChild(inp);
+        inp.addEventListener('change', async () => {
+          const f = inp.files?.[0];
+          inp.remove();
+          if (!f) return;
+          const btn = document.getElementById(btnId);
+          const msg = document.getElementById(msgId);
+          const origLabel = btn?.textContent || '';
+          if (btn) { btn.textContent = '⏳ Lädt hoch…'; btn.disabled = true; }
+          const url = await uploadFile(f);
+          if (btn) { btn.textContent = origLabel; btn.disabled = false; }
+          if (!url) { if (msg) msg.textContent = '❌ Upload fehlgeschlagen.'; return; }
 
-        // Alle Logo-Imgs auf der Seite sofort aktualisieren
-        document.querySelectorAll('[data-bind="site.logo"]').forEach(img => { img.src = url; });
-        // Vorschau im Panel
-        const previewDark  = document.getElementById('sp-logo-preview-dark');
-        const previewLight = document.getElementById('sp-logo-preview-light');
-        if (previewDark)  previewDark.src  = url;
-        if (previewLight) previewLight.src = url;
+          // Alle passenden Logo-Imgs auf der Seite sofort aktualisieren
+          document.querySelectorAll(`[data-bind="${bindKey}"]`).forEach(img => { img.src = url; });
+          // Vorschau im Panel
+          const preview = document.getElementById(previewId);
+          if (preview) preview.src = url;
 
-        // In den Patch-Sammler schreiben (wird bei Speichern gespeichert)
-        setPatchValue('pages', 'site.logo', url);
-        const pages = window.__SARDINIA_PAGES__;
-        if (pages) { if (!pages.site) pages.site = {}; pages.site.logo = url; }
-        setDirty(true);
+          // In den Patch-Sammler schreiben
+          setPatchValue('pages', bindKey, url);
+          const pages = window.__SARDINIA_PAGES__;
+          if (pages) { if (!pages.site) pages.site = {}; pages.site[bindKey.split('.').pop()] = url; }
+          setDirty(true);
 
-        if (msg) msg.textContent = '✅ Logo aktualisiert — Speichern nicht vergessen!';
+          if (msg) msg.textContent = '✅ Gespeichert — Speichern nicht vergessen!';
+        });
+        inp.click();
       });
-      inp.click();
-    });
+    }
+
+    makeLogoUploader('logo-dark-upload-btn',  'logo-dark-msg',  'site.logo',       'sp-logo-preview-dark');
+    makeLogoUploader('logo-light-upload-btn', 'logo-light-msg', 'site.logo_light', 'sp-logo-preview-light');
 
     // ── Hero-Modus Toggle ──
     document.getElementById('hero-mode-video')?.addEventListener('click', () => {

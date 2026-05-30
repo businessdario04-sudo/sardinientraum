@@ -56,16 +56,23 @@
       height: 36px;
       width: auto;
       object-fit: contain;
-      display: inline-block;
       flex-shrink: 0;
-      transition: filter .3s;
-      filter: brightness(0) invert(1); /* weiß auf dunklem Hero */
     }
-    nav.scrolled .site-logo-img { filter: none; /* Original-Braun auf weißer Nav */ }
+
+    /* Helle Version: sichtbar solange Nav transparent (über Hero) */
+    .site-logo-light { display: inline-block; }
+    /* Dunkle Version: ausgeblendet über Hero */
+    .site-logo-dark  { display: none; }
+
+    /* Nav gescrollt → weiße Nav-Bar: Logos tauschen */
+    nav.scrolled .site-logo-light { display: none; }
+    nav.scrolled .site-logo-dark  { display: inline-block; }
+
+    /* Footer: immer helle Version, etwas größer */
     .site-logo-footer {
       height: 44px;
       margin-bottom: 4px;
-      filter: brightness(0) invert(1) opacity(.85);
+      opacity: .9;
     }
     .nav-links {
       display: flex;
