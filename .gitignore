@@ -2,8 +2,10 @@ server.log
 *.mp4
 .claude/settings.local.json
 
-# Auth-Daten nie ins Git (enthält Passwort-Hash, TOTP-Secret)
+# Laufzeit-Daten nie ins Git (Gäste-Daten, Passwort-Hash, TOTP-Secret)
 data/auth.json
+data/inquiries.json
+data/availability.json
 data/logs/
 data/snapshots/
 
