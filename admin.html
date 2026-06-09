@@ -178,6 +178,60 @@
     .kal-legend { display:flex; gap:16px; padding:0 16px 14px; flex-wrap:wrap; }
     .kal-legend-item { display:flex; align-items:center; gap:5px; font-size:.75rem; color:var(--muted); }
     .kal-legend-dot  { width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+
+    /* ── Toast-Notification-System ── */
+    #toast-container {
+      position:fixed; bottom:24px; right:24px; z-index:99999;
+      display:flex; flex-direction:column; gap:10px; pointer-events:none;
+    }
+    .toast {
+      display:flex; align-items:flex-start; gap:12px;
+      background:var(--card,#1e2533); border:1px solid var(--border,#2e3a4e);
+      border-radius:12px; padding:14px 18px; min-width:280px; max-width:400px;
+      box-shadow:0 8px 32px rgba(0,0,0,.45);
+      pointer-events:all; cursor:pointer;
+      animation: toastIn .25s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .toast.removing { animation: toastOut .2s ease-in both; }
+    @keyframes toastIn  { from{opacity:0;transform:translateY(16px) scale(.95)} to{opacity:1;transform:none} }
+    @keyframes toastOut { from{opacity:1;transform:none} to{opacity:0;transform:translateY(8px) scale(.96)} }
+    .toast-icon { font-size:1.2rem; flex-shrink:0; margin-top:1px; }
+    .toast-body { flex:1; }
+    .toast-title { font-size:.85rem; font-weight:700; margin-bottom:2px; }
+    .toast-msg   { font-size:.8rem; color:var(--muted,#8899aa); line-height:1.45; }
+    .toast.toast-success { border-left:3px solid #22c55e; }
+    .toast.toast-success .toast-title { color:#22c55e; }
+    .toast.toast-error   { border-left:3px solid #ef4444; }
+    .toast.toast-error   .toast-title { color:#ef4444; }
+    .toast.toast-warning { border-left:3px solid #f59e0b; }
+    .toast.toast-warning .toast-title { color:#f59e0b; }
+    .toast.toast-info    { border-left:3px solid var(--gold,#c8975a); }
+    .toast.toast-info    .toast-title { color:var(--gold,#c8975a); }
+
+    /* ── Confirm-Dialog ── */
+    #confirm-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:99998;
+      display:flex; align-items:center; justify-content:center;
+      backdrop-filter:blur(4px); animation:fadeIn .15s ease both;
+    }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    #confirm-box {
+      background:var(--card,#1e2533); border:1px solid var(--border,#2e3a4e);
+      border-radius:16px; padding:28px 30px; max-width:420px; width:90%;
+      box-shadow:0 24px 60px rgba(0,0,0,.5);
+      animation:slideUp .2s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+    #confirm-icon { font-size:2rem; margin-bottom:10px; }
+    #confirm-title { font-size:1rem; font-weight:700; margin-bottom:8px; color:var(--text,#eef2ff); }
+    #confirm-msg { font-size:.85rem; color:var(--muted,#8899aa); line-height:1.6; white-space:pre-line; margin-bottom:22px; }
+    .confirm-btns { display:flex; gap:10px; justify-content:flex-end; }
+    .confirm-btns button { padding:9px 22px; border-radius:8px; border:none; font-size:.85rem; font-weight:600; cursor:pointer; }
+    #confirm-cancel { background:var(--bg,#141b2d); color:var(--muted,#8899aa); border:1px solid var(--border,#2e3a4e); }
+    #confirm-cancel:hover { color:var(--text,#eef2ff); }
+    #confirm-ok    { background:var(--blue,#3b5bdb); color:#fff; }
+    #confirm-ok.danger { background:#ef4444; }
+    #confirm-ok:hover  { filter:brightness(1.1); }
   </style>
 </head>
 <body>
@@ -695,7 +749,7 @@
   <div class="modal-box" style="max-width:560px;width:100%;">
     <h3 style="margin-bottom:20px;color:#fff;font-size:1.1rem;">＋ Anfrage manuell erfassen</h3>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;">Für Buchungen/Anfragen die nicht über das Webseiten-Formular kamen.</p>
-    <form id="inq-create-form">
+    <form id="inq-create-form" novalidate>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Vorname *</label><input class="field-sm" id="new-inq-vorname" placeholder="Maria" required /></div>
         <div><label style="font-size:.75rem;color:var(--muted);display:block;margin-bottom:4px;">Nachname *</label><input class="field-sm" id="new-inq-nachname" placeholder="Mustermann" required /></div>
@@ -903,6 +957,73 @@
 
 let __CSRF_TOKEN__   = '';
 let __CURRENT_USER__ = '';
+
+/* ══════════════════════════════════════════════
+   TOAST + CONFIRM — kein nativer browser-alert
+══════════════════════════════════════════════ */
+
+// Toast-Container einmalig anlegen
+(function() {
+  const c = document.createElement('div');
+  c.id = 'toast-container';
+  document.body.appendChild(c);
+})();
+
+function showToast(msg, type = 'info', duration = 4000) {
+  const icons = { success:'✅', error:'❌', warning:'⚠️', info:'ℹ️' };
+  const titles = { success:'Erfolgreich', error:'Fehler', warning:'Hinweis', info:'Info' };
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `
+    <div class="toast-icon">${icons[type] || 'ℹ️'}</div>
+    <div class="toast-body">
+      <div class="toast-title">${titles[type] || 'Info'}</div>
+      <div class="toast-msg">${msg.replace(/\n/g,'<br>')}</div>
+    </div>`;
+  container.appendChild(t);
+  t.addEventListener('click', () => removeToast(t));
+  if (duration > 0) setTimeout(() => removeToast(t), duration);
+}
+
+function removeToast(t) {
+  if (!t || t.classList.contains('removing')) return;
+  t.classList.add('removing');
+  t.addEventListener('animationend', () => t.remove(), { once: true });
+}
+
+function showConfirm(msg, onOk, opts = {}) {
+  // Vorhandenes Overlay entfernen
+  document.getElementById('confirm-overlay')?.remove();
+
+  const isDanger = opts.danger ?? msg.toLowerCase().includes('lösch') ?? false;
+  const icon     = opts.icon  ?? (isDanger ? '🗑️' : '❓');
+  const okLabel  = opts.okLabel ?? (isDanger ? 'Löschen' : 'OK');
+  const title    = opts.title ?? (isDanger ? 'Bestätigung erforderlich' : 'Bist du sicher?');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div id="confirm-box">
+      <div id="confirm-icon">${icon}</div>
+      <div id="confirm-title">${title}</div>
+      <div id="confirm-msg">${msg.replace(/\n/g,'<br>')}</div>
+      <div class="confirm-btns">
+        <button id="confirm-cancel">Abbrechen</button>
+        <button id="confirm-ok" class="${isDanger ? 'danger' : ''}">${okLabel}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const close = () => { overlay.style.animation='fadeIn .15s ease reverse both'; setTimeout(() => overlay.remove(), 150); };
+  document.getElementById('confirm-cancel').addEventListener('click', close);
+  document.getElementById('confirm-ok').addEventListener('click', () => { close(); onOk(); });
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  // Escape-Taste
+  const onKey = e => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+  document.addEventListener('keydown', onKey);
+}
 
 async function apiPost(url, data) {
   return fetch(url, {
@@ -1278,7 +1399,7 @@ async function copyTemplate(type) {
     const w = window.open('', '_blank');
     w.document.write(html);
     w.document.close();
-    alert('Seite öffnet sich in neuem Tab → Alles markieren (Strg+A) → Kopieren (Strg+C) → in E-Mail einfügen');
+    showToast('E-Mail-Vorlage in neuem Tab geöffnet — Alles markieren (Strg+A) → Kopieren → in E-Mail einfügen', 'info', 6000);
   }
 }
 
@@ -1419,7 +1540,7 @@ document.getElementById('health-refresh-btn')?.addEventListener('click', () => {
 
 /* Server-Restart — Hinweis (PHP-CLI-Server muss manuell neu gestartet werden) */
 document.getElementById('restart-btn')?.addEventListener('click', () => {
-  alert('PHP-Server neu starten:\n\nTerminal öffnen und ausführen:\nphp -S localhost:8080 -t .\n\nAuf Hostinger: Nicht nötig — läuft automatisch.');
+  showToast('Terminal öffnen und ausführen:\n<code style="font-family:monospace;background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;">php -S localhost:8080 -t .</code>\n\nAuf Hostinger: Nicht nötig — läuft automatisch.', 'info', 8000);
 });
 
 /* Auto-Refresh alle 20 Sekunden */
@@ -1645,38 +1766,41 @@ function renderInquiries() {
   // Delete
   list.querySelectorAll('[data-inq-delete]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Anfrage wirklich löschen?')) return;
       const id = btn.dataset.inqDelete;
-      const ok = await inqUpdate(id, { delete: true });
-      if (ok) loadInquiries();
+      showConfirm('Anfrage wirklich löschen?\nDiese Aktion kann nicht rückgängig gemacht werden.', async () => {
+        const ok = await inqUpdate(id, { delete: true });
+        if (ok) loadInquiries();
+      }, { danger: true, icon: '🗑️', title: 'Anfrage löschen' });
     });
   });
 
   // Buchungsbestätigung manuell senden
   list.querySelectorAll('[data-inq-confirm]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Buchungsbestätigung jetzt an den Gast senden?')) return;
-      btn.disabled = true; btn.textContent = '⏳…';
-      try {
-        const r = await fetch('/api/inquiries.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
-          credentials: 'same-origin',
-          body: JSON.stringify({ action: 'send_confirmation', id: btn.dataset.inqConfirm })
-        });
-        const j = await r.json();
-        if (j.ok && j.sent) {
-          btn.textContent = '✅ Gesendet!'; btn.style.color = 'var(--green)';
-        } else if (j.ok && !j.sent) {
-          alert('E-Mail konnte nicht gesendet werden.\nBitte Absender-E-Mail in Einstellungen → ✉️ E-Mail konfigurieren.');
-          btn.textContent = '📧 Bestätigung senden'; btn.style.color = '';
-        } else {
-          alert('Fehler: ' + (j.error || '?'));
-          btn.textContent = '📧 Bestätigung senden'; btn.style.color = '';
-        }
-      } catch(e) { btn.textContent = '✗ Verbindungsfehler'; }
-      btn.disabled = false;
-      setTimeout(() => { btn.textContent = '📧 Bestätigung senden'; btn.style.color = ''; }, 3500);
+      showConfirm('Buchungsbestätigung jetzt an den Gast senden?', async () => {
+        btn.disabled = true; btn.textContent = '⏳…';
+        try {
+          const r = await fetch('/api/inquiries.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'send_confirmation', id: btn.dataset.inqConfirm })
+          });
+          const j = await r.json();
+          if (j.ok && j.sent) {
+            btn.textContent = '✅ Gesendet!'; btn.style.color = 'var(--green)';
+            showToast('Buchungsbestätigung erfolgreich gesendet.', 'success');
+          } else if (j.ok && !j.sent) {
+            showToast('E-Mail konnte nicht gesendet werden.\nBitte Absender-E-Mail in Einstellungen → ✉️ E-Mail konfigurieren.', 'warning', 7000);
+            btn.textContent = '📧 Bestätigung senden'; btn.style.color = '';
+          } else {
+            showToast('Fehler: ' + (j.error || '?'), 'error');
+            btn.textContent = '📧 Bestätigung senden'; btn.style.color = '';
+          }
+        } catch(e) { btn.textContent = '✗ Verbindungsfehler'; showToast('Verbindungsfehler: ' + e.message, 'error'); }
+        btn.disabled = false;
+        setTimeout(() => { btn.textContent = '📧 Bestätigung senden'; btn.style.color = ''; }, 3500);
+      }, { icon: '📧', title: 'Bestätigung senden', okLabel: 'Senden' });
     });
   });
 
@@ -1694,31 +1818,31 @@ function renderInquiries() {
       const property = propMap[wohnung] || 'casa-tramonto';
       const propLabel = property === 'casa-tramonto' ? 'Casa Tramonto' : 'Casa Mare';
 
-      if (!confirm(`Buchung für ${name} eintragen?\n\nWohnung: ${propLabel}\nAnreise: ${anreise}\nAbreise: ${abreise}\n\nDie Anfrage wird gleichzeitig auf „Gebucht" gesetzt.`)) return;
-
-      btn.disabled = true; btn.textContent = '⏳…';
-
-      try {
-        // 1. Buchung in availability.json eintragen
-        const ra = await fetch('/api/availability.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
-          credentials: 'same-origin',
-          body: JSON.stringify({ action: 'create', property, from: anreise, to: abreise, label: name, inquiry_id: inqId })
-        });
-        const ja = await ra.json();
-        if (!ja.ok) { alert('Fehler beim Eintragen: ' + (ja.error || 'unbekannt')); btn.disabled = false; btn.textContent = '📅 Als Buchung eintragen'; return; }
-
-        // 2. Anfrage-Status auf "gebucht" setzen
-        await inqUpdate(inqId, { status: 'gebucht' });
-
-        btn.textContent = '✅ Eingetragen';
-        btn.style.color = 'var(--green)';
-        setTimeout(() => loadInquiries(), 1000);
-      } catch(e) {
-        alert('Verbindungsfehler: ' + e.message);
-        btn.disabled = false; btn.textContent = '📅 Als Buchung eintragen';
-      }
+      showConfirm(
+        `Wohnung: ${propLabel}\nAnreise: ${anreise}\nAbreise: ${abreise}\n\nDie Anfrage wird gleichzeitig auf „Gebucht" gesetzt.`,
+        async () => {
+          btn.disabled = true; btn.textContent = '⏳…';
+          try {
+            const ra = await fetch('/api/availability.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+              credentials: 'same-origin',
+              body: JSON.stringify({ action: 'create', property, from: anreise, to: abreise, label: name, inquiry_id: inqId })
+            });
+            const ja = await ra.json();
+            if (!ja.ok) { showToast('Fehler beim Eintragen: ' + (ja.error || 'unbekannt'), 'error'); btn.disabled = false; btn.textContent = '📅 Als Buchung eintragen'; return; }
+            await inqUpdate(inqId, { status: 'gebucht' });
+            btn.textContent = '✅ Eingetragen';
+            btn.style.color = 'var(--green)';
+            showToast(`Buchung für ${name} erfolgreich eingetragen.`, 'success');
+            setTimeout(() => loadInquiries(), 1000);
+          } catch(e) {
+            showToast('Verbindungsfehler: ' + e.message, 'error');
+            btn.disabled = false; btn.textContent = '📅 Als Buchung eintragen';
+          }
+        },
+        { icon: '📅', title: `Buchung für ${name} eintragen?`, okLabel: 'Eintragen' }
+      );
     });
   });
 }
@@ -1782,15 +1906,15 @@ document.getElementById('s-mail-save-btn')?.addEventListener('click', async () =
       btn.textContent = '✅ Gespeichert'; btn.style.background = '#22c55e';
       setTimeout(() => { btn.textContent = 'Speichern'; btn.style.background = ''; btn.disabled = false; if (msg) msg.textContent = ''; }, 2500);
     } else {
-      alert('Fehler: ' + (j.error || '?'));
+      showToast('Fehler: ' + (j.error || '?'), 'error');
       btn.disabled = false; btn.textContent = 'Speichern';
     }
-  } catch(e) { alert('Verbindungsfehler'); btn.disabled = false; btn.textContent = 'Speichern'; }
+  } catch(e) { showToast('Verbindungsfehler: ' + e.message, 'error'); btn.disabled = false; btn.textContent = 'Speichern'; }
 });
 
 document.getElementById('s-mail-test-btn')?.addEventListener('click', async () => {
   const from = document.getElementById('s-mail-from')?.value?.trim() || '';
-  if (!from) { alert('Bitte zuerst Absender-E-Mail eintragen und speichern.'); return; }
+  if (!from) { showToast('Bitte zuerst Absender-E-Mail eintragen und speichern.', 'warning'); return; }
   const btn = document.getElementById('s-mail-test-btn');
   btn.disabled = true; btn.textContent = '⏳ Sende…';
   // Test-Anfrage mit Dummy-Daten
@@ -1854,37 +1978,38 @@ async function checkDraftStatus() {
   } catch(_) { card.style.display = 'none'; }
 }
 
-document.getElementById('draft-promote-btn')?.addEventListener('click', async () => {
-  if (!confirm('Entwurf jetzt Live schalten? Der aktuelle Live-Stand wird als Backup gesichert.')) return;
-  const btn = document.getElementById('draft-promote-btn');
-  btn.disabled = true; btn.textContent = '⏳ Veröffentliche…';
-  try {
-    const r = await fetch('/api/draft-promote.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
-      credentials: 'same-origin',
-      body: JSON.stringify({})
-    });
-    const j = await r.json();
-    if (j.ok) {
-      btn.textContent = '✅ Veröffentlicht!';
-      btn.style.background = '#22c55e';
-      setTimeout(() => { checkDraftStatus(); btn.textContent='🚀 Jetzt veröffentlichen'; btn.style.background=''; btn.disabled=false; }, 2000);
-    } else {
-      alert('Fehler: ' + (j.error || 'unbekannt'));
+document.getElementById('draft-promote-btn')?.addEventListener('click', () => {
+  showConfirm('Entwurf jetzt Live schalten?\nDer aktuelle Live-Stand wird als Backup gesichert.', async () => {
+    const btn = document.getElementById('draft-promote-btn');
+    btn.disabled = true; btn.textContent = '⏳ Veröffentliche…';
+    try {
+      const r = await fetch('/api/draft-promote.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+        credentials: 'same-origin',
+        body: JSON.stringify({})
+      });
+      const j = await r.json();
+      if (j.ok) {
+        btn.textContent = '✅ Veröffentlicht!';
+        btn.style.background = '#22c55e';
+        showToast('Entwurf erfolgreich live geschaltet.', 'success');
+        setTimeout(() => { checkDraftStatus(); btn.textContent='🚀 Jetzt veröffentlichen'; btn.style.background=''; btn.disabled=false; }, 2000);
+      } else {
+        showToast('Fehler: ' + (j.error || 'unbekannt'), 'error');
+        btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
+      }
+    } catch(e) {
+      showToast('Verbindungsfehler: ' + e.message, 'error');
       btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
     }
-  } catch(e) {
-    alert('Verbindungsfehler: ' + e.message);
-    btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
-  }
+  }, { icon: '🚀', title: 'Entwurf veröffentlichen?', okLabel: 'Live schalten' });
 });
 
-document.getElementById('draft-discard-btn')?.addEventListener('click', async () => {
-  if (!confirm('Entwurf verwerfen? Alle nicht veröffentlichten Änderungen gehen verloren.')) return;
-  // Draft-Datei löschen durch Promote mit Discard-Flag noch nicht implementiert.
-  // Workaround: Leeren Promote durchführen ist nicht sinnvoll. Stattdessen Hinweis.
-  alert('Um den Draft zu verwerfen: /data/pages.draft.json auf dem Server löschen.\n\nAlternativ: Leere Änderung als Draft speichern überschreibt den alten Draft.');
+document.getElementById('draft-discard-btn')?.addEventListener('click', () => {
+  showConfirm('Entwurf verwerfen?\nAlle nicht veröffentlichten Änderungen gehen verloren.', () => {
+    showToast('Entwurf verwerfen: Datei /data/pages.draft.json auf dem Server löschen.\nAlternativ: Leere Änderung als Draft speichern überschreibt den alten Draft.', 'info', 8000);
+  }, { danger: true, icon: '🗑️', title: 'Entwurf verwerfen?', okLabel: 'Verwerfen' });
 });
 
 /* ═══════════════════════════════
@@ -1900,12 +2025,21 @@ document.getElementById('inq-create-cancel')?.addEventListener('click', () => {
 document.getElementById('inq-create-form')?.addEventListener('submit', async e => {
   e.preventDefault();
   const f = id => document.getElementById(id)?.value?.trim() || '';
+
+  // Eigene Validierung — kein Browser-Popup
+  const vorname = f('new-inq-vorname');
+  const nachname = f('new-inq-nachname');
+  const email = f('new-inq-email');
+  if (!vorname) { showToast('Bitte Vorname eingeben.', 'warning'); document.getElementById('new-inq-vorname')?.focus(); return; }
+  if (!nachname) { showToast('Bitte Nachname eingeben.', 'warning'); document.getElementById('new-inq-nachname')?.focus(); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Bitte eine gültige E-Mail-Adresse eingeben.', 'warning'); document.getElementById('new-inq-email')?.focus(); return; }
+
   const body = {
     action: 'create',
     guest: {
-      vorname:  f('new-inq-vorname'),
-      nachname: f('new-inq-nachname'),
-      email:    f('new-inq-email'),
+      vorname,
+      nachname,
+      email,
       telefon:  f('new-inq-telefon'),
     },
     request: {
@@ -1931,11 +2065,13 @@ document.getElementById('inq-create-form')?.addEventListener('submit', async e =
       document.getElementById('inq-create-modal').style.display = 'none';
       document.getElementById('inq-create-form').reset();
       loadInquiries();
+      showToast('Anfrage erfolgreich angelegt.', 'success');
     } else {
-      alert('Fehler: ' + (j.error || 'Ungültige Eingabe'));
+      const errMsg = j.error === 'invalid_email' ? 'Ungültige E-Mail-Adresse.' : ('Fehler: ' + (j.error || 'Ungültige Eingabe'));
+      showToast(errMsg, 'error');
     }
   } catch(err) {
-    alert('Verbindungsfehler: ' + err.message);
+    showToast('Verbindungsfehler: ' + err.message, 'error');
   }
   btn.disabled = false; btn.textContent = 'Anfrage erstellen';
 });
@@ -2133,24 +2269,26 @@ async function kalAddBooking() {
   btn.disabled = false; btn.textContent = '✓ Eintragen';
 }
 
-async function kalDeleteBooking(id) {
-  if (!confirm('Buchung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
-  try {
-    const r = await fetch('/api/availability.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
-      credentials: 'same-origin',
-      body: JSON.stringify({ action: 'delete', property: kalCurrentProperty, id })
-    });
-    const j = await r.json();
-    if (j.ok) {
-      await kalLoadList();
-    } else {
-      alert('Fehler beim Löschen: ' + (j.error || 'unbekannt'));
+function kalDeleteBooking(id) {
+  showConfirm('Buchung wirklich löschen?\nDiese Aktion kann nicht rückgängig gemacht werden.', async () => {
+    try {
+      const r = await fetch('/api/availability.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': __CSRF_TOKEN__ },
+        credentials: 'same-origin',
+        body: JSON.stringify({ action: 'delete', property: kalCurrentProperty, id })
+      });
+      const j = await r.json();
+      if (j.ok) {
+        await kalLoadList();
+        showToast('Buchung erfolgreich gelöscht.', 'success');
+      } else {
+        showToast('Fehler beim Löschen: ' + (j.error || 'unbekannt'), 'error');
+      }
+    } catch(e) {
+      showToast('Verbindungsfehler beim Löschen.', 'error');
     }
-  } catch(e) {
-    alert('Verbindungsfehler beim Löschen.');
-  }
+  }, { danger: true, icon: '📅', title: 'Buchung löschen?' });
 }
 
 // Kalender laden wenn Tab aktiviert wird
@@ -2347,9 +2485,9 @@ async function wohnUpload(file) {
     });
     const j = await r.json();
     if (j.ok && j.url) return '/' + j.url;
-    alert('Upload fehlgeschlagen: ' + (j.error || '?'));
+    showToast('Upload fehlgeschlagen: ' + (j.error || '?'), 'error');
     return null;
-  } catch(e) { alert('Verbindungsfehler'); return null; }
+  } catch(e) { showToast('Verbindungsfehler beim Upload: ' + e.message, 'error'); return null; }
 }
 
 document.getElementById('wohn-save-btn')?.addEventListener('click', async () => {
@@ -2399,11 +2537,11 @@ document.getElementById('wohn-save-btn')?.addEventListener('click', async () => 
       btn.style.background = '#22c55e';
       setTimeout(() => { btn.textContent = '💾 Alle Änderungen speichern'; btn.style.background = ''; btn.disabled = false; if (msg) msg.textContent = ''; }, 2500);
     } else {
-      alert('Fehler: ' + (j.error || 'Unbekannt'));
+      showToast('Fehler: ' + (j.error || 'Unbekannt'), 'error');
       btn.disabled = false; btn.textContent = '💾 Alle Änderungen speichern';
     }
   } catch(e) {
-    alert('Verbindungsfehler: ' + e.message);
+    showToast('Verbindungsfehler: ' + e.message, 'error');
     btn.disabled = false; btn.textContent = '💾 Alle Änderungen speichern';
   }
 });
