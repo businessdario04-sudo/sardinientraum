@@ -306,10 +306,10 @@
       });
       const j = await r.json();
       if (j.ok && j.url) return '/' + j.url;
-      alert('Upload fehlgeschlagen:\n' + (j.msg || j.error || 'Unbekannt') + (j.code ? ' (Code ' + j.code + ')' : ''));
+      window.showToast?.('Upload fehlgeschlagen: ' + (j.msg || j.error || 'Unbekannt') + (j.code ? ' (Code ' + j.code + ')' : ''), 'error');
       return null;
     } catch (e) {
-      alert('Upload-Fehler (Verbindung):\n' + e.message);
+      window.showToast?.('Upload-Fehler: ' + e.message, 'error');
       return null;
     }
   }
@@ -694,7 +694,7 @@
     const isDraft = mode === 'draft';
 
     if (!dirty) {
-      alert(isDraft ? 'Keine Änderungen zum Als-Draft-Speichern.' : 'Keine Änderungen zum Speichern.');
+      window.showToast?.(isDraft ? 'Keine Änderungen vorhanden.' : 'Keine Änderungen zum Speichern.', 'info', 3000);
       return;
     }
 
@@ -721,6 +721,8 @@
       pendingPatches = { pages: {}, config: {} };
       setDirty(false);
 
+      window.showToast?.(isDraft ? 'Als Draft gespeichert — im Admin-Panel prüfen.' : 'Änderungen live gespeichert!', 'success');
+
       if (btn) {
         btn.textContent    = isDraft ? '✅ Draft gespeichert' : '✅ Live gespeichert!';
         btn.style.background = isDraft ? '#c8975a' : '#22c55e';
@@ -730,12 +732,12 @@
       }, 2500);
 
       if (isDraft) {
-        const dirty = document.getElementById('et-tb-dirty');
-        if (dirty) { dirty.textContent = '✓ Als Draft gespeichert — im Admin-Panel prüfen'; }
-        setTimeout(() => { if (dirty) dirty.textContent = ''; }, 4000);
+        const dirtyLbl = document.getElementById('et-tb-dirty');
+        if (dirtyLbl) { dirtyLbl.textContent = '✓ Als Draft gespeichert'; }
+        setTimeout(() => { if (dirtyLbl) dirtyLbl.textContent = ''; }, 4000);
       }
     } catch (e) {
-      alert('Speichern fehlgeschlagen: ' + e.message);
+      window.showToast?.('Speichern fehlgeschlagen: ' + e.message, 'error', 7000);
       if (btn) { btn.textContent = orig; btn.disabled = false; }
     }
   }
@@ -869,7 +871,12 @@
 
   // ════════════════ EXIT ════════════════
   function exitEditor() {
-    if (dirty && !confirm('Ungespeicherte Änderungen verwerfen?')) return;
+    if (dirty) {
+      window.showConfirm?.('Ungespeicherte Änderungen verwerfen?\nAlle Bearbeitungen gehen verloren.', () => {
+        location.replace(location.pathname);
+      }, { danger: true, icon: '✏️', title: 'Editor beenden?', okLabel: 'Verwerfen & beenden' });
+      return;
+    }
     location.replace(location.pathname);
   }
 

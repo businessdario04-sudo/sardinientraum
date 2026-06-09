@@ -398,11 +398,11 @@
           const success = document.getElementById('form-success');
           if (success) success.style.display = 'block';
         } else {
-          alert(j.msg || j.error || 'Fehler beim Senden. Bitte erneut versuchen.');
+          window.showToast?.(j.msg || j.error || 'Fehler beim Senden. Bitte erneut versuchen.', 'error', 6000);
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = orig; }
         }
       } catch (_) {
-        alert('Verbindungsfehler. Bitte Internet prüfen.');
+        window.showToast?.('Verbindungsfehler. Bitte Internet prüfen.', 'error', 6000);
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = orig; }
       }
     });
@@ -682,11 +682,11 @@
           btn.style.background = '#22c55e';
           setTimeout(() => location.replace('/'), 1500);
         } else {
-          alert('Fehler: ' + (j.error || 'unbekannt'));
+          window.showToast?.('Fehler: ' + (j.error || 'unbekannt'), 'error');
           btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
         }
       } catch (e) {
-        alert('Verbindungsfehler: ' + e.message);
+        window.showToast?.('Verbindungsfehler: ' + e.message, 'error');
         btn.disabled = false; btn.textContent = '🚀 Jetzt veröffentlichen';
       }
     });
