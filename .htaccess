@@ -95,3 +95,14 @@ Options -Indexes
 
 # ──── Default-Charset ────
 AddDefaultCharset UTF-8
+
+# ──── /data und /uploads PHP-Schutz ────
+<IfModule mod_rewrite.c>
+    RewriteRule ^data/ - [F,L]
+</IfModule>
+
+<FilesMatch "^(auth|config|pages|inquiries|availability|faq)\.json$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+</FilesMatch>

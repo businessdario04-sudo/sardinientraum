@@ -113,7 +113,8 @@ $ownerEmail      = $CONFIG['contact']['email']    ?? '';
 $ownerPhone      = $CONFIG['contact']['phone']    ?? '';
 $formSubject     = $CONFIG['form']['subject']     ?? 'Neue Anfrage';
 
-$fullName = $vorname . ' ' . $nachname;
+// Header-Injection Schutz
+$fullName = str_replace(["\r", "\n", ":", "<", ">"], ' ', $vorname . ' ' . $nachname);
 
 // Datum-Formatierung
 $fmtDate = function(string $d): string {
