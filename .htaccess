@@ -96,6 +96,16 @@ Options -Indexes
 # ──── Default-Charset ────
 AddDefaultCharset UTF-8
 
+# ──── Veraltete Dateien permanent sperren (404, nicht 403) ────
+<IfModule mod_rewrite.c>
+    RewriteRule ^(contact|save|save-config)\.php$ - [R=404,L]
+    RewriteRule ^site-config\.json$ - [R=404,L]
+    RewriteRule ^server\.log$ - [R=404,L]
+    RewriteRule ^index\.(draft|legacy-backup)\.html$ - [R=404,L]
+    RewriteRule ^index\.html\.backup-.*\.html$ - [R=404,L]
+    RewriteRule ^admin\.html$ - [R=404,L]
+</IfModule>
+
 # ──── /data und /uploads PHP-Schutz ────
 <IfModule mod_rewrite.c>
     RewriteRule ^data/ - [F,L]
