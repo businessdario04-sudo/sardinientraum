@@ -55,7 +55,7 @@ $hashedBackups = array_map(
     $backupCodes
 );
 
-$companyName = $CONFIG['company']['name'] ?? 'Sardinientraum';
+$companyName = $CONFIG['company']['name'] ?? '';
 $totpUri = totpUri($secret, $username, $companyName);
 
 // Session-Pepper für zusätzlichen Schutz

@@ -107,7 +107,7 @@ writeJson($inquiriesFile, $inquiries);
 logEvent('contact_received', ['id' => $id, 'email' => $email]);
 
 // ─── E-Mails versenden ──────────────────────────────────────
-$companyName     = $CONFIG['company']['name']     ?? 'Sardinientraum';
+$companyName     = $CONFIG['company']['name']     ?? '';
 $companyLocation = $CONFIG['company']['location'] ?? '';
 $ownerEmail      = $CONFIG['contact']['email']    ?? '';
 $ownerPhone      = $CONFIG['contact']['phone']    ?? '';

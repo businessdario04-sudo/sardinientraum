@@ -241,7 +241,7 @@
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">🌊</div>
-    <h1>Sardinientraum</h1>
+    <h1 id="login-brand">Backend</h1>
     <p>Admin-Bereich — bitte anmelden</p>
     <input type="text"     class="field" id="login-user" placeholder="Benutzername" autocomplete="username" />
     <input type="password" class="field" id="login-pass" placeholder="Passwort" autocomplete="current-password" />
@@ -255,7 +255,7 @@
 
   <header class="admin-header">
     <div class="admin-header-left">
-      <span class="admin-brand">🌊 Sardinientraum</span>
+      <span class="admin-brand">🌊 <span id="admin-brand-name">Backend</span></span>
       <span class="admin-badge">Admin</span>
     </div>
     <div class="admin-header-right">
@@ -469,7 +469,7 @@
           </div>
           <div class="setting-row">
             <div class="setting-label">Absender-Name <span>Erscheint im E-Mail-Programm</span></div>
-            <input type="text" class="field-sm" id="s-mail-from-name" placeholder="Sardinientraum">
+            <input type="text" class="field-sm" id="s-mail-from-name" placeholder="Mein Betrieb">
           </div>
           <div class="setting-row">
             <div class="setting-label">BCC <span>Optional: Kopie an eigene Adresse</span></div>
@@ -526,7 +526,7 @@
               Empfänger-E-Mail
               <span>Zur Kontrolle – muss mit Formspree übereinstimmen</span>
             </div>
-            <input type="email" class="field-sm" id="s-contact-email" placeholder="z.B. info@sardinientraum.de" />
+            <input type="email" class="field-sm" id="s-contact-email" placeholder="z.B. info@meinbetrieb.de" />
           </div>
 
           <div class="setting-row">
@@ -534,7 +534,7 @@
               Betreff-Vorlage
               <span>Wie Anfragen in deinem Postfach erscheinen</span>
             </div>
-            <input type="text" class="field-sm" id="s-form-subject" placeholder="Neue Buchungsanfrage – Sardinientraum" />
+            <input type="text" class="field-sm" id="s-form-subject" placeholder="Neue Buchungsanfrage" />
           </div>
 
         </div>
@@ -568,7 +568,7 @@
           </div>
           <div class="setting-row">
             <div class="setting-label">Adresse<span>Straße, Ort</span></div>
-            <input type="text" class="field-sm" id="s-address" placeholder="Via Sardegna 1, La Caletta, Siniscola" />
+            <input type="text" class="field-sm" id="s-address" placeholder="Musterstraße 1, 12345 Musterstadt" />
           </div>
           <div class="setting-row">
             <div class="setting-label">Google Maps Link<span>Link zur Unterkunft</span></div>
@@ -593,11 +593,11 @@
         <div class="settings-body">
           <div class="setting-row">
             <div class="setting-label">Name der Unterkunft</div>
-            <input type="text" class="field-sm" id="s-prop-name" placeholder="Sardinientraum" />
+            <input type="text" class="field-sm" id="s-prop-name" placeholder="Mein Betrieb" />
           </div>
           <div class="setting-row">
             <div class="setting-label">Standort / Region</div>
-            <input type="text" class="field-sm" id="s-prop-location" placeholder="La Caletta, Siniscola, Sardinien" />
+            <input type="text" class="field-sm" id="s-prop-location" placeholder="Stadt, Region, Land" />
           </div>
           <div class="setting-row">
             <div class="setting-label">Personen / Schlafzimmer</div>
@@ -653,14 +653,14 @@
               Seiten-Titel
               <span>Browser-Tab & Google-Ergebnis</span>
             </div>
-            <input type="text" class="field-sm" id="s-site-title" placeholder="Sardinientraum – Ferienwohnungen in La Caletta" />
+            <input type="text" class="field-sm" id="s-site-title" placeholder="Mein Betrieb – Kurzbeschreibung" />
           </div>
           <div class="setting-row">
             <div class="setting-label">
               Meta-Beschreibung
               <span>Google-Vorschautext (max. 160 Zeichen)</span>
             </div>
-            <input type="text" class="field-sm" id="s-meta-desc" placeholder="Urlaub in Sardinien – moderne Ferienwohnungen direkt am Meer in La Caletta." maxlength="160" />
+            <input type="text" class="field-sm" id="s-meta-desc" placeholder="Kurze Beschreibung der Webseite für Suchmaschinen (max. 160 Zeichen)." maxlength="160" />
           </div>
           <div id="meta-char-count" style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:-8px;">0 / 160</div>
           <div class="setting-row">
@@ -824,7 +824,7 @@
             <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Check-out Uhrzeit</label><input class="field-sm" id="tpl-b-checkout" placeholder="11:00 Uhr" /></div>
             <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Gesamtbetrag (€)</label><input class="field-sm" id="tpl-b-betrag" placeholder="840" /></div>
             <div><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Bezahlt am</label><input class="field-sm" type="date" id="tpl-b-zahldatum" /></div>
-            <div style="grid-column:1/-1;"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Adresse der Unterkunft</label><input class="field-sm" id="tpl-b-adresse" placeholder="Via Sardegna 1, La Caletta, 08029 Siniscola" /></div>
+            <div style="grid-column:1/-1;"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Adresse der Unterkunft</label><input class="field-sm" id="tpl-b-adresse" placeholder="Musterstraße 1, 12345 Musterstadt" /></div>
             <div style="grid-column:1/-1;"><label style="font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px;">Wichtige Hinweise / Hausregeln</label><textarea class="field-sm" id="tpl-b-hinweise" rows="3" placeholder="Rauchen nur auf der Terrasse. Haustiere leider nicht erlaubt. WLAN-Passwort erhalten Sie bei Ankunft."></textarea></div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
@@ -1104,6 +1104,14 @@ async function populateFields() {
     if (el && val) el.value = val;
   });
   document.getElementById('s-admin-user').value = __CURRENT_USER__;
+  const brandName = company.name || '';
+  if (brandName) {
+    const el = document.getElementById('admin-brand-name');
+    if (el) el.textContent = brandName;
+    const loginEl = document.getElementById('login-brand');
+    if (loginEl) loginEl.textContent = brandName;
+    document.title = 'Backend – ' + brandName;
+  }
   updateFormspreeCheck();
   updateStatusEmail();
   updateMetaCount();
@@ -1282,8 +1290,8 @@ function buildAngebotHTML() {
   const pG   = document.getElementById('tpl-a-preis-ges').value   || '—';
   const leis = document.getElementById('tpl-a-leistungen').value  || '';
   const noti = document.getElementById('tpl-a-notiz').value       || '';
-  const siteName   = document.getElementById('s-prop-name')?.value     || 'Sardinientraum';
-  const siteLoc    = document.getElementById('s-prop-location')?.value || 'La Caletta, Sardinien';
+  const siteName   = document.getElementById('s-prop-name')?.value     || '';
+  const siteLoc    = document.getElementById('s-prop-location')?.value || '';
   const ownerEmail = document.getElementById('s-contact-email')?.value || '';
   const ownerPhone = document.getElementById('s-phone')?.value         || '';
 
@@ -1337,8 +1345,8 @@ function buildBuchungHTML() {
   const zd     = document.getElementById('tpl-b-zahldatum').value;
   const addr   = document.getElementById('tpl-b-adresse').value   || '';
   const hinw   = document.getElementById('tpl-b-hinweise').value  || '';
-  const siteName   = document.getElementById('s-prop-name')?.value     || 'Sardinientraum';
-  const siteLoc    = document.getElementById('s-prop-location')?.value || 'La Caletta, Sardinien';
+  const siteName   = document.getElementById('s-prop-name')?.value     || '';
+  const siteLoc    = document.getElementById('s-prop-location')?.value || '';
   const ownerEmail = document.getElementById('s-contact-email')?.value || '';
   const ownerPhone = document.getElementById('s-phone')?.value         || '';
 
@@ -1592,12 +1600,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 ═══════════════════════════════ */
 document.getElementById('open-editor-btn').addEventListener('click', () => {
   const url = 'index.html?edit=1&t=' + Date.now();
-  const win = window.open(url, 'sardinien-editor');
+  const win = window.open(url, 'website-editor');
   if (win) { try { win.location.replace(url); win.focus(); } catch(_) {} }
 });
 
 document.getElementById('export-btn').addEventListener('click', () => {
-  Object.assign(document.createElement('a'), {href:'index.html', download:'sardinientraum.html'}).click();
+  Object.assign(document.createElement('a'), {href:'index.html', download:'website.html'}).click();
 });
 
 /* ─── Passwort ändern (Einstellungen → Sicherheit) ─── */
@@ -1737,7 +1745,7 @@ function renderInquiries() {
       <div class="inq-actions">
         <input type="text" class="field-sm inq-notes" placeholder="Notizen…" value="${escHtml(item.notes||'')}" data-inq-id="${escHtml(item.id)}" />
         <button class="btn btn-outline" style="font-size:.8rem;" data-inq-save="${escHtml(item.id)}">Speichern</button>
-        ${g.email ? `<a class="btn btn-outline" style="font-size:.8rem;" href="mailto:${escHtml(g.email)}?subject=Ihre%20Anfrage%20-%20Sardinientraum">✉ Antworten</a>` : ''}
+        ${g.email ? `<a class="btn btn-outline" style="font-size:.8rem;" href="mailto:${escHtml(g.email)}?subject=Ihre%20Anfrage%20-%20${encodeURIComponent(document.getElementById('s-prop-name')?.value||'')}">✉ Antworten</a>` : ''}
         ${(r.anreise && r.abreise && r.wohnung) ? `<button class="btn btn-outline" style="font-size:.8rem;color:var(--green);" data-inq-book="${escHtml(item.id)}" data-anreise="${escHtml(r.anreise)}" data-abreise="${escHtml(r.abreise)}" data-wohnung="${escHtml(r.wohnung)}" data-name="${escHtml((g.vorname||'')+' '+(g.nachname||''))}">📅 Als Buchung eintragen</button>` : ''}
         ${g.email ? `<button class="btn btn-outline" style="font-size:.8rem;color:var(--gold);" data-inq-confirm="${escHtml(item.id)}">📧 Bestätigung senden</button>` : ''}
       </div>
@@ -1879,7 +1887,7 @@ async function mailSettingsLoad() {
     const bccEl     = document.getElementById('s-mail-bcc');
     const enabledEl = document.getElementById('s-mail-enabled');
     if (fromEl)    fromEl.value       = m.from      || '';
-    if (nameEl)    nameEl.value       = m.from_name || 'Sardinientraum';
+    if (nameEl)    nameEl.value       = m.from_name || '';
     if (bccEl)     bccEl.value        = m.bcc       || '';
     if (enabledEl) enabledEl.checked  = m.confirmation_enabled !== false;
   } catch(_) {}
@@ -1890,7 +1898,7 @@ document.getElementById('s-mail-save-btn')?.addEventListener('click', async () =
   btn.disabled = true; btn.textContent = '⏳…';
   const patch = { mail: {
     from:                   document.getElementById('s-mail-from')?.value?.trim()    || '',
-    from_name:              document.getElementById('s-mail-from-name')?.value?.trim() || 'Sardinientraum',
+    from_name:              document.getElementById('s-mail-from-name')?.value?.trim() || '',
     bcc:                    document.getElementById('s-mail-bcc')?.value?.trim()     || '',
     confirmation_enabled:   document.getElementById('s-mail-enabled')?.checked ?? true,
   }};

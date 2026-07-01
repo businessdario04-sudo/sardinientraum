@@ -81,7 +81,9 @@ function mailSendBookingConfirmation(array $inquiry): bool {
     $priceInfo = $aptData ? ($aptData['price'] ?? '') : '';
 
     // Absender-Konfig
-    $company      = $config['company']['name'] ?? 'Sardinientraum';
+    $company      = $config['company']['name']    ?? '';
+    $tagline      = $config['company']['tagline'] ?? '';
+    $location     = $config['company']['location'] ?? '';
     $fromEmail    = $mailConf['from']      ?? '';
     $fromName     = $mailConf['from_name'] ?? $company;
     $bcc          = $mailConf['bcc']       ?? '';
@@ -100,6 +102,8 @@ function mailSendBookingConfirmation(array $inquiry): bool {
 
     $html = _mailerBuildConfirmationHtml(
         company:      $company,
+        tagline:      $tagline,
+        location:     $location,
         fullName:     $fullName,
         vorname:      $vorname ?: $fullName,
         anreiseFmt:   $anreiseFmt,
@@ -154,7 +158,8 @@ function _mailerSend(
 // HTML-Template
 // ─────────────────────────────────────────────────────────────
 function _mailerBuildConfirmationHtml(
-    string $company, string $fullName, string $vorname,
+    string $company, string $tagline, string $location,
+    string $fullName, string $vorname,
     string $anreiseFmt, string $abreiseFmt, string $nights,
     string $aptName, string $personen, string $priceInfo,
     string $contactEmail, string $inqId
@@ -192,7 +197,7 @@ function _mailerBuildConfirmationHtml(
   <tr><td style="background:linear-gradient(135deg,#1e4d6b 0%,#2e6d96 100%);padding:44px 40px 36px;text-align:center;">
     <div style="font-size:36px;margin-bottom:10px;">🌊</div>
     <div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:.5px;">{$e($company)}</div>
-    <div style="color:rgba(255,255,255,.65);font-size:13px;margin-top:6px;">Ferienwohnungen · La Caletta · Sardinien</div>
+    <div style="color:rgba(255,255,255,.65);font-size:13px;margin-top:6px;">{$e($tagline)}{$tagline && $location ? ' · ' : ''}{$e($location)}</div>
   </td></tr>
   <tr><td style="background:#c8975a;height:4px;"></td></tr>
 
@@ -204,7 +209,7 @@ function _mailerBuildConfirmationHtml(
 
     <p style="font-size:15px;line-height:1.5;margin:0 0 10px;">Liebe/r <strong>{$e($vorname)}</strong>,</p>
     <p style="font-size:15px;line-height:1.7;color:#2a2a2a;margin:0 0 28px;">
-      wir freuen uns sehr, deine Buchung zu bestätigen! Dein Aufenthalt bei uns in Sardinien ist vorgemerkt.
+      wir freuen uns sehr, deine Buchung zu bestätigen! Dein Aufenthalt ist vorgemerkt.
       Wir werden uns in Kürze persönlich bei dir melden, um alle Details zu Zahlungsmodalitäten und
       Schlüsselübergabe zu besprechen.
     </p>
@@ -253,7 +258,7 @@ function _mailerBuildConfirmationHtml(
     </table>
 
     <p style="font-size:15px;line-height:1.7;margin:0 0 6px;">
-      Wir freuen uns darauf, dich in La Caletta willkommen zu heißen! 🌊☀️
+      Wir freuen uns darauf, dich{$location ? ' in ' . $e($location) : ''} willkommen zu heißen! 🌊☀️
     </p>
     <p style="font-size:15px;margin:0;">
       Herzliche Grüße,<br>
@@ -266,7 +271,7 @@ function _mailerBuildConfirmationHtml(
   <tr><td style="background:#1e4d6b;padding:24px 40px;text-align:center;">
     {$contactLink}
     <p style="color:rgba(255,255,255,.45);font-size:11px;margin:10px 0 0;line-height:1.6;">
-      La Caletta · Siniscola · Sardinien, Italien<br>
+      {$e($location)}<br>
       Diese Buchungsbestätigung wurde automatisch generiert.
     </p>
   </td></tr>
